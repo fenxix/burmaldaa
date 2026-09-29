@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070817">
+<title>burmalda</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="burmalda">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg-primary:#070817;--bg-secondary:#101024;--glass:rgba(255,255,255,.04);--glass-strong:rgba(255,255,255,.07);--border:rgba(255,255,255,.08);--text-primary:#F8F4FA;--text-secondary:#B8B2C8;--text-muted:#77728B;--pink:#FF4F9A;--pink-light:#FF86C0;--purple:#9B5DE5;--success:#3DDC97;--radius-sm:12px;--radius-md:16px;--radius-lg:20px;--blur:blur(20px);--shadow-glow:0 0 30px rgba(var(--pr),.2);--pr:255,79,154;--sr:155,93,229;--grad:linear-gradient(135deg,var(--pink),var(--purple))}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg-primary);color:var(--text-primary);font:14px/1.4 Inter,sans-serif;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;transition:transform .2s ease,opacity .2s ease,box-shadow .2s ease}
+button:active{transform:scale(.98)}
+input,textarea,select{font:inherit;color:var(--text-primary);background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;width:100%;outline:0;min-height:44px}
+input:focus,textarea:focus{border-color:var(--pink)}
+#app{position:relative;max-width:430px;height:100dvh;margin:0 auto;overflow:hidden;background:radial-gradient(circle at 50% 25%,rgba(var(--pr),.12),transparent 40%),radial-gradient(circle at 90% 85%,rgba(var(--sr),.12),transparent 40%),linear-gradient(#070817,#0B0B1A 60%,#101024)}
+.screen{position:absolute;inset:0;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 16px) 16px 112px;display:none}
+.screen.on{display:block;animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulseGlow{50%{box-shadow:0 0 34px rgba(var(--pr),.4)}}
+@keyframes bn{30%{transform:scale(1.25) rotate(-8deg)}60%{transform:scale(.95) rotate(6deg)}}
+@keyframes hup{to{transform:translateY(-70px);opacity:0}}
+.pet{font-size:64px;line-height:1;display:inline-block;filter:drop-shadow(0 0 18px rgba(var(--pr),.5))}.pet.bn{animation:bn .5s ease}
+.pw{position:relative;display:inline-block}.pb{position:absolute;right:-8px;top:-6px;font-size:.38em;background:#12132b;border:1px solid var(--border);border-radius:50%;width:1.7em;height:1.7em;display:flex;align-items:center;justify-content:center;line-height:1}
+@keyframes r-hb{50%{transform:scale(1.12)}}@keyframes r-jp{40%{transform:translateY(-14px)}}@keyframes r-sl{50%{transform:rotate(-7deg) translateY(3px)}}@keyframes r-sd{50%{transform:translateY(4px) scale(.95)}}@keyframes r-pl{25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}@keyframes r-cm{50%{transform:translateY(-4px)}}
+.pet.r-love{animation:r-hb 1.2s ease-in-out infinite}.pet.r-joy{animation:r-jp .9s ease-in-out infinite}.pet.r-tired{animation:r-sl 3s ease-in-out infinite}.pet.r-sad{animation:r-sd 2.4s ease-in-out infinite}.pet.r-play{animation:r-pl .6s ease-in-out infinite}.pet.r-calm{animation:r-cm 3.5s ease-in-out infinite}
+.pet.bn{animation:bn .5s ease!important}
+.hup{position:absolute;pointer-events:none;color:var(--pink);animation:hup .9s ease-out forwards}
+.rw{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.rw button{border-radius:var(--radius-lg);padding:14px 8px;background:var(--glass);border:1px solid var(--border);display:grid;gap:4px;justify-items:center;position:relative}
+.rw button.on{border-color:var(--pink);box-shadow:0 0 25px rgba(var(--pr),.35);background:rgba(var(--pr),.1)}
+.rw button.lock{opacity:.45}.rw .em{font-size:38px;line-height:1.1}
+.sw{width:38px;height:38px;border-radius:50%}
+@keyframes float{50%{transform:translateY(-10px) rotate(var(--r,0deg))}}
+h1,h2,h3,.ff{font-family:Comfortaa,sans-serif}
+.card{background:var(--glass);border:1px solid var(--border);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:var(--radius-lg);padding:16px}
+.row{display:flex;align-items:center;gap:12px}.sp{flex:1;min-width:0}.mt{margin-top:12px}
+.sm{font-size:12px;color:var(--text-secondary)}.xs{font-size:11px;color:var(--text-muted)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);margin-right:6px}.dot.off{background:var(--text-muted)}
+.logo{font:700 32px Comfortaa;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{width:100%;min-height:52px;border-radius:var(--radius-md);background:var(--grad);font-weight:600;font-size:15px;box-shadow:var(--shadow-glow)}
+.ico{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;background:linear-gradient(135deg,rgba(var(--pr),.35),rgba(var(--sr),.2));border:1px solid rgba(var(--pr),.4);color:var(--pink);font-size:18px}
+.pill{border-radius:999px;padding:8px 16px;background:var(--glass);border:1px solid var(--border);font-size:12px;min-height:36px}
+.pill.on,.emo.on{border-color:var(--pink);box-shadow:0 0 25px rgba(var(--pr),.35);background:rgba(var(--pr),.1)}
+.head{display:flex;align-items:center;gap:12px;min-height:44px;margin-bottom:16px}.head h2{font-size:20px;font-weight:600}
+.back{width:44px;height:44px;font-size:18px;margin-left:-12px}
+.tabs{display:flex;padding:4px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border)}
+.tabs button{flex:1;min-height:44px;border-radius:var(--radius-sm);color:var(--text-secondary)}
+.tabs .on{background:var(--glass-strong);color:var(--text-primary);font-weight:600;box-shadow:inset 0 -2px 0 var(--pink),0 0 25px rgba(var(--pr),.2)}
+.game{display:flex;gap:12px;align-items:center;width:100%;text-align:left;margin-top:12px;padding:12px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border)}
+.thumb{width:72px;height:88px;border-radius:var(--radius-sm);background:#0d0d20;border:1px solid var(--border);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;padding:8px;flex:none}
+.thumb i{display:block;height:8px;border-radius:2px;background:linear-gradient(90deg,var(--pink),var(--purple))}
+.grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:8px;width:72px;height:72px}.grid6 i{border-radius:2px;background:rgba(var(--sr),.35)}
+.badge{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:999px;background:var(--glass-strong);font-size:11px}
+.nav{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 12px);left:50%;transform:translateX(-50%);width:min(406px,calc(100% - 24px));display:none;padding:8px;border-radius:var(--radius-lg);background:rgba(16,16,36,.8);border:1px solid var(--border);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);z-index:5}
+.nav.on{display:flex}.nav button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;color:var(--text-muted)}.nav i{font-size:20px}.nav .on{color:var(--pink);text-shadow:0 0 14px var(--pink)}
+.emos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.emo{min-height:88px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12px}.emo i{font-size:26px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+h3.t{font-size:16px;font-weight:600;margin:20px 0 12px}
+#welcome{text-align:center;display:none;padding-top:0}#welcome.on{display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:96px 24px 32px}
+.hearts{position:relative;width:240px;height:200px}.hearts i{position:absolute;color:var(--pink);filter:blur(1px);animation:float 6s ease-in-out infinite}
+.modal{position:absolute;inset:0;z-index:10;background:rgba(7,8,23,.75);backdrop-filter:blur(8px);display:none;align-items:flex-end;padding:16px}.modal.on{display:flex}.modal .card{width:100%;background:#12132b;display:grid;gap:12px}
+.sky i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--pink-light);opacity:.6}
+#tower{padding-bottom:24px}
+.stack{position:relative;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:rgba(0,0,0,.22);touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.stack canvas{display:block;width:100%;touch-action:manipulation}
+.bd{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;max-width:280px;margin:0 auto}.bd.sm2{max-width:180px}
+.cell{aspect-ratio:1;border-radius:8px;background:var(--glass);border:1px solid var(--border);position:relative;min-height:0;padding:0}
+.cell.ship{background:linear-gradient(135deg,#9B5DE5,#7C4DFF);border-color:transparent}
+.cell.miss::after{content:"";position:absolute;inset:38%;border-radius:50%;background:var(--text-muted)}
+.cell.hit{background:rgba(var(--pr),.55);box-shadow:0 0 14px rgba(var(--pr),.6)}.cell.hit::after{content:"\2715";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:14px}
+.cell:disabled{opacity:1;cursor:default}
+.btn2{min-height:44px;padding:0 16px;border-radius:var(--radius-md);background:var(--glass-strong);border:1px solid var(--border);flex:1}
+.wish{display:flex;gap:12px;align-items:center;margin-top:8px;padding:12px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border)}
+.wish.done b{text-decoration:line-through;color:var(--text-muted)}.wish a{color:var(--pink-light);font-size:12px;text-decoration:none}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:#1C1D38;border:1px solid var(--border);padding:12px 16px;border-radius:var(--radius-md);z-index:20;display:none;max-width:90%}
+.btn:disabled{opacity:.5;box-shadow:none;cursor:default}
+.gear{width:44px;height:44px;font-size:18px;color:var(--text-secondary);margin-right:-10px;flex:none}
+.sheet{max-height:85%;overflow-y:auto}
+.themes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.theme{border-radius:var(--radius-md);border:1px solid var(--border);padding:8px;background:var(--glass);display:grid;gap:8px;font-size:12px;text-align:center}
+.theme.on{border-color:var(--pink);box-shadow:0 0 20px rgba(var(--pr),.3)}
+.theme .sw{height:52px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;padding:6px}
+.theme .sw i{display:block;height:8px;border-radius:3px}
+.opt{min-height:52px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border);padding:12px 14px;text-align:left;font-weight:500;line-height:1.35}
+.opt.on{border-color:var(--pink);background:rgba(var(--pr),.12);box-shadow:0 0 20px rgba(var(--pr),.3)}
+.bw{display:flex;gap:8px;align-items:center;padding:6px 6px 6px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--border);text-align:left}
+.wish{gap:8px}
+input[type=datetime-local]{color-scheme:dark}
+.mdb{display:grid;gap:3px;max-width:340px;margin:0 auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.mc{aspect-ratio:1;border-radius:10px;border:1px solid var(--border);font-size:26px;display:grid;place-items:center;padding:0;min-height:0}
+.mc.bad{border-color:#ff5c7a;box-shadow:inset 0 0 0 2px rgba(255,92,122,.7)}
+.mdl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mdl button{border-radius:var(--radius-md);padding:10px 4px;background:var(--glass);border:1px solid var(--border);display:grid;gap:2px;justify-items:center}
+.mdl button.on{border-color:var(--pink);background:rgba(var(--pr),.1)}
+</style></head>
+<body><div id="app">
+
+<section class="screen" id="welcome">
+ <div><h1 class="logo" style="font-size:48px">burmalda</h1><p class="sm ff" style="margin-top:8px">Ближе, чем кажется</p></div>
+ <div class="hearts"><i class="fa-solid fa-heart" style="font-size:150px;left:20px;top:30px;opacity:.35;--r:-12deg"></i><i class="fa-solid fa-heart" style="font-size:130px;left:80px;top:0;opacity:.75;animation-delay:-2s;--r:8deg"></i><i class="fa-solid fa-heart" style="font-size:90px;left:135px;top:90px;opacity:.4;color:var(--purple);animation-delay:-4s"></i></div>
+ <p class="sm" style="line-height:1.6">Ваше личное пространство<br>для особенных моментов</p>
+ <div style="width:100%"><button class="btn" onclick="openModal()">Начать <i class="fa-solid fa-arrow-right" style="margin-left:8px"></i></button><p class="xs" style="margin-top:20px">Вместе. Всегда. <i class="fa-regular fa-heart"></i></p></div>
+</section>
+
+<section class="screen" id="home">
+ <div class="row" style="justify-content:space-between;margin-bottom:16px"><span class="logo" style="font-size:28px">burmalda</span><i class="fa-regular fa-heart" style="color:var(--pink);font-size:20px"></i></div>
+ <div class="card row" id="roomCard"></div>
+ <div class="card mt" id="memCard"></div>
+ <div class="card row mt" id="petCard" style="padding:12px"></div>
+ <div class="card row mt" id="emoCard" style="padding:12px"></div>
+ <div class="tabs mt"><button class="on">Игры</button><button onclick="go('emotions')">Эмоции</button><button onclick="go('capsules')">Капсулы</button></div>
+ <div class="card mt" id="games">
+  <div class="row"><i class="fa-solid fa-gamepad" style="font-size:24px;color:var(--pink-light)"></i><div><h3 class="ff" style="font-size:16px">Игры</h3><p class="sm">Развлекайтесь вместе и получайте приятные сюрпризы</p></div></div>
+  <button class="game" onclick="go('tower')"><div class="thumb" id="thumb"></div><div class="sp"><b style="font-weight:600">Башня Мечты</b><p class="sm">Стройте, набирайте очки и открывайте награды</p><span class="badge" id="lvlBadge"></span></div><i class="fa-solid fa-chevron-right sm"></i></button>
+  <button class="game" onclick="go('battle')"><div class="thumb"><div class="grid6" id="g6"></div></div><div class="sp"><b style="font-weight:600">Морской Бой Желаний</b><p class="sm">Угадывайте желания друг друга</p><span class="badge"><span class="dot" style="background:var(--pink)"></span>Твой ход</span></div><i class="fa-solid fa-chevron-right sm"></i></button>
+  <button class="game" onclick="go('meowdoku')"><div class="thumb" id="mdThumb" style="justify-content:center;align-items:center"></div><div class="sp"><b style="font-weight:600">Meowdoku</b><p class="sm">Расставляйте котиков и открывайте новых героев</p><span class="badge" id="mdBadge">0 / 12 уровней</span></div><i class="fa-solid fa-chevron-right sm"></i></button>
+ </div>
+</section>
+
+<section class="screen" id="tower">
+ <div class="sky" id="sky"></div>
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2 class="sp">Башня Мечты</h2><button class="gear" onclick="towerSet()" aria-label="Настройки"><i class="fa-solid fa-gear"></i></button></div>
+ <div class="row"><div class="card sp" style="text-align:center;padding:10px"><p class="sm">Этаж</p><b class="ff" style="font-size:22px"><span id="hgt">1</span> <i class="fa-solid fa-crown" style="font-size:13px;color:var(--pink-light)"></i></b></div><div class="card sp" style="text-align:center;padding:10px"><p class="sm">Счёт</p><b class="ff" style="font-size:22px"><i class="fa-solid fa-star" style="font-size:13px"></i> <span id="scr">0</span></b></div><div class="card sp" style="text-align:center;padding:10px"><p class="sm">Рекорд</p><b class="ff" style="font-size:22px"><i class="fa-solid fa-trophy" style="font-size:13px;color:#FFC24A"></i> <span id="rec">1</span></b></div></div>
+ <div class="stack mt" id="stack"><canvas id="cv"></canvas></div>
+ <p class="xs" style="text-align:center;margin-top:10px">Нажми на поле, чтобы уронить блок. Промах — и всё сначала</p>
+ <button class="card row mt" style="width:100%;padding:12px;text-align:left" onclick="go('rewards')"><span class="ico" style="border-radius:12px"><i class="fa-solid fa-gift"></i></span><div class="sp"><b style="font-weight:600;font-size:12px" id="ach"></b><p class="xs">Питомцы и оформление — открыть награды</p></div><i class="fa-solid fa-chevron-right sm"></i></button>
+</section>
+
+<section class="screen" id="rewards">
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Награды</h2></div>
+ <div class="card" id="rwHead" style="text-align:center"></div>
+ <div class="row mt" id="rwName" style="display:none"><input id="petName" placeholder="Имя питомца" maxlength="16"><button class="pill on" onclick="saveName()">Сохранить</button></div>
+ <div class="tabs mt"><button id="rwt1" onclick="setRw('pets')">Питомцы</button><button id="rwt2" onclick="setRw('deco')">Оформление</button></div>
+ <div class="rw" id="rwList"></div>
+</section>
+
+<section class="screen" id="emotions">
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Эмоции</h2></div>
+ <div class="card row" id="pCard" style="padding:12px"></div>
+ <h3 class="t">Как ты сейчас?</h3><div class="emos" id="emos"></div>
+ <h3 class="t">Выбери подэмоцию</h3><div class="pills" id="subs"></div>
+ <div id="emoAct" style="margin-top:16px"></div>
+ <div class="card mt" id="nowCard" style="margin-top:20px"></div>
+</section>
+
+<section class="screen" id="capsules">
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Капсулы</h2></div>
+ <div class="card" style="display:grid;gap:12px">
+  <p class="sm">Сообщение придёт: <b id="capTo" style="color:var(--text-primary)">партнёру</b></p>
+  <textarea id="cbody" rows="3" placeholder="Секретное сообщение" maxlength="500"></textarea>
+  <div><p class="xs" style="margin-bottom:6px">Когда партнёр сможет прочитать</p><input type="datetime-local" id="cwhen"></div>
+  <div class="pills"><button class="pill" onclick="capQ('h')">Через час</button><button class="pill" onclick="capQ('e')">Вечером</button><button class="pill" onclick="capQ('m')">Завтра утром</button><button class="pill" onclick="capQ('w')">Через неделю</button></div>
+  <button class="btn" onclick="addCap()">Запечатать и отправить</button>
+ </div>
+ <div id="caps"></div>
+</section>
+
+<section class="screen" id="meowdoku">
+ <div class="head"><button class="back" onclick="mdBack()"><i class="fa-solid fa-arrow-left"></i></button><h2 class="sp">Meowdoku</h2><span class="xs" id="mdT"></span></div>
+ <div id="mdList"><div class="card" id="mdTop"></div><h3 class="t">Персонажи</h3><div class="rw" id="mdChars" style="margin-top:0"></div><h3 class="t">Уровни</h3><div class="mdl" id="mdLv"></div></div>
+ <div id="mdPlay" style="display:none"><p class="sm" id="mdInfo" style="text-align:center;margin-bottom:12px"></p><div class="mdb" id="mdB"></div><p class="xs" style="text-align:center;margin:12px 0">Тап: ✕ → зверёк → пусто. Проведи пальцем по клеткам — они заполнятся ✕ (если начать с ✕, проведение стирает их). В каждой строке, столбце и каждой цветной зоне ровно по одному зверьку, и они не касаются (даже по диагонали). ✕ можно ставить свободно, а зверёк не на своём месте отнимает сердце</p><div class="row"><button class="btn2" onclick="mdReset()">Сбросить</button></div><div id="mdMsg" class="mt"></div></div>
+</section>
+
+<section class="screen" id="battle">
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2 class="sp">Морской Бой Желаний</h2><button class="gear" onclick="bwOpen()" aria-label="Настройки"><i class="fa-solid fa-gear"></i></button></div>
+ <p class="sm" id="bst" style="text-align:center;margin-bottom:16px;color:var(--text-primary)"></p><div id="bbody"></div>
+</section>
+<section class="screen" id="wishes">
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Вишлист</h2></div>
+ <div class="card" style="display:grid;gap:12px"><input id="wt" placeholder="Что хочешь?" maxlength="80"><div class="row"><input id="wp" placeholder="Цена" maxlength="20"><input id="wu" placeholder="Ссылка" inputmode="url"></div><button class="btn" onclick="addWish()">Добавить желание</button></div>
+ <div id="wl"></div>
+</section>
+<div class="modal" id="set" onclick="if(event.target===this)closeSet()"><div class="card sheet" id="setc"></div></div>
+<div class="modal" id="ov" style="align-items:center"><div class="card" id="ovc" style="text-align:center;background:#12132b;width:100%;display:grid;gap:12px"></div></div>
+<div class="modal" id="modal"><div class="card">
+ <h3 class="ff" style="font-size:20px">Ваша комната</h3>
+ <input id="nm" placeholder="Твоё имя" maxlength="20">
+ <button class="btn" onclick="enter('create')">Создать комнату</button>
+ <input id="cd" placeholder="Код комнаты партнёра" maxlength="6" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform:uppercase">
+ <button class="btn" style="background:var(--glass-strong);box-shadow:none;border:1px solid var(--border)" onclick="enter('join')">Войти по коду</button>
+ <p class="sm" id="merr" style="display:none;color:var(--pink-light);text-align:center;line-height:1.4"></p>
+ <button class="sm" style="min-height:44px" onclick="$('modal').classList.remove('on')">Отмена</button>
+</div></div>
+
+<nav class="nav" id="nav">
+ <button data-s="home" onclick="go('home')"><i class="fa-solid fa-house"></i>Главная</button>
+ 
+ <button data-s="emotions" onclick="go('emotions')"><i class="fa-regular fa-heart"></i>Эмоции</button>
+ <button data-s="capsules" onclick="go('capsules')"><i class="fa-solid fa-lock"></i>Капсулы</button>
+ <button data-s="wishes" onclick="go('wishes')"><i class="fa-solid fa-gift"></i>Желания</button>
+ <button data-s="rewards" onclick="go('rewards')"><i class="fa-solid fa-paw"></i>Награды</button>
+</nav>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const sb=supabase.createClient('https://vgtblpiksjynbtsxecrk.supabase.co','sb_publishable_N3LaRs9NlMwLquUtKKjUPg_R88gNLEV');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const EM={love:['Любовь','fa-heart','#FF4F9A'],joy:['Радость','fa-face-smile','#FFB45A'],tired:['Усталость','fa-face-tired','#9B8CFF'],sad:['Грусть','fa-face-frown','#7C8CFF'],play:['Игривость','fa-face-grin-wink','#FF8A5A'],calm:['Спокойствие','fa-spa','#C89BFF']};
+const SUBS={
+ love:['Скучаю','Хочу обнять','Целую','Думаю о тебе','Люблю тебя'],
+ joy:['Счастье','Восторг','Улыбаюсь','Всё отлично','Радуюсь тебе'],
+ tired:['Хочу спать','Нет сил','Тяжёлый день','Нужны объятия','Хочу отдохнуть'],
+ sad:['Грустно','Одиноко','Обидно','Нужна поддержка','Хочется плакать'],
+ play:['Хочу играть','Дразню тебя','Флиртую','Хочу пошалить','Щекотка'],
+ calm:['Умиротворение','Мне уютно','Тепло рядом','Тишина и покой','Всё спокойно']};
+let S={room:localStorage.getItem('room'),code:localStorage.getItem('code'),uid:null,me:null,pt:null,members:[],game:{level:1,score:0,blocks:1},caps:[],wishes:[],bt:null,ships:[],re:false,dis:null,saving:false},cur='welcome',ch=null;
+
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
+function go(s){cur=s;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id===s));
+ $('nav').classList.toggle('on',['home','emotions','capsules','wishes','rewards'].includes(s));
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+ if(s==='tower')startSwing();else stopSwing();if(s==='capsules')capInit();if(s==='meowdoku')mdOpen();render()}
+const PETS=[['cat','🐱','Котёнок',1],['dog','🐶','Щенок',3],['bunny','🐰','Зайка',6],['fox','🦊','Лисёнок',10],['panda','🐼','Панда',15],['uni','🦄','Единорог',20],['dragon','🐉','Дракончик',30]];
+const DECO=[['dream','Мечта','#FF4F9A','#FF86C0','#9B5DE5','255,79,154','155,93,229',1],['ocean','Океан','#38BDF8','#7DD3FC','#6366F1','56,189,248','99,102,241',4],['sunset','Закат','#FF7A45','#FFA36C','#E5405E','255,122,69','229,64,94',7],['forest','Лес','#34D399','#6EE7B7','#0EA5A4','52,211,153','14,165,164',10],['galaxy','Галактика','#C084FC','#DDB8FF','#3B82F6','192,132,252','59,130,246',15],['gold','Золото','#FFC24A','#FFD98A','#FF8A3D','255,194,74','255,138,61',20]];
+const PHR=['Мур!','Тебя любят','Ещё погладь','Хочу на ручки','Вы лучшие'];
+let rwTab='pets';
+function applyDeco(){let k=(S.game&&S.game.deco)||null;if(!k){try{k=localStorage.getItem('deco')}catch{}}const d=DECO.find(x=>x[0]===k)||DECO[0],r=document.documentElement.style;
+ r.setProperty('--pink',d[2]);r.setProperty('--pink-light',d[3]);r.setProperty('--purple',d[4]);r.setProperty('--pr',d[5]);r.setProperty('--sr',d[6]);try{localStorage.setItem('deco',d[0])}catch{}}
+applyDeco();
+const REACT={love:['😍','{n} млеет: {p} сейчас в любви'],joy:['🎉','{n} прыгает от радости вместе с {p}'],tired:['😴','{n} сопит рядом: у {p} нет сил'],sad:['🥺','{n} хочет обнять {p}: сейчас грустно'],play:['😜','{n} машет лапками: {p} в игривом настроении'],calm:['😌','{n} уютно свернулся: у {p} спокойствие']};
+function petName(x){return (S.game.pet_name||'').trim()||x[2]}
+function petEmo(){const p=S.pt;if(!p||!p.emotion||!REACT[p.emotion])return null;if(p.emotion_at&&Date.now()-new Date(p.emotion_at)>864e5)return null;return p.emotion}
+function petHTML(x,fs){const e=petEmo();return `<span class="pw"><span class="pet ${e?'r-'+e:''}" style="${fs?'font-size:'+fs+'px':''}" onclick="petTap(this)">${x[1]}</span>${e?`<span class="pb">${REACT[e][0]}</span>`:''}</span>`}
+function petLine(x){const e=petEmo(),n=petName(x),p=S.pt;if(!p)return n+' ждёт, когда в комнату придёт партнёр';if(!e)return n+' ждёт, какое у '+p.name+' настроение';return REACT[e][1].replace('{n}',n).replace('{p}',p.name)+(p.emotion_at?' · '+ago(p.emotion_at):'')}
+function saveName(){const v=$('petName').value.trim().slice(0,16);saveGame({pet_name:v||null});toast(v?'Имя сохранено':'Имя сброшено')}
+function petOf(){const k=S.game&&S.game.pet;return PETS.find(x=>x[0]===k)||null}
+function setRw(t){rwTab=t;drawRewards()}
+async function saveGame(u){Object.assign(S.game,u);render();const {error}=await sb.from('couple_game').update(u).eq('room_id',S.room);if(error)toast('Не сохранилось: '+error.message)}
+function pickPet(k){const p=PETS.find(x=>x[0]===k);if(!p)return;if(S.game.blocks<p[3])return toast('Откроется на '+p[3]+' этаже');saveGame({pet:k})}
+function pickDeco(k){const d=DECO.find(x=>x[0]===k);if(!d)return;if(S.game.blocks<d[7])return toast('Откроется на '+d[7]+' этаже');saveGame({deco:k})}
+function petTap(e){e.classList.remove('bn');void e.offsetWidth;e.classList.add('bn');const h=document.createElement('i');h.className='fa-solid fa-heart hup';h.style.left=(e.offsetLeft+e.offsetWidth/2-8+Math.random()*30-15)+'px';h.style.top=e.offsetTop+'px';e.parentNode.style.position='relative';e.parentNode.appendChild(h);setTimeout(()=>h.remove(),900);toast(PHR[Math.floor(Math.random()*PHR.length)])}
+function drawRewards(){if(cur!=='rewards')return;const b=S.game.blocks,pet=petOf(),all=[...PETS.map(x=>x[3]),...DECO.map(x=>x[7])].filter(l=>l>b).sort((a,c)=>a-c),nx=all[0];
+ $('rwHead').innerHTML=`<div style="position:relative">${pet?`${petHTML(pet)}<p class="ff" style="margin-top:8px">${esc(petName(pet))}</p><p class="xs" style="margin-top:4px">${esc(petLine(pet))}</p>`:'<p class="sm">Выбери питомца — он будет жить у вас на главной</p>'}</div><p class="xs" style="margin-top:8px"><i class="fa-solid fa-trophy" style="color:#FFC24A"></i> Рекорд башни: ${b} · ${nx?'следующая награда на '+nx+' этаже':'всё открыто!'}</p>`;
+ {const i=$('petName');$('rwName').style.display=pet?'flex':'none';if(pet&&document.activeElement!==i)i.value=S.game.pet_name||''}
+ $('rwt1').classList.toggle('on',rwTab==='pets');$('rwt2').classList.toggle('on',rwTab==='deco');
+ $('rwList').innerHTML=rwTab==='pets'?PETS.map(p=>{const ok=b>=p[3],on=S.game.pet===p[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickPet('${p[0]}')"><span class="em">${ok?p[1]:'🔒'}</span><b class="sm" style="color:var(--text-primary)">${p[2]}</b><span class="xs">${ok?(on?'выбран ✓':'открыт'):p[3]+' этаж'}</span></button>`}).join(''):DECO.map(d=>{const ok=b>=d[7],on=(S.game.deco||'dream')===d[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickDeco('${d[0]}')"><span class="sw" style="background:linear-gradient(135deg,${d[2]},${d[4]})">${ok?'':'<i class="fa-solid fa-lock" style="line-height:38px;font-size:14px"></i>'}</span><b class="sm" style="color:var(--text-primary)">${d[1]}</b><span class="xs">${ok?(on?'выбрано ✓':'открыто'):d[7]+' этаж'}</span></button>`}).join('')}
+function ago(t){const m=Math.floor((Date.now()-new Date(t))/6e4);return m<1?'только что':m<60?m+' мин назад':Math.floor(m/60)+' ч назад'}
+const online=m=>m&&Date.now()-new Date(m.seen_at)<7e4;
+function openModal(){$('modal').classList.add('on')}
+
+async function auth(){let {data:{session}}=await sb.auth.getSession();
+ if(!session){const {data,error}=await sb.auth.signInAnonymously();if(error){toast('Включи Anonymous sign-ins в Supabase → Auth');throw error}session=data.session}
+ S.uid=session.user.id}
+
+async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m.textContent=t;m.style.display=t?'block':'none'};
+ if(!name){err('Введи своё имя');return toast('Введи имя')}
+ const code=$('cd').value.replace(/\s/g,'').toUpperCase();
+ if(mode==='join'&&!code){err('Введи код комнаты');return toast('Введи код комнаты')}
+ const bs=[...document.querySelectorAll('#modal .btn')];bs.forEach(b=>b.disabled=true);err('Подключаемся…');
+ try{
+  const job=(async()=>{await auth();const r=mode==='create'?await sb.rpc('couple_create_room',{p_name:name}):await sb.rpc('couple_join_room',{p_code:code,p_name:name});if(r.error)throw r.error;return r.data})();
+  const data=await Promise.race([job,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),20000))]);
+  const d=Array.isArray(data)?data[0]:data;
+  if(!d||!d.room_id)throw new Error('Сервер вернул неожиданный ответ: '+JSON.stringify(data));
+  S.room=d.room_id;S.code=d.code||code;localStorage.setItem('room',S.room);localStorage.setItem('code',S.code);
+  await start();
+  if(S.me){$('modal').classList.remove('on');err('')}
+  else err('Код принят, но комната не загрузилась: '+(S.lerr?S.lerr.message:'участник не найден'))}
+ catch(e){const t=String(e.message||e);
+  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
+  err(msg);toast(msg)}
+ finally{bs.forEach(b=>b.disabled=false)}}
+
+async function load(){if(!S.room)return;
+ const [m,g,c,w,b,sh]=await Promise.all([sb.from('couple_members').select('*').eq('room_id',S.room),sb.from('couple_game').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_capsules').select('*').eq('room_id',S.room).order('created_at',{ascending:false}),sb.from('couple_wishes').select('*').eq('room_id',S.room).order('created_at',{ascending:false}),sb.from('couple_battle').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_battle_ships').select('cells').eq('room_id',S.room).eq('user_id',S.uid).maybeSingle()]);
+ S.lerr=m.error;if(m.data){const me=m.data.find(x=>x.user_id===S.uid);S.members=m.data;if(S.me&&!me){dropRoom();toast('Ты больше не в этой комнате');return}if(!S.saving||!S.me)S.me=me;S.pt=m.data.find(x=>x.user_id!==S.uid)||null}
+ if(g.data)S.game=g.data;if(c.data)S.caps=c.data;if(w.data)S.wishes=w.data;S.bt=b.data||null;S.ships=sh.data?sh.data.cells:[];render();mdLoad()}
+
+function dropRoom(){['room','code'].forEach(k=>{try{localStorage.removeItem(k)}catch{}});if(ch){sb.removeChannel(ch);ch=null}S.room=null;S.code=null;S.me=null;S.pt=null;S.members=[];go('welcome')}
+async function leaveRoom(){if(!S.room||!confirm('Выйти из комнаты '+S.code+'? Вернуться можно по коду, пока в ней не двое.'))return;
+ const {error}=await sb.rpc('couple_leave_room',{p_room:S.room});if(error)return toast('Не получилось выйти: '+error.message);
+ dropRoom();toast('Ты вышел из комнаты')}
+async function kickMember(uid,name){if(!confirm('Убрать «'+name+'» из комнаты?'))return;
+ const {error}=await sb.rpc('couple_kick_member',{p_room:S.room,p_user:uid});if(error)return toast('Ошибка: '+error.message);
+ toast('Участник убран');load()}
+
+async function start(){await auth();await load();
+ if(!S.me){dropRoom();return}
+ if(ch)sb.removeChannel(ch);
+ ch=sb.channel('r'+S.room);['couple_members','couple_game','couple_capsules','couple_wishes','couple_battle','couple_meow'].forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t,filter:'room_id=eq.'+S.room},()=>load()));ch.subscribe();
+ ping();go(cur==='welcome'?'home':cur)}
+function ping(){if(S.me&&S.room)sb.from('couple_members').update({seen_at:new Date().toISOString()}).eq('room_id',S.room).eq('user_id',S.uid).then(()=>{})}
+setInterval(()=>{if(document.visibilityState==='visible'){ping();load()}},20000);
+document.addEventListener('visibilitychange',()=>{ping();if(document.visibilityState==='visible')load()});
+window.addEventListener('focus',()=>{ping();load()});window.addEventListener('pagehide',ping);
+
+function render(){if(!S.me)return;const p=S.pt,pe=p?EM[p.emotion]||EM.love:EM.love;
+ $('roomCard').innerHTML=`<div class="sp"><p class="xs">Вы с</p><h3 class="ff" style="font-size:18px">${esc(p?p.name:'ждём партнёра')}</h3><p class="xs"><span class="dot ${online(p)?'':'off'}"></span>${online(p)?'в сети':'не в сети'}</p></div><div style="text-align:right;border-left:1px solid var(--border);padding-left:12px"><p class="xs">Комната</p><div class="row"><b class="ff" style="font-size:18px;letter-spacing:1px">${esc(S.code)}</b><button style="width:44px;height:44px;color:var(--text-secondary)" onclick="navigator.clipboard.writeText('${esc(S.code)}');toast('Код скопирован')"><i class="fa-regular fa-copy"></i></button></div></div>`;
+ const ms=(S.members||[]).slice().sort((a,b)=>(b.user_id===S.uid)-(a.user_id===S.uid));
+ $('memCard').innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px"><b class="ff" style="font-size:15px">В комнате: ${ms.length}</b><span class="xs">макс. 2</span></div>`+ms.map(m=>{const you=m.user_id===S.uid,on=you||online(m);return `<div class="row" style="padding:8px 0;border-top:1px solid var(--border)"><div class="sp"><p class="sm" style="color:var(--text-primary)"><span class="dot ${on?'':'off'}"></span>${esc(m.name)}${you?' <span class="xs">(это ты)</span>':''}</p><p class="xs">${on?'в сети':(m.seen_at?'был(а) '+ago(m.seen_at):'не в сети')} · ID …${esc(String(m.user_id).slice(-4))}</p></div>${you?'':`<button class="pill" style="color:var(--pink-light)" onclick="kickMember('${esc(m.user_id)}','${esc(m.name)}')"><i class="fa-solid fa-xmark"></i> Убрать</button>`}</div>`}).join('')+`<button class="sm" style="min-height:44px;width:100%;margin-top:8px;color:var(--pink-light)" onclick="leaveRoom()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из комнаты</button>`;
+ applyDeco();const pp=petOf();
+ $('petCard').innerHTML=pp?`${petHTML(pp,40)}<div class="sp"><b class="ff" style="font-size:15px">${esc(petName(pp))}</b><p class="xs">${esc(petLine(pp))}</p></div><button class="pill" onclick="go('rewards')">Награды</button>`:`<span class="ico"><i class="fa-solid fa-paw"></i></span><div class="sp"><b class="ff" style="font-size:15px">Питомец пары</b><p class="xs">Открыт за этажи башни — выбери своего</p></div><button class="pill on" onclick="go('rewards')">Выбрать</button>`;
+ $('emoCard').innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp"><p class="sm" style="color:var(--text-primary)">Текущие эмоции</p><p class="xs">${p?esc(p.sub):'Просто рядом'} <i class="fa-regular fa-heart"></i></p></div><button class="pill on" onclick="go('emotions')"><i class="fa-solid ${pe[1]}" style="color:var(--pink)"></i> ${pe[0]} <i class="fa-solid fa-chevron-right"></i></button>`;
+ const g=S.game;$('lvlBadge').innerHTML=`<i class="fa-solid fa-star" style="color:#FFC24A"></i> ${g.blocks} уровень`;
+ $('thumb').innerHTML=Array.from({length:Math.min(g.blocks,6)},(_,i)=>`<i style="width:${20+i*7}px"></i>`).reverse().join('');
+ $('g6').innerHTML='<i></i>'.repeat(36);
+ const emp=EM[S.me.emotion]||EM.love;
+ $('pCard').innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp"><h3 class="ff" style="font-size:16px">${esc(p?p.name:'Ждём партнёра')}</h3><p class="xs"><span class="dot ${online(p)?'':'off'}"></span>${online(p)?'в сети':'не в сети'}</p></div><span class="xs">${p?ago(p.seen_at):''}</span>`;
+ if(!pk)pk={e:EM[S.me.emotion]?S.me.emotion:'love',s:S.me.sub};
+ $('emos').innerHTML=Object.entries(EM).map(([k,v])=>`<button class="emo ${pk.e===k?'on':''}" onclick="pickEmo('${k}')"><i class="fa-solid ${v[1]}" style="color:${v[2]}"></i>${v[0]}</button>`).join('');
+ $('subs').innerHTML=(SUBS[pk.e]||[]).map(x=>`<button class="pill ${pk.s===x?'on':''}" onclick="pickSub(this.dataset.s)" data-s="${esc(x)}">${esc(x)}</button>`).join('');
+ const same=pk.e===S.me.emotion&&pk.s===S.me.sub,cu=EM[S.me.emotion]||EM.love;
+ $('emoAct').innerHTML=`${S.emoErr?`<p class="xs" style="text-align:center;color:var(--pink-light);margin-bottom:8px;line-height:1.4">${esc(S.emoErr)}</p>`:''}<p class="xs" style="text-align:center;margin-bottom:8px">Сейчас у тебя: ${cu[0]} · ${esc(S.me.sub||'—')}</p><button class="btn" onclick="saveEmo()" ${same?'disabled':''}>${same?'Выбрано ✓':'Выбрать'}</button>`;
+ $('nowCard').innerHTML=`<p class="sm"><i class="fa-solid fa-heart" style="color:var(--pink)"></i> Сейчас с ${esc(p?p.name:'партнёром')} <span class="dot" style="float:right;margin:6px 0 0"></span></p><div class="row mt"><span class="ico" style="border-radius:16px;width:56px;height:56px"><i class="fa-solid ${pe[1]}"></i></span><div class="sp"><b class="ff">${pe[0]}</b><br><span class="pill" style="padding:4px 12px;min-height:0">${esc(p?p.sub:'—')}</span></div><span class="xs">${p?ago(p.emotion_at):''}</span></div>`;
+ $('ach').textContent=`Достигнут ${g.blocks} уровень!`;twHud();
+ drawCaps();drawWishes();drawBattle();drawRewards()}
+let pk=null;
+function pickEmo(k){if(!pk||!S.me)return;pk.e=k;const l=SUBS[k]||[];pk.s=(k===S.me.emotion&&l.includes(S.me.sub))?S.me.sub:l[0];render()}
+function pickSub(x){if(!pk)return;pk.s=x;render()}
+async function saveEmo(){if(!pk||S.saving||!S.me)return;S.saving=true;const e=pk.e,x=pk.s,t=new Date().toISOString();S.emoErr='';
+ let error=null;
+ const r1=await sb.rpc('couple_set_emotion',{p_room:S.room,p_emotion:e,p_sub:x});
+ if(r1.error){const r2=await sb.from('couple_members').update({emotion:e,sub:x,emotion_at:t}).eq('room_id',S.room).eq('user_id',S.uid).select('user_id');
+  error=r2.error||(!r2.data||!r2.data.length?{message:'сервер не разрешил изменить строку (нет политики UPDATE или функции couple_set_emotion)'}:null)}
+ S.saving=false;
+ if(error){S.emoErr='Не сохранилось: '+error.message;toast('Эмоция не сохранилась');return load()}
+ S.me.emotion=e;S.me.sub=x;S.me.emotion_at=t;toast('Эмоция выбрана');render();load()}
+
+/* Tower */
+const TH={
+ dream:{n:'Розовая мечта',bg:['#1f0d36','#070817'],h:[325,285],dh:25,s:85,l:62,gr:'#2a1a4a',star:'#FF86C0'},
+ ocean:{n:'Океан',bg:['#08345a','#03101f'],h:[185,220],dh:20,s:80,l:58,gr:'#0b3b63',star:'#7FD8FF'},
+ sunset:{n:'Закат',bg:['#4f1834','#160a1f'],h:[20,345],dh:-15,s:90,l:60,gr:'#5a2036',star:'#FFC38A'},
+ forest:{n:'Лес',bg:['#0f3a24','#04120b'],h:[140,165],dh:20,s:65,l:50,gr:'#124a2d',star:'#9BFFC4'},
+ space:{n:'Космос',bg:['#0d0d34','#000006'],h:[250,290],dh:30,s:80,l:65,gr:'#1a1a44',star:'#ffffff'},
+ gold:{n:'Золото',bg:['#33260a','#0f0b03'],h:[38,50],dh:-10,s:90,l:58,gr:'#4a3810',star:'#FFE29A'},
+ rainbow:{n:'Радуга',bg:['#1a1030','#070817'],h:[0,300],dh:20,s:85,l:62,gr:'#2a2050',star:'#ffffff'},
+ ice:{n:'Лёд',bg:['#12314a','#050b12'],h:[195,215],dh:10,s:45,l:78,gr:'#1b4664',star:'#DFF6FF'}};
+let thm=null;try{thm=localStorage.getItem('tth')}catch{}if(!TH[thm])thm='dream';
+const BH=26,GR=28,SW=150,HV=BH*4;
+const TW={W:320,H:400,K:5,cx:null,blocks:[{x:85,w:SW}],mv:{w:SW,cx:160,fall:0,vy:0},phase:0,cam:0,state:'swing',deb:[],pops:[],score:0,raf:0,last:0,overAt:0};
+const sy=i=>TW.H-GR-(i+1)*BH+TW.cam;
+function bcol(t,i){const h=t.h[0]+(t.h[1]-t.h[0])*(.5+.5*Math.sin(i*.5));return[`hsl(${h},${t.s}%,${t.l}%)`,`hsl(${h+t.dh},${t.s}%,${t.l-10}%)`]}
+function rr(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function applyTheme(){const t=TH[thm];$('tower').style.background=`linear-gradient(180deg,${t.bg[0]},${t.bg[1]})`;document.querySelectorAll('#sky i').forEach(i=>i.style.background=t.star)}
+function twSize(){const cv=$('cv'),w=Math.max(200,$('stack').clientWidth-2),h=Math.max(300,Math.min(460,$('app').clientHeight-330)),d=Math.min(window.devicePixelRatio||1,3);
+ cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.style.height=h+'px';TW.W=w;TW.H=h;TW.cx=cv.getContext('2d');TW.cx.setTransform(d,0,0,d,0,0);TW.K=Math.max(3,Math.floor((h-GR-HV-30)/BH)-1)}
+function twReset(){TW.blocks=[{x:(TW.W-SW)/2,w:SW}];TW.score=0;TW.cam=0;TW.deb=[];TW.pops=[];TW.state='swing';TW.mv={w:SW,cx:TW.W/2,fall:0,vy:0};twHud()}
+function twHud(){$('hgt').textContent=TW.blocks.length;$('scr').textContent=TW.score;$('rec').textContent=S.game.blocks}
+function twSave(){const n=TW.blocks.length,g=S.game;if(n<=g.blocks&&TW.score<=g.score)return;
+ const old=g.blocks,u={blocks:Math.max(n,g.blocks),level:Math.max(n,g.blocks),score:Math.max(TW.score,g.score)};Object.assign(g,u);twHud();
+ const nw=[...PETS.filter(x=>x[3]>old&&x[3]<=u.blocks).map(x=>x[1]+' '+x[2]),...DECO.filter(x=>x[7]>old&&x[7]<=u.blocks).map(x=>'оформление «'+x[1]+'»')];if(nw.length)toast('Новая награда: '+nw.join(', '));
+ if(S.room)sb.from('couple_game').update(u).eq('room_id',S.room).then(({error})=>{if(error)toast('Рекорд не сохранился')})}
+function twTap(){
+ if(TW.state==='over'){if(performance.now()-TW.overAt>700)twReset();return}
+ if(TW.state!=='swing')return;
+ const top=TW.blocks[TW.blocks.length-1],m=TW.mv,ml=m.cx-m.w/2,mr=ml+m.w,tl=top.x,tr=top.x+top.w,ov=Math.min(mr,tr)-Math.max(ml,tl);
+ m.vy=0;m.fall=0;
+ if(ov<=0){TW.state='miss';return}
+ const perfect=Math.abs(ml-tl)<=6;let nx,nw,cut=null;
+ if(perfect){nw=Math.min(SW,top.w+(top.w<SW?4:0));nx=tl-(nw-top.w)/2}
+ else{nx=Math.max(ml,tl);nw=ov;cut=ml<tl?{x:ml,w:tl-ml}:{x:tr,w:mr-tr}}
+ m.res={x:nx,w:nw,perfect,cut};TW.state='fall'}
+function twLand(){const m=TW.mv,r=m.res,n=TW.blocks.length;
+ TW.blocks.push({x:r.x,w:r.w});
+ if(r.cut)TW.deb.push({x:r.cut.x,w:r.cut.w,idx:n,dy:0,vy:0,a:1});
+ const gain=r.perfect?25:Math.max(5,Math.round(15*r.w/SW));TW.score+=gain;
+ TW.pops.push({t:r.perfect?'Идеально! +'+gain:'+'+gain,x:r.x+r.w/2,idx:n,life:1});
+ TW.mv={w:r.w,cx:m.cx,fall:0,vy:0};TW.state='swing';twHud();twSave()}
+function twUpdate(dt){const n=TW.blocks.length,m=TW.mv;
+ TW.cam+=(Math.max(0,n-TW.K)*BH-TW.cam)*Math.min(1,dt*6);
+ if(TW.state==='swing'){TW.phase+=dt*(2.2+Math.min(n,45)*.055);m.cx=TW.W/2+Math.sin(TW.phase)*(TW.W/2+m.w*.3);m.fall=0}
+ else if(TW.state==='fall'){m.vy+=2600*dt;m.fall+=m.vy*dt;if(m.fall>=HV)twLand()}
+ else if(TW.state==='miss'){m.vy+=2600*dt;m.fall+=m.vy*dt;if(sy(n)-HV+m.fall>TW.H+10){TW.state='over';TW.overAt=performance.now();twSave()}}
+ TW.deb.forEach(d=>{d.vy+=2600*dt;d.dy+=d.vy*dt;d.a=Math.max(0,1-d.dy/260)});TW.deb=TW.deb.filter(d=>d.a>0);
+ TW.pops.forEach(p=>p.life-=dt*1.1);TW.pops=TW.pops.filter(p=>p.life>0)}
+function drawBlock(c,x,y,w,i,t){const[c1,c2]=bcol(t,i),g=c.createLinearGradient(x,0,x+w,0);g.addColorStop(0,c1);g.addColorStop(1,c2);
+ c.save();c.shadowColor=c1;c.shadowBlur=14;c.fillStyle=g;rr(c,x,y,w,BH-2,6);c.fill();c.restore();
+ c.fillStyle='rgba(255,255,255,.2)';rr(c,x+3,y+2,Math.max(0,w-6),4,2);c.fill()}
+function twDraw(){const c=TW.cx;if(!c)return;const W=TW.W,H=TW.H,t=TH[thm],n=TW.blocks.length;c.clearRect(0,0,W,H);
+ const gy=H-GR+TW.cam;c.fillStyle=t.gr;c.fillRect(0,gy,W,H-gy+GR);c.fillStyle='rgba(255,255,255,.12)';c.fillRect(0,gy,W,2);
+ TW.blocks.forEach((b,i)=>{const y=sy(i);if(y<-BH||y>H)return;drawBlock(c,b.x,y,b.w,i,t)});
+ TW.deb.forEach(d=>{c.globalAlpha=d.a;drawBlock(c,d.x,sy(d.idx)+d.dy,d.w,d.idx,t);c.globalAlpha=1});
+ if(TW.state!=='over'){const m=TW.mv;drawBlock(c,m.cx-m.w/2,sy(n)-HV+m.fall,m.w,n,t)}
+ c.textAlign='center';
+ TW.pops.forEach(p=>{c.globalAlpha=Math.max(0,p.life);c.fillStyle='#fff';c.font='700 16px Comfortaa,sans-serif';c.fillText(p.t,p.x,sy(p.idx)-8-(1-p.life)*30);c.globalAlpha=1});
+ if(TW.state==='swing'&&n===1&&TW.score===0){c.fillStyle='rgba(255,255,255,.6)';c.font='600 14px Inter,sans-serif';c.fillText('Нажми на поле, чтобы бросить блок',W/2,H*.72)}
+ if(TW.state==='over'){c.fillStyle='rgba(7,8,23,.72)';c.fillRect(0,0,W,H);
+  c.fillStyle='#FF4F9A';c.font='700 30px Comfortaa,sans-serif';c.fillText('Проигрыш',W/2,H/2-34);
+  c.fillStyle='#F8F4FA';c.font='600 16px Inter,sans-serif';c.fillText(`Этажей: ${n}  ·  Счёт: ${TW.score}`,W/2,H/2+2);
+  c.fillStyle='#B8B2C8';c.font='500 14px Inter,sans-serif';c.fillText(`Рекорд: ${S.game.blocks}`,W/2,H/2+28);
+  if(performance.now()-TW.overAt>700){c.globalAlpha=.6+.4*Math.sin(performance.now()/300);c.fillStyle='#FF86C0';c.font='600 14px Inter,sans-serif';c.fillText('Нажми, чтобы начать заново',W/2,H/2+66);c.globalAlpha=1}}}
+function twFrame(t){TW.raf=requestAnimationFrame(twFrame);const dt=Math.min(.05,(t-(TW.last||t))/1000);TW.last=t;twUpdate(dt);twDraw()}
+function startSwing(){stopSwing();applyTheme();twSize();twReset();TW.last=0;TW.raf=requestAnimationFrame(twFrame)}
+function stopSwing(){cancelAnimationFrame(TW.raf)}
+$('cv').addEventListener('pointerdown',e=>{e.preventDefault();twTap()});
+function closeSet(){$('set').classList.remove('on')}
+function towerSet(){$('setc').innerHTML=`<h3 class="ff" style="font-size:20px">Тема башни</h3><div class="themes">${Object.entries(TH).map(([k,t])=>`<button class="theme ${k===thm?'on':''}" onclick="setTheme('${k}')"><div class="sw" style="background:linear-gradient(180deg,${t.bg[0]},${t.bg[1]})">${[4,2,0].map((i,j)=>`<i style="width:${22+j*10}px;background:linear-gradient(90deg,${bcol(t,i).join(',')})"></i>`).join('')}</div>${t.n}</button>`).join('')}</div><button class="btn" onclick="closeSet()">Готово</button>`;$('set').classList.add('on')}
+function setTheme(k){thm=k;try{localStorage.setItem('tth',k)}catch{}applyTheme();towerSet()}
+(function(){const s=$('sky');for(let i=0;i<16;i++){const d=document.createElement('i');d.style.left=Math.random()*100+'%';d.style.top=Math.random()*90+'%';s.appendChild(d)}})();
+
+/* Capsules */
+function ldt(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function capQ(k){const d=new Date();if(k==='h')d.setHours(d.getHours()+1);else if(k==='e'){d.setHours(20,0,0,0);if(d<=Date.now())d.setDate(d.getDate()+1)}else if(k==='m'){d.setDate(d.getDate()+1);d.setHours(9,0,0,0)}else if(k==='w')d.setDate(d.getDate()+7);$('cwhen').value=ldt(d)}
+function capInit(){const e=$('cwhen');e.min=ldt(new Date());if(!e.value)capQ('h')}
+const fd=t=>new Date(t).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function left(t){const m=Math.max(1,Math.ceil((new Date(t)-Date.now())/6e4));if(m<60)return m+' мин';if(m<1440)return Math.floor(m/60)+' ч'+(m%60?' '+m%60+' мин':'');return Math.floor(m/1440)+' дн'+(Math.floor(m%1440/60)?' '+Math.floor(m%1440/60)+' ч':'')}
+async function addCap(){const b=$('cbody').value.trim();if(!b)return toast('Напиши сообщение');const v=$('cwhen').value;if(!v)return toast('Выбери, когда партнёр сможет прочитать');
+ const d=new Date(v);if(isNaN(d)||d.getTime()<=Date.now()+30000)return toast('Выбери время в будущем');
+ const {error}=await sb.from('couple_capsules').insert({room_id:S.room,body:b,unlock_at:d.toISOString()});
+ if(error)return toast(error.message);$('cbody').value='';capQ('h');toast('Капсула отправлена партнёру');load()}
+function capCard(c,mine){const open=new Date(c.unlock_at)<=Date.now();
+ if(mine)return `<div class="card row mt"><span class="ico"><i class="fa-solid fa-paper-plane"></i></span><div class="sp"><p class="xs">${open?'Партнёр уже может прочитать':'Партнёр прочитает '+fd(c.unlock_at)+' · через '+left(c.unlock_at)}</p><p>${esc(c.body)}</p></div></div>`;
+ return `<div class="card row mt"><span class="ico"><i class="fa-solid ${open?'fa-envelope-open-text':'fa-lock'}"></i></span><div class="sp"><p class="xs">От ${esc(S.pt?S.pt.name:'партнёра')}</p><p>${open?esc(c.body):'Откроется '+fd(c.unlock_at)+' · через '+left(c.unlock_at)}</p></div></div>`}
+function drawCaps(){$('capTo').textContent=S.pt?S.pt.name:'партнёру';
+ const inb=S.caps.filter(c=>c.author!==S.uid),out=S.caps.filter(c=>c.author===S.uid);
+ $('caps').innerHTML=(inb.length?`<h3 class="t">Тебе</h3>`+inb.map(c=>capCard(c,false)).join(''):'')+(out.length?`<h3 class="t">Отправлено</h3>`+out.map(c=>capCard(c,true)).join(''):'')||'<p class="sm" style="text-align:center;margin-top:32px">Пока нет капсул. Запечатайте первое сообщение.</p>'}
+setInterval(()=>{if(cur==='capsules')drawCaps()},15000);
+setInterval(()=>{if(S.me&&!S.saving&&!document.hidden&&(cur==='home'||cur==='emotions'))load()},10000);
+
+/* Wishlist */
+function safeUrl(u){u=(u||'').trim();if(!u)return'';if(!/^https?:\/\//i.test(u))u='https://'+u;try{return new URL(u).href}catch{return''}}
+async function addWish(){const t=$('wt').value.trim();if(!t)return toast('Напиши, что хочешь');
+ const {error}=await sb.from('couple_wishes').insert({room_id:S.room,title:t,price:$('wp').value.trim()||null,url:safeUrl($('wu').value)||null});
+ if(error)return toast(error.message);['wt','wp','wu'].forEach(i=>$(i).value='');load()}
+async function togWish(id,d){const {data,error}=await sb.from('couple_wishes').update({done:!d}).eq('id',id).select('id');
+ if(error||!data||!data.length){toast('Не получилось обновить желание');return load()}
+ const w=S.wishes.find(x=>String(x.id)===String(id));if(w)w.done=!d;render();toast(d?'Желание возвращено':'Отмечено как выполненное')}
+async function delWish(id){if(!confirm('Удалить желание?'))return;
+ const {data,error}=await sb.from('couple_wishes').delete().eq('id',id).select('id');
+ if(error||!data||!data.length){toast('Не получилось удалить желание');return load()}
+ S.wishes=S.wishes.filter(x=>String(x.id)!==String(id));render();toast('Удалено')}
+function wishHtml(w,mine){const u=safeUrl(w.url),d=!!w.done;return `<div class="wish ${d?'done':''}"><span class="ico" style="${d?'':'opacity:.6'}"><i class="fa-solid ${d?'fa-check':'fa-gift'}"></i></span><div class="sp"><b style="font-weight:600">${esc(w.title)}</b><p class="sm">${w.price?esc(w.price):''} ${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-link"></i> ссылка</a>`:''}</p></div><button class="pill ${d?'':'on'}" style="flex:none" onclick="togWish('${esc(w.id)}',${d})"><i class="fa-solid ${d?'fa-rotate-left':'fa-check'}"></i> ${d?'Вернуть':'Выполнено'}</button>${mine?`<button style="width:40px;height:44px;color:var(--text-muted);flex:none" onclick="delWish('${esc(w.id)}')" aria-label="Удалить"><i class="fa-regular fa-trash-can"></i></button>`:''}</div>`}
+function drawWishes(){const m=S.wishes.filter(w=>w.author===S.uid),t=S.wishes.filter(w=>w.author!==S.uid);
+ $('wl').innerHTML=`<h3 class="t">Хотелки ${esc(S.pt?S.pt.name:'партнёра')}</h3>${t.map(w=>wishHtml(w,false)).join('')||'<p class="sm">Пока пусто</p>'}<h3 class="t">Мои хотелки</h3>${m.map(w=>wishHtml(w,true)).join('')||'<p class="sm">Добавь первое желание</p>'}`}
+
+/* Battleship */
+let draft=[];
+function fleet(){for(let t=0;t<300;t++){const used=new Set();let ok=true;for(const s of [3,2,2,1,1]){let pl=false;for(let k=0;k<60&&!pl;k++){const h=Math.random()<.5,r=Math.floor(Math.random()*(h?6:7-s)),c=Math.floor(Math.random()*(h?7-s:6));const cs=Array.from({length:s},(_,i)=>h?r*6+c+i:(r+i)*6+c);
+ const bad=cs.some(x=>{for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const nr=Math.floor(x/6)+a,nc=x%6+b;if(nr>=0&&nr<6&&nc>=0&&nc<6&&used.has(nr*6+nc))return true}return false});
+ if(!bad){cs.forEach(x=>used.add(x));pl=true}}
+ if(!pl){ok=false;break}}
+ if(ok)return[...used]}return[0,1,2,8,9,20,21,34,35]}
+function bd(ships,shots,click,sm){const h={};shots.forEach(x=>h[x.c]=x.h);return `<div class="bd ${sm?'sm2':''}">`+Array.from({length:36},(_,i)=>`<button class="cell${ships&&ships.includes(i)?' ship':''}${i in h?(h[i]?' hit':' miss'):''}" ${click&&!(i in h)?`onclick="shoot(${i})"`:'disabled'}></button>`).join('')+'</div>'}
+const PX='w~',BW0=['Сделай мне массаж на 10 минут','Приготовь мне завтрак','Расскажи, за что ты меня любишь','Спой мне песню','Обними меня на минуту без слов','Пришли милое голосовое','Станцуй для меня','Напиши мне любовное письмо','Устрой мини-свидание дома','Сделай мне комплимент пять раз подряд'];
+const chosen=b=>b&&typeof b.wish==='string'&&b.wish.startsWith(PX)?b.wish.slice(PX.length):null;
+let opts=[],sel=-1;
+function bw(){try{const a=JSON.parse(localStorage.getItem('bw'));if(Array.isArray(a)&&a.length)return a}catch{}return BW0.slice()}
+function bwSave(a){try{localStorage.setItem('bw',JSON.stringify(a))}catch{}}
+function pick3(){const a=bw().slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,3)}
+function drawBattle(){const b=S.bt,ph=b?b.phase:'placing',sh=b&&b.shots||{},my=sh[S.uid]||[],their=S.pt?sh[S.pt.user_id]||[]:[];let st='',h='';
+ if(ph!=='over'){S.dis=null;opts=[];sel=-1}
+ const win=ph==='over'&&b.winner===S.uid,cw=ph==='over'?chosen(b):null,pn=esc(S.pt?S.pt.name:'партнёра');
+ if(ph==='placing'){
+  if(S.ships.length&&!S.re){st='Корабли готовы. Ждём партнёра…';h=bd(S.ships,[],false)+'<div class="row mt"><button class="btn2" onclick="S.re=true;draft=fleet();drawBattle()">Перерасставить</button></div>'}
+  else{if(!draft.length)draft=fleet();st='Расставь корабли и нажми «Готов»';h=bd(draft,[],false)+'<div class="row mt"><button class="btn2" onclick="draft=fleet();drawBattle()"><i class="fa-solid fa-shuffle"></i> Перемешать</button><button class="btn2" style="background:var(--grad)" onclick="ready()">Готов</button></div>'}}
+ else{const mt=b.turn===S.uid;
+  st=ph==='over'?(win?(cw!==null?'Ты победил! Желание для партнёра: '+cw:'Ты победил! Выбери желание'):(cw!==null?'Ты проиграл. Твоё желание: '+cw:'Ты проиграл. Партнёр выбирает желание…')):mt?'Твой ход — стреляй! Попал — стреляешь снова':'Ход партнёра…';
+  h=`<p class="xs" style="text-align:center;margin-bottom:8px">Поле партнёра</p>${bd(null,my,ph==='playing'&&mt)}<p class="xs" style="text-align:center;margin:16px 0 8px">Твоё поле</p>${bd(S.ships,their,false,true)}`+(ph==='over'?(win&&cw===null?'<button class="btn mt" onclick="S.dis=null;drawBattle()">Выбрать желание</button>':'')+'<button class="btn2 mt" style="width:100%" onclick="newGame()">Новая игра</button>':'')}
+ $('bst').textContent=st;$('bbody').innerHTML=h;
+ let show=false,oh='';
+ if(ph==='over'&&S.dis!=='x'){show=true;
+  if(win&&cw===null){if(!opts.length)opts=pick3();
+   oh=`<i class="fa-solid fa-crown" style="font-size:40px;color:var(--pink)"></i><h3 class="ff" style="font-size:22px">Ты победил!</h3><p class="sm">Выбери желание для ${pn}</p>${opts.map((o,i)=>`<button class="opt ${sel===i?'on':''}" onclick="selOpt(${i})">${esc(o)}</button>`).join('')}<div class="row"><button class="btn2" onclick="rerollOpts()"><i class="fa-solid fa-shuffle"></i> Другие</button><button class="btn" style="flex:1;width:auto" ${sel<0?'disabled':''} onclick="sendWish()">Отправить</button></div><button class="sm" style="min-height:44px" onclick="S.dis='x';drawBattle()">Позже</button>`}
+  else if(win)oh=`<i class="fa-solid fa-circle-check" style="font-size:40px;color:var(--success)"></i><h3 class="ff" style="font-size:22px">Желание отправлено</h3><div class="card" style="background:rgba(var(--pr),.1);border-color:var(--pink)"><b class="ff" style="font-size:18px;line-height:1.4">${esc(cw)}</b></div><button class="btn" onclick="S.dis='x';drawBattle()">Понятно</button><button class="btn2" onclick="newGame()">Сыграть ещё</button>`;
+  else if(cw===null)oh=`<i class="fa-solid fa-hourglass-half" style="font-size:40px;color:var(--pink)"></i><h3 class="ff" style="font-size:22px">Ты проиграл</h3><p class="sm">${pn} выбирает для тебя желание…</p><button class="sm" style="min-height:44px" onclick="S.dis='x';drawBattle()">Закрыть</button>`;
+  else oh=`<i class="fa-solid fa-gift" style="font-size:40px;color:var(--pink)"></i><h3 class="ff" style="font-size:22px">Ты проиграл</h3><p class="sm">Вот твоё желание:</p><div class="card" style="background:rgba(var(--pr),.1);border-color:var(--pink);box-shadow:var(--shadow-glow)"><b class="ff" style="font-size:18px;line-height:1.4">${esc(cw)}</b></div><button class="btn" onclick="S.dis='x';drawBattle()">Понятно</button><button class="btn2" onclick="newGame()">Сыграть ещё</button>`}
+ $('ov').classList.toggle('on',show);if(show)$('ovc').innerHTML=oh}
+function selOpt(i){sel=i;drawBattle()}
+function rerollOpts(){opts=pick3();sel=-1;drawBattle()}
+async function sendWish(){if(sel<0||!opts[sel])return;const v=PX+opts[sel];
+ let {error}=await sb.rpc('couple_battle_set_wish',{p_room:S.room,p_wish:v});
+ if(error){const r=await sb.from('couple_battle').update({wish:v}).eq('room_id',S.room).select('room_id');error=r.error||(!r.data||!r.data.length?{message:'denied'}:null)}
+ if(error)return toast('Не удалось отправить желание');
+ toast('Желание отправлено');await load()}
+setInterval(()=>{if(S.room&&S.bt&&S.bt.phase==='over'&&chosen(S.bt)===null)load()},4000);
+function bwOpen(){const a=bw();$('setc').innerHTML=`<h3 class="ff" style="font-size:20px">Желания для проигравшего</h3><p class="sm">Победитель выбирает одно из трёх случайных желаний из этого списка</p><div class="row"><input id="bwn" placeholder="Новое желание" maxlength="80"><button class="btn2" style="flex:none;width:52px;padding:0" onclick="bwAdd()" aria-label="Добавить"><i class="fa-solid fa-plus"></i></button></div>${a.map((t,i)=>`<div class="bw"><span class="sp">${esc(t)}</span><button style="width:40px;height:40px;color:var(--text-muted);flex:none" onclick="bwDel(${i})" aria-label="Удалить"><i class="fa-regular fa-trash-can"></i></button></div>`).join('')}<button class="btn2" onclick="bwReset()">Вернуть стандартные</button><button class="btn" onclick="closeSet()">Готово</button>`;$('set').classList.add('on')}
+function bwAdd(){const t=$('bwn').value.trim();if(!t)return toast('Напиши желание');const a=bw();a.unshift(t);bwSave(a);bwOpen()}
+function bwDel(i){const a=bw();if(a.length<=3)return toast('Нужно минимум 3 желания');a.splice(i,1);bwSave(a);bwOpen()}
+function bwReset(){bwSave(BW0.slice());bwOpen()}
+async function ready(){const {error}=await sb.rpc('couple_battle_place',{p_room:S.room,p_cells:draft});if(error)return toast(error.message);S.re=false;draft=[];load()}
+async function shoot(i){const {error}=await sb.rpc('couple_battle_shoot',{p_room:S.room,p_cell:i});if(error)toast('Сейчас не твой ход');load()}
+async function newGame(){await sb.rpc('couple_battle_reset',{p_room:S.room});S.dis=null;S.re=false;draft=[];load()}
+/* ===== Meowdoku ===== */
+const MDL=[[4,11],[4,23],[4,37],[5,41],[5,52],[5,63],[5,74],[6,85],[6,96],[6,107],[6,118],[6,129]];
+const MDC=[['cat','🐱','Мурка',1],['dog','🐶','Бублик',2],['fox','🦊','Рыжик',4],['bunny','🐰','Пушинка',6],['panda','🐼','Бамбук',8],['uni','🦄','Радуга',10],['dragon','🐉','Искра',12]];
+const MDCOL=[210,340,140,45,270,20,175];
+const mdLvl=l=>l<MDL.length?MDL[l]:[l<24?6:7,1000+l*97];
+let md={v:'list',lv:0,n:0,reg:[],st:[],t0:0,done:false,tm:null,rows:[],warned:false,me:(()=>{try{return JSON.parse(localStorage.getItem('mdme'))}catch{return null}})()||{solved:{},pick:null}};
+function mdRng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function mdSolve(n,reg){let c=0;const uc=Array(n).fill(0),ur=Array(n).fill(0);(function f(r,pv){if(c>1)return;if(r===n){c++;return}for(let x=0;x<n;x++){const g=reg[r*n+x];if(uc[x]||ur[g]||(r&&Math.abs(x-pv)<2))continue;uc[x]=ur[g]=1;f(r+1,x);uc[x]=ur[g]=0}})(0,-9);return c}
+function mdGen(l){const [n,seed]=mdLvl(l);for(let a=0;;a++){const R=mdRng(seed+a*7919);let p;
+ do{p=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(R()*(i+1));[p[i],p[j]]=[p[j],p[i]]}}while(p.some((c,r)=>r&&Math.abs(c-p[r-1])<2));
+ const g=Array(n*n).fill(-1);p.forEach((c,r)=>g[r*n+c]=r);
+ const nb=i=>{const r=Math.floor(i/n),c=i%n,o=[];if(r)o.push(i-n);if(r<n-1)o.push(i+n);if(c)o.push(i-1);if(c<n-1)o.push(i+1);return o};
+ for(;;){const f=[];g.forEach((v,i)=>{if(v<0&&nb(i).some(j=>g[j]>=0))f.push(i)});if(!f.length)break;const i=f[Math.floor(R()*f.length)],q=nb(i).filter(j=>g[j]>=0);g[i]=g[q[Math.floor(R()*q.length)]]}
+ if(mdSolve(n,g)===1||a>4000)return{g,p}}}
+const mdF=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
+const mdCnt=()=>Object.keys(md.me.solved).length;
+const mdE=y=>`<circle cx="14" cy="${y}" r="2.3" fill="#2b1b3d"/><circle cx="26" cy="${y}" r="2.3" fill="#2b1b3d"/>`;
+const MDF={
+cat:`<polygon points="5,17 7,3 18,11" fill="#FFB86B"/><polygon points="35,17 33,3 22,11" fill="#FFB86B"/><polygon points="8,14 9,7 14,11" fill="#FF9BB8"/><polygon points="32,14 31,7 26,11" fill="#FF9BB8"/><ellipse cx="20" cy="23" rx="15" ry="13" fill="#FFC98B"/>${mdE(21)}<polygon points="18,25.5 22,25.5 20,28" fill="#FF6FA0"/><path d="M20 28v2M16.5 30.5q3.5 3 7 0M3 24h8M3 28l8-2M37 24h-8M37 28l-8-2" stroke="#7a4a2a" fill="none" stroke-width="1" stroke-linecap="round"/>`,
+dog:`<ellipse cx="6" cy="20" rx="5" ry="10" fill="#8A5A2B" transform="rotate(12 6 20)"/><ellipse cx="34" cy="20" rx="5" ry="10" fill="#8A5A2B" transform="rotate(-12 34 20)"/><ellipse cx="20" cy="22" rx="14" ry="14" fill="#E0AC72"/><ellipse cx="20" cy="29" rx="8" ry="6" fill="#FFE8CC"/>${mdE(20)}<ellipse cx="20" cy="26" rx="3" ry="2.2" fill="#2b1b3d"/><path d="M20 28v2.5M16.5 30.5q3.5 3 7 0" stroke="#2b1b3d" fill="none" stroke-width="1.2" stroke-linecap="round"/>`,
+fox:`<polygon points="4,18 6,2 18,11" fill="#FF7A2F"/><polygon points="36,18 34,2 22,11" fill="#FF7A2F"/><polygon points="8,14 9,6 14,11" fill="#3a2230"/><polygon points="32,14 31,6 26,11" fill="#3a2230"/><ellipse cx="20" cy="22" rx="15" ry="13" fill="#FF8A3D"/><polygon points="5,24 20,37 35,24 20,28" fill="#fff"/>${mdE(20)}<ellipse cx="20" cy="30" rx="2.4" ry="1.8" fill="#2b1b3d"/>`,
+bunny:`<ellipse cx="13" cy="10" rx="4.5" ry="10" fill="#fff"/><ellipse cx="27" cy="10" rx="4.5" ry="10" fill="#fff"/><ellipse cx="13" cy="11" rx="2" ry="7" fill="#FFB3CC"/><ellipse cx="27" cy="11" rx="2" ry="7" fill="#FFB3CC"/><circle cx="20" cy="25" r="13" fill="#fff" stroke="#e6def0"/>${mdE(24)}<ellipse cx="20" cy="28" rx="2" ry="1.5" fill="#FF7FA8"/><path d="M20 29.5v1.5M17 32q3 2.5 6 0" stroke="#b58aa0" fill="none" stroke-width="1" stroke-linecap="round"/>`,
+panda:`<circle cx="8" cy="9" r="5" fill="#2b1b3d"/><circle cx="32" cy="9" r="5" fill="#2b1b3d"/><circle cx="20" cy="23" r="14" fill="#fff" stroke="#e6def0"/><ellipse cx="13" cy="21" rx="4" ry="5" fill="#2b1b3d" transform="rotate(-20 13 21)"/><ellipse cx="27" cy="21" rx="4" ry="5" fill="#2b1b3d" transform="rotate(20 27 21)"/><circle cx="13.5" cy="21" r="1.6" fill="#fff"/><circle cx="26.5" cy="21" r="1.6" fill="#fff"/><ellipse cx="20" cy="27.5" rx="2.6" ry="1.9" fill="#2b1b3d"/><path d="M16.5 31q3.5 3 7 0" stroke="#2b1b3d" fill="none" stroke-width="1.2" stroke-linecap="round"/>`,
+uni:`<path d="M6 16q-6 10 2 22q0-9 5-13z" fill="#C084FC"/><path d="M34 16q6 10-2 22q0-9-5-13z" fill="#FF86C0"/><polygon points="7,15 8,6 15,11" fill="#fff"/><polygon points="33,15 32,6 25,11" fill="#fff"/><polygon points="20,1 16.5,11 23.5,11" fill="#FFD54F"/><ellipse cx="20" cy="24" rx="13" ry="12" fill="#fff" stroke="#e6def0"/>${mdE(23)}<circle cx="11" cy="27" r="2.3" fill="#FFB3CC" opacity=".7"/><circle cx="29" cy="27" r="2.3" fill="#FFB3CC" opacity=".7"/><path d="M17 30q3 2.5 6 0" stroke="#b58aa0" fill="none" stroke-width="1.1" stroke-linecap="round"/>`,
+dragon:`<polygon points="8,14 4,3 15,10" fill="#F5C542"/><polygon points="32,14 36,3 25,10" fill="#F5C542"/><ellipse cx="20" cy="23" rx="15" ry="13" fill="#5ED39A"/><ellipse cx="20" cy="29" rx="9" ry="6" fill="#9BEBC4"/><circle cx="14" cy="20" r="3" fill="#FFE066"/><circle cx="26" cy="20" r="3" fill="#FFE066"/><rect x="13.2" y="17.8" width="1.6" height="4.4" rx=".8" fill="#2b1b3d"/><rect x="25.2" y="17.8" width="1.6" height="4.4" rx=".8" fill="#2b1b3d"/><circle cx="17" cy="29" r="1.1" fill="#2b1b3d"/><circle cx="23" cy="29" r="1.1" fill="#2b1b3d"/><path d="M15 33q5 3 10 0" stroke="#2b1b3d" fill="none" stroke-width="1.1" stroke-linecap="round"/>`};
+const mdFace=(k,z)=>`<svg viewBox="0 0 40 40" style="width:${z};height:${z};display:inline-block;vertical-align:middle;${MDF[k]?'':'filter:grayscale(1) opacity(.75)'}">${MDF[k]||MDF.cat}</svg>`;
+const mdHearts=()=>[0,1,2].map(i=>`<i class="fa-${i<md.hp?'solid':'regular'} fa-heart" style="color:${i<md.hp?'var(--pink)':'var(--text-muted)'};margin:0 3px"></i>`).join('');
+function mdPts(){const P=[];md.st.forEach((s,i)=>{if(s===1)P.push(i)});return P}
+function mdBad(P){const n=md.n,b=new Set();for(let a=0;a<P.length;a++)for(let c=a+1;c<P.length;c++){const x=P[a],y=P[c],rx=Math.floor(x/n),ry=Math.floor(y/n),cx=x%n,cy=y%n;if(rx===ry||cx===cy||md.reg[x]===md.reg[y]||(Math.abs(rx-ry)<2&&Math.abs(cx-cy)<2)){b.add(x);b.add(y)}}return b}
+function mdScore(){const pr=md.rows.find(x=>x.user_id!==S.uid),ps=(pr&&pr.solved)||{};let a=0,b=0;for(const k in md.me.solved)if(k in ps){if(md.me.solved[k]<ps[k])a++;else if(md.me.solved[k]>ps[k])b++}return{pr,ps,a,b}}
+function mdBoard(){const n=md.n,bad=mdBad(mdPts());$('mdB').style.gridTemplateColumns=`repeat(${n},1fr)`;$('mdB').innerHTML=md.reg.map((r,i)=>{const s=md.st[i];return `<button class="mc ${bad.has(i)?'bad':''}" style="background:hsla(${MDCOL[r]},70%,55%,.28)" data-i="${i}">${mdCellHTML(i)}</button>`}).join('')}
+function mdCellHTML(i){const s=md.st[i];return s===1?mdFace(md.me.pick,'78%'):s===2?'<span class="xs" style="font-size:16px">✕</span>':''}
+function mdTap(i){if(md.done)return;const s=md.st[i]===0?2:md.st[i]===2?1:0;
+ if(s===1&&!md.sol.has(i)){md.st[i]=0;md.hp--;mdInfo();mdBoard();try{navigator.vibrate&&navigator.vibrate(80)}catch{}if(md.hp<=0)return mdLose();return toast('Тут зверька нет! −1 сердце')}
+ md.st[i]=s;mdBoard();const P=mdPts();if(P.length===md.n&&!mdBad(P).size)mdWin()}
+
+const mdDrag={on:false,start:-1,last:-1,moved:false,mode:2,lost:false};
+function mdIdx(e){const el=document.elementFromPoint(e.clientX,e.clientY),b=el&&el.closest?el.closest('.mc'):null;return b&&$('mdB').contains(b)?+b.dataset.i:-1}
+function mdPaint(i){const s=md.st[i];
+ if(mdDrag.mode===2){if(s!==0)return;
+  md.st[i]=2}
+ else{if(s!==2)return;md.st[i]=0}
+ const b=$('mdB').children[i];if(b)b.innerHTML=mdCellHTML(i)}
+(function(){const B=$('mdB');
+ B.addEventListener('pointerdown',e=>{if(md.done)return;const i=mdIdx(e);if(i<0)return;e.preventDefault();try{e.target.releasePointerCapture(e.pointerId)}catch{}
+  Object.assign(mdDrag,{on:true,start:i,last:i,moved:false,lost:false,mode:md.st[i]===2?0:2})});
+ B.addEventListener('pointermove',e=>{if(!mdDrag.on||md.done)return;const j=mdIdx(e);if(j<0||j===mdDrag.last)return;e.preventDefault();
+  if(!mdDrag.moved){mdDrag.moved=true;mdPaint(mdDrag.start);if(!mdDrag.on)return}
+  mdDrag.last=j;mdPaint(j)});
+ B.addEventListener('pointerup',()=>{if(!mdDrag.on)return;mdDrag.on=false;if(!mdDrag.moved)mdTap(mdDrag.start);else if(!md.done)mdBoard()});
+ B.addEventListener('pointercancel',()=>{if(mdDrag.on){mdDrag.on=false;if(mdDrag.moved&&!md.done)mdBoard()}});
+})();
+function mdLose(){md.done=true;clearInterval(md.tm);$('mdMsg').innerHTML=`<div class="card" style="text-align:center"><p class="ff" style="font-size:18px">Сердца закончились 💔</p><div class="row mt"><button class="btn2" onclick="mdList()">К уровням</button><button class="btn" style="flex:1" onclick="mdStart(${md.lv})">Ещё раз</button></div></div>`}
+function mdInfo(){const {ps}=mdScore(),m=md.me.solved[md.lv],p=ps[md.lv];$('mdInfo').innerHTML=`Уровень ${md.lv+1} · ${md.n}×${md.n}`+(m?` · твой рекорд ${mdF(m)}`:'')+(p&&S.pt?`<br>${esc(S.pt.name)}: ${mdF(p)}`:'')+`<br><span style="font-size:18px">${mdHearts()}</span>`}
+function mdStart(l){md.v='play';md.lv=l;md.n=mdLvl(l)[0];const G=mdGen(l);md.reg=G.g;md.sol=new Set(G.p.map((c,r)=>r*md.n+c));md.hp=3;md.st=Array(md.n*md.n).fill(0);md.done=false;md.t0=Date.now();$('mdList').style.display='none';$('mdPlay').style.display='';$('mdMsg').innerHTML='';$('mdT').textContent='0:00';mdInfo();mdBoard();clearInterval(md.tm);md.tm=setInterval(()=>{if(cur!=='meowdoku'||md.done)return clearInterval(md.tm);$('mdT').textContent=mdF(Math.round((Date.now()-md.t0)/1000))},1000)}
+function mdReset(){if(md.done)return;md.st.fill(0);mdBoard()}
+function mdList(){md.v='list';clearInterval(md.tm);$('mdList').style.display='';$('mdPlay').style.display='none';$('mdT').textContent='';mdDraw()}
+function mdBack(){if(md.v==='play')mdList();else go('home')}
+function mdOpen(){md.done=false;mdList();mdLoad()}
+function mdWin(){md.done=true;clearInterval(md.tm);const t=Math.round((Date.now()-md.t0)/1000),k=md.lv,old=md.me.solved[k],was=mdCnt(),p=mdScore().ps[k];if(!old||t<old)md.me.solved[k]=t;const now=mdCnt(),nw=MDC.filter(c=>c[3]>was&&c[3]<=now);mdSave();
+ $('mdT').textContent=mdF(t);toast(nw.length?'Открыт персонаж: '+nw.map(c=>c[2]).join(', '):'Уровень пройден!');
+ $('mdMsg').innerHTML=`<div class="card" style="text-align:center"><p class="ff" style="font-size:18px">Готово! ${mdF(t)}</p>${nw.length?`<p class="sm" style="margin-top:6px">Новый персонаж: ${nw.map(c=>mdFace(c[0],'20px')+' '+esc(c[2])).join(', ')}</p>`:''}${p&&S.pt?`<p class="sm" style="margin-top:6px">${esc(S.pt.name)}: ${mdF(p)} · ${t<p?'ты быстрее 🎉':t>p?'партнёр быстрее':'ничья'}</p>`:''}<div class="row mt"><button class="btn2" onclick="mdList()">К уровням</button><button class="btn" style="flex:1" onclick="mdStart(${k+1})">Дальше</button></div></div>`}
+function mdPick(k){const c=MDC.find(x=>x[0]===k);if(!c)return;if(mdCnt()<c[3])return toast('Откроется после '+c[3]+' пройденных уровней');md.me.pick=k;mdSave();mdDraw()}
+async function mdSave(){try{localStorage.setItem('mdme',JSON.stringify(md.me))}catch{}if(!S.room||!S.uid)return;const {error}=await sb.from('couple_meow').upsert({room_id:S.room,user_id:S.uid,solved:md.me.solved,pick:md.me.pick},{onConflict:'room_id,user_id'});if(error&&!md.warned){md.warned=true;toast('Meowdoku: прогресс пока только на этом устройстве')}}
+async function mdLoad(){if(!S.room)return;const {data,error}=await sb.from('couple_meow').select('*').eq('room_id',S.room);if(error||!data)return;md.rows=data;const r=data.find(x=>x.user_id===S.uid),rs=(r&&r.solved)||{};
+ for(const k in rs)if(!(k in md.me.solved)||rs[k]<md.me.solved[k])md.me.solved[k]=rs[k];if(r&&r.pick&&!md.me.pick)md.me.pick=r.pick;
+ if(!r||Object.keys(md.me.solved).some(k=>!(k in rs)||md.me.solved[k]<rs[k]))mdSave();mdDraw()}
+function mdDraw(){const c=mdCnt(),{pr,ps,a,b}=mdScore(),pc=Object.keys(ps).length,bd=$('mdBadge');if(bd)bd.textContent=c+' пройдено';const th=$('mdThumb');if(th)th.innerHTML=mdFace('cat','44px');if(cur!=='meowdoku'||md.v!=='list')return;
+ $('mdTop').innerHTML=`<div class="row" style="justify-content:space-between"><b class="ff">Прогресс</b><span class="xs">∞ уровней</span></div>`+[[S.me?S.me.name:'Ты',c,md.me.pick,1],[S.pt?S.pt.name:'Партнёр',pc,pr&&pr.pick,0]].map(([nm,k,pk,me])=>`<div class="mt"><div class="row" style="justify-content:space-between"><span>${mdFace(pk,'22px')} ${esc(nm)}${me?' <span class="xs">(ты)</span>':''}</span><b>${k}</b></div><div style="height:6px;border-radius:9px;background:var(--glass-strong);margin-top:6px"><div style="height:100%;width:${Math.min(k,12)/12*100}%;border-radius:9px;background:var(--grad)"></div></div></div>`).join('')+`<p class="sm" style="margin-top:12px;text-align:center">Кто быстрее: <b>${a}</b> : <b>${b}</b></p>`;
+ $('mdChars').innerHTML=MDC.map(x=>{const u=c>=x[3],on=x[0]===md.me.pick;return `<button class="${on?'on':''} ${u?'':'lock'}" onclick="mdPick('${x[0]}')"><span class="em">${mdFace(x[0],'46px')}</span><b style="font-weight:600">${x[2]}</b><span class="xs">${u?(on?'выбран':'открыт'):'🔒 '+x[3]+' ур.'}</span></button>`}).join('');
+ const mx=Math.max(-1,...Object.keys(md.me.solved).map(Number)),tot=Math.max(md.more||0,12*(Math.floor((mx+1)/12)+1)+12);
+ $('mdLv').innerHTML=Array.from({length:tot},(_,i)=>{const m=md.me.solved[i],nn=mdLvl(i)[0];return `<button class="${m?'on':''}" onclick="mdStart(${i})"><b class="ff">${i+1}</b><span class="xs">${nn}×${nn}</span><span class="xs">${m?mdF(m):'—'}</span>${ps[i]?'<i class="fa-solid fa-heart" style="color:var(--pink);font-size:10px"></i>':'<i style="height:10px"></i>'}</button>`}).join('')+`<button class="btn2" style="grid-column:1/-1;margin-top:4px" onclick="md.more=${tot}+12;mdDraw()">Ещё уровни <i class="fa-solid fa-chevron-down"></i></button>`}
+mdDraw();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+if(S.room)start().catch(()=>go('welcome'));else go('welcome');
+</script></body></html>
