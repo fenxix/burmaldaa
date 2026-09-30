@@ -220,7 +220,7 @@ input[type=datetime-local]{color-scheme:dark}
  <div class="card mt" style="display:grid;gap:10px"><input id="evT" placeholder="Событие (например, первый поцелуй)" maxlength="60"><input id="evD" type="date" style="color-scheme:dark"><div class="pills" id="evK"></div><button class="pill" id="evY" onclick="this.classList.toggle('on')"><i class="fa-solid fa-rotate"></i> Повторять каждый год</button><input id="evN" placeholder="Короткая заметка" maxlength="200"><button class="btn" onclick="addEv()">Добавить дату</button></div>
  <div id="evList"></div></section>
 <section class="screen" id="shop"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Магазин</h2><span class="pill on" id="shCoins" style="margin-left:auto"></span></div>
- <div class="tabs" id="shTabs" style="overflow-x:auto"></div><div class="rw" id="shList"></div><div id="shSwap"></div></section>
+ <div class="tabs" id="shTabs" style="overflow-x:auto"></div><div id="shHead"></div><div class="rw" id="shList"></div><div id="shSwap"></div></section>
 <section class="screen" id="notes"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>За что я тебя люблю</h2></div>
  <div class="card" style="display:grid;gap:10px"><input id="nT" maxlength="300" placeholder="Я люблю тебя за…"><button class="btn" onclick="addNote()"><i class="fa-solid fa-heart"></i> Написать записку</button></div><div id="ntList"></div></section>
 <section class="screen" id="tasks"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Задачи</h2></div>
@@ -390,7 +390,7 @@ let thm=null;try{thm=localStorage.getItem('tth')}catch{}if(!TH[thm])thm='dream';
 const BH=26,GR=120,SW=150,HV=BH*4;
 const TW={W:320,H:400,K:5,cx:null,blocks:[{x:85,w:SW}],mv:{w:SW,cx:160,fall:0,vy:0},phase:0,cam:0,state:'swing',deb:[],pops:[],score:0,raf:0,last:0,overAt:0,combo:0,top:80,paused:false};
 const sy=i=>TW.H-GR-(i+1)*BH+TW.cam;
-function bcol(t,i){const h=t.h[0]+(t.h[1]-t.h[0])*(.5+.5*Math.sin(i*.5));return[`hsl(${h},${t.s}%,${t.l}%)`,`hsl(${h+t.dh},${t.s}%,${t.l-10}%)`]}
+function bcol(t,i){const h=S.fxT==='rainbow'?(i*22+performance.now()/25)%360:t.h[0]+(t.h[1]-t.h[0])*(.5+.5*Math.sin(i*.5));return[`hsl(${h},${t.s}%,${t.l}%)`,`hsl(${h+t.dh},${t.s}%,${t.l-10}%)`]}
 function rr(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function applyTheme(){const t=TH[thm];$('tower').style.background=`linear-gradient(180deg,${t.bg[0]},${t.bg[1]})`;document.querySelectorAll('#sky i').forEach(i=>i.style.background=t.star)}
 function twSize(){const cv=$('cv'),st=$('stack'),w=Math.max(200,st.clientWidth),h=Math.max(300,st.clientHeight),d=Math.min(window.devicePixelRatio||1,3);
@@ -418,14 +418,14 @@ function twLand(){const m=TW.mv,r=m.res,n=TW.blocks.length;
  TW.combo=r.cb||0;const gain=r.perfect?25+Math.min(TW.combo-1,8)*5:Math.max(5,Math.round(15*r.w/SW));TW.score+=gain;
  if(r.perfect)try{navigator.vibrate&&navigator.vibrate(TW.combo>=3?[12,40,12]:12)}catch{}
  TW.pops.push({t:r.perfect?(TW.combo>1?'Идеально ×'+TW.combo+'! +':'Идеально! +')+gain:'+'+gain,x:r.x+r.w/2,idx:n,life:1});
- TW.mv={w:r.w,cx:m.cx,fall:0,vy:0};TW.state='swing';twHud();twSave()}
+ twFxSpawn(r,n);TW.mv={w:r.w,cx:m.cx,fall:0,vy:0};TW.state='swing';twHud();twSave()}
 function twUpdate(dt){const n=TW.blocks.length,m=TW.mv;
  TW.cam+=(Math.max(0,n-TW.K)*BH-TW.cam)*Math.min(1,dt*6);
  if(TW.state==='swing'){TW.phase+=dt*(2.2+Math.min(n,45)*.055);m.cx=TW.W/2+Math.sin(TW.phase)*(TW.W/2+m.w*.3);m.fall=0}
  else if(TW.state==='fall'){m.vy+=2600*dt;m.fall+=m.vy*dt;if(m.fall>=HV)twLand()}
  else if(TW.state==='miss'){m.vy+=2600*dt;m.fall+=m.vy*dt;if(sy(n)-HV+m.fall>TW.H+10){TW.state='over';TW.overAt=performance.now();twSave()}}
  TW.deb.forEach(d=>{d.vy+=2600*dt;d.dy+=d.vy*dt;d.a=Math.max(0,1-d.dy/260)});TW.deb=TW.deb.filter(d=>d.a>0);
- TW.pops.forEach(p=>p.life-=dt*1.1);TW.pops=TW.pops.filter(p=>p.life>0)}
+ TW.pops.forEach(p=>p.life-=dt*1.1);if(TW.pt){TW.pt.forEach(p=>{p.x+=p.vx*dt;p.dy+=p.vy*dt;p.vy+=p.g*dt;p.life-=dt*p.d});TW.pt=TW.pt.filter(p=>p.life>0)}TW.pops=TW.pops.filter(p=>p.life>0)}
 function drawBlock(c,x,y,w,i,t){const[c1,c2]=bcol(t,i),g=c.createLinearGradient(x,0,x+w,0);g.addColorStop(0,c1);g.addColorStop(1,c2);
  c.save();c.shadowColor=c1;c.shadowBlur=14;c.fillStyle=g;rr(c,x,y,w,BH-2,6);c.fill();c.restore();
  c.fillStyle='rgba(255,255,255,.2)';rr(c,x+3,y+2,Math.max(0,w-6),4,2);c.fill()}
@@ -436,6 +436,7 @@ function twDraw(){const c=TW.cx;if(!c)return;const W=TW.W,H=TW.H,t=TH[thm],n=TW.
  if(TW.state!=='over'){const m=TW.mv;drawBlock(c,m.cx-m.w/2,sy(n)-HV+m.fall,m.w,n,t)}
  c.textAlign='center';
  TW.pops.forEach(p=>{c.globalAlpha=Math.max(0,p.life);c.fillStyle='#fff';c.font='700 16px Comfortaa,sans-serif';c.fillText(p.t,p.x,sy(p.idx)-8-(1-p.life)*30);c.globalAlpha=1});
+ (TW.pt||[]).forEach(p=>{c.globalAlpha=Math.max(0,p.life);c.fillStyle=p.col;if(p.ch){c.font=p.sz+'px sans-serif';c.fillText(p.ch,p.x,sy(p.idx)+p.dy)}else c.fillRect(p.x,sy(p.idx)+p.dy,p.sz,p.sz*.6)});c.globalAlpha=1;
  if(TW.combo>=2&&TW.state!=='over'){c.fillStyle='#FFC24A';c.font='700 18px Comfortaa,sans-serif';c.fillText('🔥 Комбо ×'+TW.combo,W/2,TW.top+30)}
  if(TW.state==='swing'&&n===1&&TW.score===0){c.fillStyle='rgba(255,255,255,.6)';c.font='600 14px Inter,sans-serif';c.fillText('Нажми в любом месте, чтобы бросить блок',W/2,H*.72)}
  if(TW.state==='over'){c.fillStyle='rgba(7,8,23,.72)';c.fillRect(0,0,W,H);
@@ -644,14 +645,14 @@ S.tree={};S.quiz=[];S.qst=null;S.ev=[];
 const dayKey=()=>ldt(new Date()).slice(0,10);
 const pl=(n,f)=>n+' '+(n%10===1&&n%100!==11?f[0]:[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?f[1]:f[2]);
 async function xLoad(){if(!S.room)return;
- const [t,q,st,e,w,nt,tk]=await Promise.all([sb.from('couple_tree').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_quiz').select('*').eq('room_id',S.room).order('day',{ascending:false}).limit(200),sb.rpc('couple_quiz_status',{p_room:S.room,p_day:dayKey()}),sb.from('couple_events').select('*').eq('room_id',S.room),sb.from('couple_wallet').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_notes').select('*').eq('room_id',S.room).order('created_at',{ascending:false}).limit(100),sb.from('couple_tasks').select('*').eq('room_id',S.room).order('created_at',{ascending:false}).limit(100)]);
- if(!t.error)S.tree=t.data||{};if(!q.error)S.quiz=q.data||[];S.qst=st.error?null:(st.data||[]);if(!e.error)S.ev=e.data||[];if(!w.error){S.wal=Object.assign({coins:0,owned:[],sel:{}},w.data||{});gSkin();streakTouch()}if(!nt.error)S.notes=nt.data||[];if(!tk.error)S.tasks=tk.data||[];
+ const [t,q,st,e,w,nt,tk]=await Promise.all([sb.from('couple_tree').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_quiz').select('*').eq('room_id',S.room).order('day',{ascending:false}).limit(200),sb.rpc('couple_quiz_status2',{p_room:S.room,p_day:dayKey()}),sb.from('couple_events').select('*').eq('room_id',S.room),sb.from('couple_wallet').select('*').eq('room_id',S.room).maybeSingle(),sb.from('couple_notes').select('*').eq('room_id',S.room).order('created_at',{ascending:false}).limit(100),sb.from('couple_tasks').select('*').eq('room_id',S.room).order('created_at',{ascending:false}).limit(100)]);
+ if(!t.error)S.tree=t.data||{};if(!q.error)S.quiz=q.data||[];S.qst=st.error?null:(st.data||[]);if(!e.error)S.ev=e.data||[];if(!w.error){S.wal=Object.assign({coins:0,owned:[],sel:{}},w.data||{});gSkin();selApply();streakTouch()}if(!nt.error)S.notes=nt.data||[];if(!tk.error)S.tasks=tk.data||[];
  if(t.error&&!xLoad.w){xLoad.w=1;toast('Дерево/Угадайка/Даты: выполни schema.sql в Supabase')}render()}
 function drawX(){drawTree();drawQuiz();drawDates();drawCoins();drawShop();drawNotes();drawTasks()}
 /* Love tree */
 const TS=[['Росток','Весна',0],['Цветение','Лето',60],['Золотая осень','Осень',180],['Волшебная зима','Зима',400]];
 const TP=['Спасибо, я расту 💗','Ммм, вкусная водичка!','Вы такие милые вместе','Корни тянутся к вам ❤','Ещё капельку, пожалуйста','Расту от вашей любви'];
-function treePts(){const t=S.tree||{},by={};S.quiz.forEach(r=>by[r.day]=(by[r.day]||0)+1);
+function treePts(){const t=S.tree||{},by={};S.quiz.forEach(r=>{const k=r.day+'|'+(r.round||0);by[k]=(by[k]||0)+1});
  return Math.floor((S.game.score||0)/20)+S.caps.length*5+(t.emo||0)*2+Object.values(by).filter(n=>n>1).length*8+(t.water||0)*3+(t.bonus||0)}
 function treeSVG(k){const C=[['#4ADE80','#22C55E','#86EFAC'],['#34D399','#22B584','#6EE7B7'],['#FFB84A','#FF8A3D','#FFD27A'],['#DCEBFF','#B7D3FF','#F1F7FF']][k],
  P=[[70,62],[100,44],[130,62],[62,92],[100,74],[138,92],[84,104],[118,106],[100,58]];let g;
@@ -667,20 +668,25 @@ async function waterTree(){const {error}=await sb.rpc('couple_tree_water',{p_roo
   for(let i=0;i<5;i++){const h=document.createElement('i');h.className='fa-solid fa-heart hup';h.style.left=(35+Math.random()*30)+'%';h.style.top='90px';h.style.animationDelay=(.4+i*.12)+'s';a.appendChild(h);setTimeout(()=>h.remove(),1800)}}
  toast(TP[Math.floor(Math.random()*TP.length)]);xLoad()}
 /* Quiz */
-const QUIZ=[['Идеальный вечер для двоих?',['Фильм и плед','Прогулка','Ужин в ресторане','Игры дома']],['Любимое время суток?',['Утро','День','Вечер','Ночь']],['Где бы хотелось в отпуск?',['Море','Горы','Большой город','Деревня']],['Что выбрать на завтрак?',['Блины','Яичница','Хлопья и йогурт','Только кофе']],['Какой подарок приятнее?',['Сделанный руками','Впечатление','Что-то из вишлиста','Сюрприз']],['Любимое время года?',['Весна','Лето','Осень','Зима']],['Как лучше мириться?',['Обнимашки','Разговор','Извинения и сладкое','Дать остыть']],['Что выберешь на ужин?',['Пицца','Суши','Паста','Домашняя еда']],['Идеальный выходной?',['Спать до обеда','Активный отдых','Гости','Тишина вдвоём']],['Какое животное тебе ближе?',['Кот','Собака','Лиса','Панда']],['Любимый жанр фильмов?',['Комедия','Мелодрама','Триллер','Фэнтези']],['Как признаёшься в любви чаще?',['Словами','Объятиями','Заботой','Подарками']]];
-function qToday(){const d=dayKey();return QUIZ[(Math.floor(Date.parse(d)/864e5)+[...String(S.room)].reduce((a,c)=>a+c.charCodeAt(0),0))%QUIZ.length]}
-async function qAns(i){const {error}=await sb.from('couple_quiz').insert({room_id:S.room,day:dayKey(),answer:i});
- if(error)return toast(error.code==='23505'?'Ты уже ответил(а) сегодня':error.message);toast('Ответ сохранён');xLoad()}
-function drawQuiz(){const b=$('qBadge'),d=dayKey(),mine=S.quiz.find(r=>r.day===d&&r.user_id===S.uid),th=S.quiz.find(r=>r.day===d&&r.user_id!==S.uid);
- if(b)b.textContent=mine?(th?(mine.answer===th.answer?'💞 Совпало!':'Открыто'):'Ждём партнёра'):'Новый вопрос';
- qPay(mine,th);if(cur!=='quiz')return;const q=qToday(),pn=S.pt?S.pt.name:'Партнёр',pDone=!!th||(S.qst||[]).some(u=>u!==S.uid);
- const by={};S.quiz.forEach(r=>(by[r.day]=by[r.day]||[]).push(r));const full=Object.values(by).filter(a=>a.length>1),mt=full.filter(a=>a[0].answer===a[1].answer).length;
+const QUIZ=[['Идеальный вечер для двоих?',['Фильм и плед','Прогулка','Ужин в ресторане','Игры дома']],['Любимое время суток?',['Утро','День','Вечер','Ночь']],['Где бы хотелось в отпуск?',['Море','Горы','Большой город','Деревня']],['Что выбрать на завтрак?',['Блины','Яичница','Хлопья и йогурт','Только кофе']],['Какой подарок приятнее?',['Сделанный руками','Впечатление','Что-то из вишлиста','Сюрприз']],['Любимое время года?',['Весна','Лето','Осень','Зима']],['Как лучше мириться?',['Обнимашки','Разговор','Извинения и сладкое','Дать остыть']],['Что выберешь на ужин?',['Пицца','Суши','Паста','Домашняя еда']],['Идеальный выходной?',['Спать до обеда','Активный отдых','Гости','Тишина вдвоём']],['Какое животное тебе ближе?',['Кот','Собака','Лиса','Панда']],['Любимый жанр фильмов?',['Комедия','Мелодрама','Триллер','Фэнтези']],['Как признаёшься в любви чаще?',['Словами','Объятиями','Заботой','Подарками']],['Какой напиток лучше вечером?',['Чай','Какао','Кофе','Вино или сок']],['Куда бы поехали на выходные?',['В другой город','На дачу или природу','В спа','Остались бы дома']],['Что важнее в паре?',['Доверие','Юмор','Забота','Страсть']],['Любимая музыка для двоих?',['Спокойная','Танцевальная','Ретро','Что-то новое']],['Как встречаем утро?',['Кофе в постель','Объятия подольше','Быстро вскочить и в путь','Молчим и потягиваемся']],['Какой у нас идеальный питомец?',['Кот','Собака','Хомяк','Никакого']],['Главный сюрприз для тебя?',['Романтический ужин','Путешествие','Записка с признанием','Вечер без телефонов']],['Что чаще всего нас смешит?',['Мемы','Наши шутки','Смешные видео','Разные истории']]];
+let qr=null;const QMAX=6;
+function qToday(r){const h=[...String(S.room)].reduce((a,c)=>a+c.charCodeAt(0),0);return QUIZ[(Math.floor(Date.parse(dayKey())/864e5)*7+h+r)%QUIZ.length]}
+function qCur(){const d=dayKey();let r=0;while(r<QMAX-1&&S.quiz.some(x=>x.day===d&&(x.round||0)===r&&x.user_id===S.uid))r++;return r}
+async function qAns(i){const r=qr===null?qCur():qr,{error}=await sb.from('couple_quiz').insert({room_id:S.room,day:dayKey(),round:r,answer:i});
+ if(error)return toast(error.code==='23505'?'Ты уже ответил(а) на этот вопрос':error.message);toast('Ответ сохранён');xLoad()}
+function qMove(n){qr=Math.max(0,Math.min(QMAX-1,(qr===null?qCur():qr)+n));drawQuiz()}
+function qPay(d,r,m,t){if(r>1||!m||!t)return;const k='qp'+d+'|'+r;try{if(!localStorage.getItem(k)){localStorage.setItem(k,'1');coinAdd(m.answer===t.answer?15:8,'угадайка')}}catch{}}
+function drawQuiz(){const b=$('qBadge'),d=dayKey(),rows=S.quiz.filter(x=>x.day===d),R=r=>({m:rows.find(x=>(x.round||0)===r&&x.user_id===S.uid),t:rows.find(x=>(x.round||0)===r&&x.user_id!==S.uid)}),done=rows.filter(x=>x.user_id===S.uid).length;
+ if(b)b.textContent=done?'Отвечено сегодня: '+done:'Новый вопрос';for(let i=0;i<2;i++){const x=R(i);qPay(d,i,x.m,x.t)}
+ if(cur!=='quiz')return;const r=qr===null?qCur():qr,{m:mine,t:th}=R(r),q=qToday(r),pn=S.pt?S.pt.name:'Партнёр',pDone=!!th||(S.qst||[]).some(u=>u.user_id!==S.uid&&(u.round||0)===r);
+ const P={};S.quiz.forEach(x=>{const k=x.day+'|'+(x.round||0);(P[k]=P[k]||[]).push(x)});const full=Object.values(P).filter(a=>a.length>1),mt=full.filter(a=>a[0].answer===a[1].answer).length,ok=new Set(full.map(a=>a[0].day)),dd=new Date();let sk=0;if(!ok.has(d))dd.setDate(dd.getDate()-1);while(ok.has(ldt(dd).slice(0,10))){sk++;dd.setDate(dd.getDate()-1)}
  const card=(nm,a,plate)=>`<div class="card qc mt"><p class="xs">${esc(nm)}</p><p style="margin-top:6px;${plate?'filter:blur(7px)':''}">${plate?'••••••••••':esc(q[1][a])}</p>${plate?`<div class="qh">${plate}</div>`:''}</div>`;
- let h=`<div class="card"><p class="xs">Вопрос дня</p><h3 class="ff" style="font-size:18px;margin-top:6px">${esc(q[0])}</h3></div>`;
+ let h=`<div class="row" style="justify-content:space-between"><button class="pill" onclick="qMove(-1)" ${r?'':'disabled'} aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button><span class="xs">Вопрос ${r+1} из ${QMAX}</span><button class="pill" onclick="qMove(1)" ${mine&&r<QMAX-1?'':'disabled'} aria-label="Дальше"><i class="fa-solid fa-chevron-right"></i></button></div><div class="card mt"><p class="xs">Вопрос дня</p><h3 class="ff" style="font-size:18px;margin-top:6px">${esc(q[0])}</h3></div>`;
  if(!mine)h+=`<div style="display:grid;gap:8px;margin-top:12px">${q[1].map((o,i)=>`<button class="opt" onclick="qAns(${i})">${esc(o)}</button>`).join('')}</div>`;
- h+=``+(mine?card('Ты',mine.answer,''):'')+card(pn,th&&th.answer,th&&mine?'':(mine?'Ждём ответ…':'Сначала ответь сам(а)!'+(pDone?'<br><span class="xs">'+esc(pn)+' уже ответил(а)</span>':'')));
+ h+=(mine?card('Ты',mine.answer,''):'')+card(pn,th&&th.answer,th&&mine?'':(mine?'Ждём ответ…':'Сначала ответь сам(а)!'+(pDone?'<br><span class="xs">'+esc(pn)+' уже ответил(а)</span>':'')));
  if(mine&&th)h+=`<div class="card mt" style="text-align:center">${mine.answer===th.answer?'💞 Ваши ответы совпали!':'Ответы разные, есть о чём поговорить 😉'}</div>`;
- h+=`<p class="sm" style="text-align:center;margin-top:16px">Совпало ${mt} из ${full.length} дней · 🔥 серия ${mdStreak(by)}</p><p class="xs" id="qNext" style="text-align:center;margin-top:6px"></p>`;$('qBody').innerHTML=h;qTick()}
+ if(mine)h+=r<QMAX-1?`<button class="btn mt" style="width:100%" onclick="qMove(1)"><i class="fa-solid fa-forward"></i> Следующий вопрос сейчас</button>`:'<p class="sm" style="text-align:center;margin-top:12px">На сегодня вопросы закончились — завтра будут новые ✨</p>';
+ h+=`<p class="sm" style="text-align:center;margin-top:16px">Совпало ${mt} из ${full.length} · 🔥 серия ${sk}</p><p class="xs" id="qNext" style="text-align:center;margin-top:6px"></p>`;$('qBody').innerHTML=h;qTick()}
 /* Dates */
 let evK='ann';const EK=[['ann','💍','Годовщина'],['kiss','💋','Первый поцелуй'],['trip','✈️','Поездка'],['memo','⭐','Памятный день']];
 const t0=()=>{const n=new Date();n.setHours(0,0,0,0);return n};
@@ -729,30 +735,52 @@ const DK=[['aurora','Северное сияние','#5EEAD4','#B8F5EA','#A78BFA
 window.FXX={};DK.forEach(d=>{DECO.push([d[0],d[1],d[2],d[3],d[4],d[5],d[6],999,{b:d[7],p:d[8],fx:d[0]}]);FXX[d[0]]=[d[9],14]});
 const TSK=[['sakura','Сакура',150,'hue-rotate(170deg) saturate(1.1)'],['aqua','Морской бриз',150,'hue-rotate(50deg)'],['amethyst','Аметист',180,'hue-rotate(115deg) saturate(1.3)'],['ember','Огненный клён',200,'hue-rotate(-60deg) saturate(1.4)'],['moon','Лунное',260,'grayscale(.5) hue-rotate(190deg) brightness(1.1) drop-shadow(0 0 8px #A5B4FC)']];
 const GSK=[['gs1','Неоновая аркада',220,{n:'Неоновая аркада',bg:['#0a0630','#02020f'],h:[300,190],dh:40,s:100,l:60,gr:'#140a44',star:'#7DF9FF'},[300,190,320,170,280,200,340],90,55],['gs2','Карамельная башня',220,{n:'Карамельная башня',bg:['#4a1030','#1a0714'],h:[340,30],dh:20,s:90,l:68,gr:'#5a1d3a',star:'#FFC2A8'},[345,30,320,50,10,300,20],85,70],['gs3','Изумрудный храм',260,{n:'Изумрудный храм',bg:['#053b30','#02120f'],h:[150,175],dh:-15,s:75,l:52,gr:'#0a4a3c',star:'#6EE7B7'},[150,170,130,190,110,160,200],65,45],['gs4','Золото фараона',300,{n:'Золото фараона',bg:['#3a2a06','#120c02'],h:[38,50],dh:-10,s:90,l:58,gr:'#4a3508',star:'#FFD86B'},[40,30,50,20,55,10,45],85,55],['gs5','Лёд и звёзды',350,{n:'Лёд и звёзды',bg:['#0b2447','#030a18'],h:[200,230],dh:15,s:85,l:70,gr:'#12356a',star:'#BFE8FF'},[200,220,190,240,180,260,210],75,62]];
-GSK.forEach(g=>{TH[g[0]]=Object.assign({paid:1},g[3]);MDP.push([g[0],g[1],g[4],g[5],g[6],1])});
+GSK.forEach(g=>{TH[g[0]]=Object.assign({paid:1},g[3])});
 applyDeco();
 const treeFilter=()=>{const k=(S.wal.sel||{}).tree,t=TSK.find(x=>x[0]===k);return t?t[3]:'none'};
-function gApply(k){thm=k&&TH[k]?k:'dream';mdPal=k&&MDP.some(p=>p[0]===k)?k:'rainbow';try{localStorage.setItem('tth',thm);localStorage.setItem('mdpal',mdPal)}catch{}applyTheme()}
+function gApply(k){thm=k&&TH[k]?k:'dream';try{localStorage.setItem('tth',thm)}catch{}applyTheme()}
 function gSkin(){const k=(S.wal.sel||{}).game||'';if(k===gSkin.k)return;gSkin.k=k;if(k)gApply(k)}gSkin.k='';
 /* покупки */
 async function buy(k,p,cb){if(own(k))return cb&&cb();if(cn()<p)return toast('Не хватает монет 🪙');if(!confirm('Купить за '+p+' 🪙?'))return;
  const {data,error}=await sb.rpc('couple_shop_buy',{p_room:S.room,p_item:k,p_price:p});if(error)return toast(error.message==='poor'?'Не хватает монет 🪙':error.message);S.wal.coins=data.coins;S.wal.owned=data.owned;toast('Куплено! 🎉');cb&&cb();drawX()}
-async function shSel(slot,v){const {error}=await sb.rpc('couple_shop_sel',{p_room:S.room,p_slot:slot,p_val:v||''});if(error)return toast(error.message);S.wal.sel=Object.assign({},S.wal.sel);v?S.wal.sel[slot]=v:delete S.wal.sel[slot];if(slot==='game'){gSkin.k=v||'';gApply(v)}drawX()}
+async function shSel(slot,v){const {error}=await sb.rpc('couple_shop_sel',{p_room:S.room,p_slot:slot,p_val:v||''});if(error)return toast(error.message);S.wal.sel=Object.assign({},S.wal.sel);v?S.wal.sel[slot]=v:delete S.wal.sel[slot];if(slot==='game'){gSkin.k=v||'';gApply(v)}selApply();drawX()}
 async function swapCoins(n){if(cn()<50*n)return toast('Не хватает монет 🪙');const {data,error}=await sb.rpc('couple_tree_swap',{p_room:S.room,p_times:n});if(error)return toast(error.message==='poor'?'Не хватает монет 🪙':error.message);S.wal.coins=data.coins;toast('+'+10*n+' очков Древу любви 🌳');xLoad()}
-let shTab='pet';const SHT=[['pet','Питомцы'],['deco','Темы'],['tree','Дерево'],['game','Игры'],['mdb','Поле Meow'],['swap','Обмен']];
+let shTab='pet',shG=null,shGT='skin';const SHT=[['pet','Питомцы'],['deco','Темы'],['tree','Дерево'],['game','Игры'],['swap','Обмен']];
+const GCAT={tower:['Построй башню','🏗️',[['skin','Оформление'],['fx','Эффекты']]],meow:['Meowdoku','🐱',[['skin','Поле']]],battle:['Морской бой','🚢',[['skin','Оформление']]],quiz:['Угадайка','🎯',[['skin','Оформление']]]};
+const TFX=[['sparks','Искры',100,'✨'],['hearts','Сердечки',120,'💗'],['stars','Звёздный дождь',140,'⭐'],['confetti','Конфетти',160,'🎉'],['rainbow','Радужные блоки',220,'🌈']];
+const BSK=[['bs1','Океан',120,'rgba(56,189,248,.14)','rgba(125,211,252,.3)','#0EA5E9','#38BDF8','rgba(255,120,80,.8)','#fff'],['bs2','Пираты',140,'rgba(139,94,60,.28)','rgba(192,133,82,.4)','#8B5E3C','#C08552','rgba(255,90,54,.85)','#FFE0B0'],['bs3','Неон',160,'rgba(0,0,0,.35)','rgba(0,212,255,.5)','#00D4FF','#7DF9FF','rgba(255,60,172,.85)','#00D4FF'],['bs4','Сакура',160,'rgba(255,183,197,.16)','rgba(255,183,197,.4)','#F9A8D4','#FF66B2','rgba(255,102,178,.8)','#FFE0E8'],['bs5','Космос',200,'rgba(15,10,50,.6)','rgba(165,180,252,.35)','#6366F1','#A78BFA','rgba(255,194,74,.85)','#FFF2A8']];
+const QSK=[['qs1','Конверт',120,'linear-gradient(135deg,rgba(255,177,153,.2),rgba(255,224,200,.08))','#FFB199','rgba(255,177,153,.25)'],['qs2','Неон',140,'rgba(0,0,0,.35)','#00D4FF','rgba(0,212,255,.35)'],['qs3','Мятная тетрадь',140,'rgba(74,222,128,.1)','#4ADE80','rgba(74,222,128,.2)'],['qs4','Золотой билет',180,'linear-gradient(135deg,rgba(255,194,74,.22),rgba(255,138,61,.08))','#FFC24A','rgba(255,194,74,.3)'],['qs5','Звёздное небо',200,'linear-gradient(160deg,rgba(30,27,100,.7),rgba(8,10,40,.7))','#A5B4FC','rgba(165,180,252,.3)']];
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:BSK.map(x=>`html[data-bs=${x[0]}]{--c-cell:${x[3]};--c-line:${x[4]};--c-s1:${x[5]};--c-s2:${x[6]};--c-hit:${x[7]};--c-miss:${x[8]}}`).join('')+QSK.map(x=>`html[data-qs=${x[0]}]{--q-bg:${x[3]};--q-bd:${x[4]};--q-gl:${x[5]}}`).join('')+`html[data-bs^=bs] .cell{background:var(--c-cell);border-color:var(--c-line)}html[data-bs^=bs] .cell.ship{background:linear-gradient(135deg,var(--c-s1),var(--c-s2))}html[data-bs^=bs] .cell.hit{background:var(--c-hit);box-shadow:0 0 14px var(--c-hit)}html[data-bs^=bs] .cell.miss::after{background:var(--c-miss)}html[data-qs^=qs] #quiz .card,html[data-qs^=qs] #quiz .opt{background:var(--q-bg);border:1px solid var(--q-bd);box-shadow:0 0 16px var(--q-gl)}`}));
+function selApply(){const se=(S.wal||{}).sel||{},d=document.documentElement;S.fxT=se.tfx||'';[['bat','bs'],['qz','qs']].forEach(([k,a])=>se[k]?d.setAttribute('data-'+a,se[k]):d.removeAttribute('data-'+a))}
+function twFxSpawn(r,n){const k=S.fxT;if(!k||k==='rainbow')return;const P=TW.pt=TW.pt||[],cx=r.x+r.w/2,cnt=r.perfect?26:12,mk=o=>P.push(Object.assign({x:cx+(Math.random()-.5)*r.w,idx:n,dy:0,vx:0,vy:0,g:0,life:1,d:1.1,sz:8,col:'#fff'},o));
+ for(let i=0;i<cnt;i++){const a=Math.random()*Math.PI*2,v=60+Math.random()*120;
+  if(k==='sparks')mk({vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,g:300,sz:3,col:i%2?'#FFE066':'#FFB84A',d:1.6});
+  if(k==='hearts')mk({vx:(Math.random()-.5)*60,vy:-50-Math.random()*70,ch:'♥',sz:12+Math.random()*10,col:i%2?'#FF6B9D':'#FFB8D6',d:.8});
+  if(k==='stars')mk({vx:Math.cos(a)*v*.8,vy:-Math.abs(Math.sin(a))*v,g:200,ch:'★',sz:10+Math.random()*8,col:'#FFF2A8',d:1});
+  if(k==='confetti')mk({vx:Math.cos(a)*v,vy:-Math.abs(Math.sin(a))*v-60,g:420,sz:6,col:`hsl(${Math.random()*360},90%,65%)`,d:.9})}}
 function shTabSet(t){shTab=t;drawShop()}
+function shGo(g){shG=g;shGT='skin';drawShop()}
+function shGsub(t){shGT=t;drawShop()}
 function drawCoins(){const c=$('coinCard');if(!c)return;c.innerHTML=`<span class="ico"><i class="fa-solid fa-coins" style="color:#FFC24A"></i></span><div class="sp"><b class="ff" style="font-size:17px">${cn()} 🪙</b><p class="xs">Общий кошелёк · 🔥 серия ${stk()} дн.</p></div><span class="pill on">Магазин</span>`;
  const n=$('noteCard'),l=(S.notes||[])[0];if(n)n.innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp" style="min-width:0"><b class="ff" style="font-size:15px">За что я тебя люблю</b><p class="xs" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc((l.author_name||'')+': '+l.body):'Напиши первую записку 💌'}</p></div><i class="fa-solid fa-chevron-right sm"></i>`}
 function drawShop(){if(cur!=='shop')return;$('shCoins').textContent=cn()+' 🪙';
- $('shTabs').innerHTML=SHT.map(t=>`<button class="${shTab===t[0]?'on':''}" style="white-space:nowrap" onclick="shTabSet('${t[0]}')">${t[1]}</button>`).join('');
- const it=(k,on,ico,nm,pr,act)=>`<button class="${on?'on':''}" onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${on?'выбрано ✓':own(k)?'выбрать':pr+' 🪙'}</span></button>`,sw=(a,b)=>`<span class="sw" style="background:linear-gradient(135deg,${a},${b})"></span>`,g=S.game,se=S.wal.sel||{};let h='';
- $('shList').style.display=shTab==='swap'?'none':'';$('shSwap').innerHTML='';
+ $('shTabs').innerHTML=SHT.map(t=>`<button class="${shTab===t[0]?'on':''}" style="white-space:nowrap;flex:1;padding:0 8px;font-size:13px" onclick="shTabSet('${t[0]}')">${t[1]}</button>`).join('');
+ const it=(k,on,ico,nm,pr,act)=>`<button class="${on?'on':''}" onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${on?'выбрано ✓':own(k)?'выбрать':pr+' 🪙'}</span></button>`,
+ cl=(on,act,ico,nm)=>`<button class="${on?'on':''}" onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${on?'выбрано ✓':'выбрать'}</span></button>`,
+ sw=(a,b)=>`<span class="sw" style="background:linear-gradient(135deg,${a},${b})"></span>`,g=S.game,se=S.wal.sel||{};let h='';
+ $('shHead').innerHTML='';$('shSwap').innerHTML='';$('shList').style.display=(shTab==='swap'||(shTab==='game'&&!shG))?'none':'';
  if(shTab==='pet')h=PETS2.map(p=>it('pet:'+p[0],g.pet===p[0],`<span class="em">${p[1]}</span>`,p[2],p[4],`buy('pet:${p[0]}',${p[4]},()=>saveGame({pet:'${p[0]}'}))`)).join('');
  if(shTab==='deco')h=DK.map(d=>it('deco:'+d[0],g.deco===d[0],sw(d[2],d[4]),d[1],d[10],`buy('deco:${d[0]}',${d[10]},()=>saveGame({deco:'${d[0]}'}))`)).join('');
  if(shTab==='tree'){const pv=f=>`<div style="width:64px;height:54px;overflow:hidden;margin:auto;filter:${f}">${treeSVG(1).replace('style="width:200px;max-width:100%"','style="width:100%"')}</div>`;
-  h=`<button class="${se.tree?'':'on'}" onclick="shSel('tree','')">${pv('none')}<b class="sm" style="color:var(--text-primary)">Классика</b><span class="xs">${se.tree?'выбрать':'выбрано ✓'}</span></button>`+TSK.map(t=>it('tree:'+t[0],se.tree===t[0],pv(t[3]),t[1],t[2],`buy('tree:${t[0]}',${t[2]},()=>shSel('tree','${t[0]}'))`)).join('')}
- if(shTab==='game')h=`<button class="${se.game?'':'on'}" onclick="shSel('game','')">${sw('#1f0d36','#FF86C0')}<b class="sm" style="color:var(--text-primary)">Классика</b><span class="xs">${se.game?'выбрать':'выбрано ✓'}</span></button>`+GSK.map(x=>it('game:'+x[0],se.game===x[0],`<span class="sw" style="background:linear-gradient(180deg,${x[3].bg[0]},${x[3].bg[1]})"><i style="width:24px;background:hsl(${x[3].h[0]},${x[3].s}%,${x[3].l}%)"></i></span>`,x[1],x[2],`buy('game:${x[0]}',${x[2]},()=>shSel('game','${x[0]}'))`)).join('');
- if(shTab==='mdb')h=MDB.map(m=>it('md:'+m[0],mdPal===m[0],`<span class="sw" style="background:linear-gradient(90deg,${m[3].slice(0,5).map(x=>`hsl(${x},${m[4]}%,${m[5]}%)`).join(',')})"></span>`,m[1],m[2],`buy('md:${m[0]}',${m[2]},()=>mdUse('${m[0]}'))`)).join('');
+  h=cl(!se.tree,"shSel('tree','')",pv('none'),'Классика')+TSK.map(t=>it('tree:'+t[0],se.tree===t[0],pv(t[3]),t[1],t[2],`buy('tree:${t[0]}',${t[2]},()=>shSel('tree','${t[0]}'))`)).join('')}
+ if(shTab==='game'&&!shG)$('shSwap').innerHTML=Object.entries(GCAT).map(([k,c])=>`<button class="card row mt" style="width:100%;text-align:left" onclick="shGo('${k}')"><span style="font-size:32px">${c[1]}</span><div class="sp"><b class="ff">${c[0]}</b><p class="xs">${c[2].map(x=>x[1]).join(' · ')}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`).join('');
+ if(shTab==='game'&&shG){const c=GCAT[shG];$('shHead').innerHTML=`<div class="row" style="margin-bottom:10px"><button class="pill" onclick="shGo(null)"><i class="fa-solid fa-arrow-left"></i> Игры</button><b class="ff">${c[1]} ${c[0]}</b></div>`+(c[2].length>1?`<div class="tabs" style="margin-bottom:10px">${c[2].map(x=>`<button class="${shGT===x[0]?'on':''}" onclick="shGsub('${x[0]}')">${x[1]}</button>`).join('')}</div>`:'');
+  const on=k=>se[k];
+  if(shG==='tower'&&shGT==='skin')h=cl(!se.game,"shSel('game','')",sw('#1f0d36','#FF86C0'),'Классика')+GSK.map(x=>it('game:'+x[0],se.game===x[0],`<span class="sw" style="background:linear-gradient(180deg,${x[3].bg[0]},${x[3].bg[1]})"><i style="width:24px;background:hsl(${x[3].h[0]},${x[3].s}%,${x[3].l}%)"></i></span>`,x[1],x[2],`buy('game:${x[0]}',${x[2]},()=>shSel('game','${x[0]}'))`)).join('');
+  if(shG==='tower'&&shGT==='fx')h=cl(!se.tfx,"shSel('tfx','')",'<span class="em">—</span>','Без эффектов')+TFX.map(x=>it('tfx:'+x[0],se.tfx===x[0],`<span class="em">${x[3]}</span>`,x[1],x[2],`buy('tfx:${x[0]}',${x[2]},()=>shSel('tfx','${x[0]}'))`)).join('');
+  if(shG==='meow')h=cl(!MDB.some(m=>m[0]===mdPal),"mdUse('rainbow')",sw('#FF4F9A','#38BDF8'),'Классика')+MDB.map(m=>it('md:'+m[0],mdPal===m[0],`<span class="sw" style="background:linear-gradient(90deg,${m[3].slice(0,5).map(x=>`hsl(${x},${m[4]}%,${m[5]}%)`).join(',')})"></span>`,m[1],m[2],`buy('md:${m[0]}',${m[2]},()=>mdUse('${m[0]}'))`)).join('');
+  if(shG==='battle')h=cl(!se.bat,"shSel('bat','')",sw('#9B5DE5','#7C4DFF'),'Классика')+BSK.map(x=>it('bat:'+x[0],se.bat===x[0],`<span class="sw" style="background:${x[3]};border:1px solid ${x[4]}"><i style="width:20px;background:linear-gradient(90deg,${x[5]},${x[6]})"></i></span>`,x[1],x[2],`buy('bat:${x[0]}',${x[2]},()=>shSel('bat','${x[0]}'))`)).join('');
+  if(shG==='quiz')h=cl(!se.qz,"shSel('qz','')",sw('#2a1a4a','#12132b'),'Классика')+QSK.map(x=>it('qz:'+x[0],se.qz===x[0],`<span class="sw" style="background:${x[3]};border:1px solid ${x[4]}"></span>`,x[1],x[2],`buy('qz:${x[0]}',${x[2]},()=>shSel('qz','${x[0]}'))`)).join('')}
  $('shList').innerHTML=h;
  if(shTab==='swap')$('shSwap').innerHTML=`<div class="card" style="text-align:center"><div style="font-size:40px">🪙 → 🌳</div><p class="ff" style="font-size:17px;margin-top:6px">50 монет = +10 очков роста</p><p class="xs" style="margin-top:4px">Сейчас у Древа ${treePts()} оч. · в кошельке ${cn()} 🪙</p><div class="row mt"><button class="btn" style="flex:1" onclick="swapCoins(1)">Обменять 50</button><button class="btn2" style="flex:1" onclick="swapCoins(5)">Обменять 250</button></div></div><p class="sm" style="text-align:center;margin-top:12px">Монеты приносят: башня, Meowdoku, морской бой, Угадайка и ежедневный вход. Каждые 7 дней серии дерево получает +10 очков.</p>`}
 function drawNotes(){if(cur!=='notes')return;$('ntList').innerHTML=(S.notes||[]).map(n=>{const d=new Date(n.created_at),mine=n.author===S.uid;return `<div class="card mt" style="${mine?'':'border-color:rgba(var(--pr),.35)'}"><p style="font-style:italic;line-height:1.5">«${esc(n.body)}»</p><div class="row" style="justify-content:space-between;margin-top:8px"><span class="xs">— ${esc(n.author_name||'…')} · ${d.toLocaleDateString('ru',{day:'numeric',month:'long'})}, ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</span>${mine?`<button class="pill" onclick="delNote('${esc(n.id)}')"><i class="fa-regular fa-trash-can"></i></button>`:''}</div></div>`}).join('')||'<p class="sm" style="text-align:center;margin-top:20px">Пока пусто — напиши первую 💗</p>'}
@@ -783,8 +811,8 @@ MDB.forEach(m=>MDP.push([m[0],m[1],m[3],m[4],m[5],2]));
 function mdUse(k){mdPal=k;try{localStorage.setItem('mdpal',k)}catch{}if(md.v==='play')mdBoard();drawShop()}
 /* Смена дня ровно в 0:00 */
 let xDay=dayKey();
-function qTick(){const el=$('qNext');if(!el)return;const n=new Date(),m=new Date(n);m.setHours(24,0,0,0);const s=Math.round((m-n)/1e3);el.textContent='Новый вопрос через '+[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(v=>String(v).padStart(2,'0')).join(':')}
-function dayCheck(){const d=dayKey();if(d!==xDay){xDay=d;render();xLoad();if(window.swr)window.swr.update()}else if(cur==='quiz')qTick()}
+function qTick(){const el=$('qNext');if(!el)return;const n=new Date(),m=new Date(n);m.setHours(24,0,0,0);const s=Math.round((m-n)/1e3);el.textContent='Счётчик дня обновится через '+[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(v=>String(v).padStart(2,'0')).join(':')}
+function dayCheck(){const d=dayKey();if(d!==xDay){xDay=d;qr=null;render();xLoad();if(window.swr)window.swr.update()}else if(cur==='quiz')qTick()}
 setInterval(dayCheck,1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)dayCheck()});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{window.swr=r;r.update()}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had)return;if(['home','quiz','dates'].includes(cur))location.reload();else toast('Вышла новая версия — обновится на главной')})};
