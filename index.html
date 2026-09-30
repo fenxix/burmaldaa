@@ -887,9 +887,9 @@ const bReady=()=>!!(S.bt&&S.bt.phase==='placing'&&S.ships&&S.ships.length&&!S.re
 function pSend(){bSend('ppres',{scr:cur,tf:+localStorage.getItem('twbf')||0,ts:+localStorage.getItem('twbs')||0})}
 function pPill(){const e=$('ptPres'),n=S.pt?esc(S.pt.name):'Партнёр',pp=S.pp,fresh=pp&&Date.now()-pp.t<55000;let t='',g='';
  if(S.ptWait&&Date.now()-S.ptWait<6e5&&cur!=='battle'){t='🚢 '+n+' ждёт вас в морском бое — зайти';g='battle'}
- else if(fresh&&PL[pp.scr]&&cur!==pp.scr){t='🟢 '+n+' сейчас '+PL[pp.scr];g=pp.scr}
+ else if(fresh&&PL[pp.scr]&&cur!==pp.scr&&Date.now()-(S.ppShow||0)<7000){t='🟢 '+n+' сейчас '+PL[pp.scr];g=pp.scr}
  e.style.display=t?'block':'none';e.innerHTML=t;e.onclick=()=>g&&go(g)}
-function pRecv(ev,p){if(ev==='ppres'){S.pp={scr:p.scr,t:Date.now()};if(p.tf!=null)try{localStorage.setItem('twpb',p.tf+','+p.ts)}catch{}if(p.scr!=='battle')S.ptWait=0;if(!S.ppSeen){S.ppSeen=1;pSend()}}
+function pRecv(ev,p){if(ev==='ppres'){{const o=S.pp;if(o&&(Date.now()-o.t>55000||o.scr!==p.scr)){S.ppShow=Date.now();setTimeout(pPill,7200)}}S.pp={scr:p.scr,t:Date.now()};if(p.tf!=null)try{localStorage.setItem('twpb',p.tf+','+p.ts)}catch{}if(p.scr!=='battle')S.ptWait=0;if(!S.ppSeen){S.ppSeen=1;pSend()}}
  if(ev==='pwait'){S.ptWait=Date.now();try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch{}if(cur!=='battle')toast((S.pt?S.pt.name:'Партнёр')+' ждёт вас в морском бое 🚢')}
  pPill()}
 {const f=window.go;window.go=function(s){const r=f.apply(this,arguments);pSend();if(s==='battle'){S.ptWait=0}pPill();return r}}
