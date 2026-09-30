@@ -172,11 +172,11 @@ input[type=datetime-local]{color-scheme:dark}
 </section>
 
 <section class="screen" id="rewards">
- <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Награды</h2></div>
+ <div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Профиль</h2></div>
  <div class="card" id="rwHead" style="text-align:center"></div>
  <div class="row mt" id="rwName" style="display:none"><input id="petName" placeholder="Имя питомца" maxlength="16"><button class="pill on" onclick="saveName()">Сохранить</button></div>
- <div class="tabs mt"><button id="rwt1" onclick="setRw('pets')">Питомцы</button><button id="rwt2" onclick="setRw('deco')">Оформление</button></div>
- <div class="rw" id="rwList"></div>
+ <div class="tabs mt" id="rwMain"></div>
+ <div id="rwBody"></div>
 </section>
 
 <section class="screen" id="emotions">
@@ -244,7 +244,7 @@ input[type=datetime-local]{color-scheme:dark}
  <button data-s="emotions" onclick="go('emotions')"><i class="fa-regular fa-heart"></i>Эмоции</button>
  <button data-s="capsules" onclick="go('capsules')"><i class="fa-solid fa-lock"></i>Капсулы</button>
  <button data-s="wishes" onclick="go('wishes')"><i class="fa-solid fa-gift"></i>Желания</button>
- <button data-s="rewards" onclick="go('rewards')"><i class="fa-solid fa-paw"></i>Награды</button>
+ <button data-s="rewards" onclick="go('rewards')"><i class="fa-solid fa-user"></i>Профиль</button>
 </nav>
 <div class="toast" id="toast"></div>
 </div>
@@ -291,8 +291,8 @@ function petTap(e){e.classList.remove('bn');void e.offsetWidth;e.classList.add('
 function drawRewards(){if(cur!=='rewards')return;const b=S.game.blocks,pet=petOf(),all=[...PETS.map(x=>x[3]),...DECO.map(x=>x[7]).filter(v=>v<900)].filter(l=>l>b).sort((a,c)=>a-c),nx=all[0];
  $('rwHead').innerHTML=`<div style="position:relative">${pet?`${petHTML(pet)}<p class="ff" style="margin-top:8px">${esc(petName(pet))}</p><p class="xs" style="margin-top:4px">${esc(petLine(pet))}</p>`:'<p class="sm">Выбери питомца — он будет жить у вас на главной</p>'}</div><p class="xs" style="margin-top:8px"><i class="fa-solid fa-trophy" style="color:#FFC24A"></i> Рекорд башни: ${b} · ${nx?'следующая награда на '+nx+' этаже':'всё открыто!'}</p>`;
  {const i=$('petName');$('rwName').style.display=pet?'flex':'none';if(pet&&document.activeElement!==i)i.value=S.game.pet_name||''}
- $('rwt1').classList.toggle('on',rwTab==='pets');$('rwt2').classList.toggle('on',rwTab==='deco');
- $('rwList').innerHTML=rwTab==='pets'?PETS.map(p=>{const ok=b>=p[3],on=S.game.pet===p[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickPet('${p[0]}')"><span class="em">${ok?p[1]:'🔒'}</span><b class="sm" style="color:var(--text-primary)">${p[2]}</b><span class="xs">${ok?(on?'выбран ✓':'открыт'):p[3]+' этаж'}</span></button>`}).join(''):DECO.filter(d=>d[7]<900).map(d=>{const ok=b>=d[7],on=(S.game.deco||'dream')===d[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickDeco('${d[0]}')"><span class="sw" style="background:linear-gradient(135deg,${d[2]},${d[4]})">${ok?'':'<i class="fa-solid fa-lock" style="line-height:38px;font-size:14px"></i>'}</span><b class="sm" style="color:var(--text-primary)">${d[1]}</b><span class="xs">${ok?(on?'выбрано ✓':'открыто'):d[7]+' этаж'}</span></button>`}).join('')}
+ $('rwMain').innerHTML=[['rw','Награды'],['st','Статистика']].map(t=>`<button class="${pfTab===t[0]?'on':''}" onclick="pfTab='${t[0]}';pfStatG=null;drawRewards()">${t[1]}</button>`).join('');
+ $('rwBody').innerHTML=pfTab==='rw'?pfRewards():pfStats()}
 function ago(t){const m=Math.floor((Date.now()-new Date(t))/6e4);return m<1?'только что':m<60?m+' мин назад':Math.floor(m/60)+' ч назад'}
 const online=m=>m&&Date.now()-new Date(m.seen_at)<7e4;
 function openModal(){$('modal').classList.add('on')}
@@ -898,12 +898,12 @@ $('mdTop').insertAdjacentHTML('afterend','<div id="mdX"></div>');let mdSt=0;
 const PL={tower:'🏗️ в Башне Мечты',meowdoku:'🐱 в Meowdoku',battle:'🚢 в морском бое',quiz:'🎯 в Угадайке',capsules:'💌 в капсулах',wishes:'🎁 в вишлисте',emotions:'💗 в эмоциях'};
 document.body.insertAdjacentHTML('beforeend','<button id="ptPres" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);z-index:15;padding:6px 14px;border-radius:999px;background:rgba(16,16,36,.94);border:1px solid var(--pink);font-size:12px;white-space:nowrap;max-width:94%;box-shadow:0 0 16px rgba(var(--pr),.4)"></button>');
 const bReady=()=>!!(S.bt&&S.bt.phase==='placing'&&S.ships&&S.ships.length&&!S.re);
-function pSend(){bSend('ppres',{scr:cur,tf:+localStorage.getItem('twbf')||0,ts:+localStorage.getItem('twbs')||0})}
+function pSend(){bSend('ppres',{scr:cur,tf:+localStorage.getItem('twbf')||0,ts:+localStorage.getItem('twbs')||0,ps:window.pst})}
 function pPill(){const e=$('ptPres'),n=S.pt?esc(S.pt.name):'Партнёр',pp=S.pp,fresh=pp&&Date.now()-pp.t<55000;let t='',g='';
  if(S.ptWait&&Date.now()-S.ptWait<6e5&&cur!=='battle'){t='🚢 '+n+' ждёт вас в морском бое — зайти';g='battle'}
  else if(fresh&&PL[pp.scr]&&cur!==pp.scr&&Date.now()-(S.ppShow||0)<7000){t='🟢 '+n+' сейчас '+PL[pp.scr];g=pp.scr}
  e.style.display=t?'block':'none';e.innerHTML=t;e.onclick=()=>g&&go(g)}
-function pRecv(ev,p){if(ev==='ppres'){{const o=S.pp;if(o&&(Date.now()-o.t>55000||o.scr!==p.scr)){S.ppShow=Date.now();setTimeout(pPill,7200)}}S.pp={scr:p.scr,t:Date.now()};if(p.tf!=null)try{localStorage.setItem('twpb',p.tf+','+p.ts)}catch{}if(p.scr!=='battle')S.ptWait=0;if(!S.ppSeen){S.ppSeen=1;pSend()}}
+function pRecv(ev,p){if(ev==='ppres'){{const o=S.pp;if(o&&(Date.now()-o.t>55000||o.scr!==p.scr)){S.ppShow=Date.now();setTimeout(pPill,7200)}}S.pp={scr:p.scr,t:Date.now()};if(p.ps)try{localStorage.setItem('pps',JSON.stringify({ps:p.ps,tf:p.tf,ts:p.ts}))}catch{}if(p.tf!=null)try{localStorage.setItem('twpb',p.tf+','+p.ts)}catch{}if(p.scr!=='battle')S.ptWait=0;if(!S.ppSeen){S.ppSeen=1;pSend()}}
  if(ev==='pwait'){S.ptWait=Date.now();try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch{}if(cur!=='battle')toast((S.pt?S.pt.name:'Партнёр')+' ждёт вас в морском бое 🚢')}
  pPill()}
 {const f=window.go;window.go=function(s){const r=f.apply(this,arguments);pSend();if(s==='battle'){S.ptWait=0}pPill();return r}}
@@ -1113,4 +1113,44 @@ document.addEventListener('visibilitychange',()=>document.documentElement.classL
  if(cur==='meowdoku'&&md.v==='list'&&!md.big)setTimeout(()=>{let i=0;while(i in md.me.solved)i++;[i,i+1,i+2].forEach(mdPre)},400);return r}}
 {const f=window.mdStart;window.mdStart=function(l){if(md.v==='list'&&Date.now()-(md.enter||0)<500)return;const r=f.apply(this,arguments);setTimeout(()=>{mdPre(l+1);mdPre(l+2)},600);return r}}
 {const f=window.mdDraw;window.mdDraw=function(){if(cur==='meowdoku'&&md.v==='list'){const k=JSON.stringify([md.me.solved,md.me.pick,md.rows.map(r=>[r.user_id,r.pick,r.solved]),S.pt&&S.pt.name,md.sd,md.vis,typeof mdXHTML==='function'?mdXHTML():0]);if(k===md._dk)return;md._dk=k}return f.apply(this,arguments)}}
+/* ---------- Профиль: награды и статистика ---------- */
+const PFG=[['tower','🏗️','Построй башню'],['meow','🐱','Meowdoku'],['battle','🚢','Морской бой'],['quiz','🎯','Угадайка']],PSK={tower:'tower',meowdoku:'meow',battle:'battle',quiz:'quiz'};
+let pfTab='rw',pfG='tower',pfSub='rw',pfStatG=null,pTk=0,pLast=Date.now();
+window.pst=(()=>{let o={};try{o=JSON.parse(LS('pst'))||{}}catch{}PFG.forEach(g=>o[g[0]]=Object.assign({t:0,s:0,c:0,k:0},o[g[0]]));return o})();
+const pstSave=()=>{try{localStorage.setItem('pst',JSON.stringify(pst))}catch{}};
+setInterval(()=>{const n=Date.now(),d=Math.min(n-pLast,10000)/1e3;pLast=n;const g=PSK[cur];if(g&&!document.hidden){pst[g].t+=d}if(++pTk%6===0)pstSave()},5000);
+document.addEventListener('visibilitychange',()=>{pLast=Date.now();if(document.hidden)pstSave()});window.addEventListener('pagehide',pstSave);
+{const f=window.go;window.go=function(s){const pv=cur,r=f.apply(this,arguments);if(PSK[s]&&s!==pv){pst[PSK[s]].s++;pstSave()}return r}}
+{const f=window.coinAdd;window.coinAdd=function(n,why){const w=String(why||''),g=/башн/i.test(w)?'tower':/meow/i.test(w)?'meow':/морск/i.test(w)?'battle':/угадай/i.test(w)?'quiz':null;if(g&&S.room&&n>0){pst[g].c+=Math.min(500,Math.round(n));pst[g].k++;pstSave()}return f.apply(this,arguments)}}
+const fT=t=>{t=Math.floor(t||0);if(t<60)return t+' сек';const m=Math.floor(t/60);if(m<60)return m+' мин';const h=Math.floor(m/60),r=m%60;return h+' ч'+(r?' '+r+' мин':'')};
+const pfP=()=>{try{return JSON.parse(LS('pps'))}catch{return null}};
+function pfA(fn,...a){Promise.resolve(window[fn](...a)).then(()=>drawRewards(),()=>{})}
+function pfRewards(){const b=S.game.blocks,se=(S.wal||{}).sel||{};
+ const gp=`<div class="pills" style="margin:12px 0 8px">${PFG.map(g=>`<button class="pill ${pfG===g[0]?'on':''}" onclick="pfG='${g[0]}';pfSub='rw';drawRewards()">${g[1]} ${g[2]}</button>`).join('')}</div><div class="tabs">${[['rw','Награды'],['bought','Купленные']].map(t=>`<button class="${pfSub===t[0]?'on':''}" onclick="pfSub='${t[0]}';drawRewards()">${t[1]}</button>`).join('')}</div>`;
+ let h='';
+ if(pfSub==='rw'){
+  if(pfG==='tower')h=`<h3 class="t">Питомцы</h3><div class="rw">${PETS.map(p=>{const ok=b>=p[3],on=S.game.pet===p[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickPet('${p[0]}')"><span class="em">${ok?p[1]:'🔒'}</span><b class="sm" style="color:var(--text-primary)">${p[2]}</b><span class="xs">${ok?(on?'выбран ✓':'открыт'):p[3]+' этаж'}</span></button>`}).join('')}</div><h3 class="t">Оформление</h3><div class="rw">${DECO.filter(d=>d[7]<900).map(d=>{const ok=b>=d[7],on=(S.game.deco||'dream')===d[0];return `<button class="${on?'on':''} ${ok?'':'lock'}" onclick="pickDeco('${d[0]}')"><span class="sw" style="background:linear-gradient(135deg,${d[2]},${d[4]})">${ok?'':'<i class="fa-solid fa-lock" style="line-height:38px;font-size:14px"></i>'}</span><b class="sm" style="color:var(--text-primary)">${d[1]}</b><span class="xs">${ok?(on?'выбрано ✓':'открыто'):d[7]+' этаж'}</span></button>`}).join('')}</div>`;
+  else if(pfG==='meow'){const c=mdCnt();h=`<h3 class="t">Персонажи</h3><div class="rw" style="grid-template-columns:repeat(3,1fr)">${MDC.map(x=>{const u=x[4]==='s'?mdBest()>=x[3]:c>=x[3],on=x[0]===md.me.pick;return `<button class="${on?'on':''} ${u?'':'lock'}" onclick="pfA('mdPick','${x[0]}')"><span class="em">${mdFace(x[0],'46px')}</span><b class="sm" style="color:var(--text-primary)">${x[2]}</b><span class="xs">${u?(on?'выбран':'открыт'):(x[4]==='s'?'🔒 серия '+x[3]:'🔒 '+x[3]+' ур.')}</span></button>`}).join('')}</div>`}
+  else h=`<p class="sm" style="text-align:center;margin-top:24px">В этой игре награды за прогресс — монеты 🪙. Внешний вид можно купить в магазине.</p>`}
+ else{const it=[],add=(list,pre,sel,slot,ty,ico,nmI,icoI)=>list.forEach(x=>{if(own(pre+':'+x[0]))it.push(`<button class="${sel(x[0])?'on':''}" onclick="pfA('${slot[0]}',${slot[1].replace('$',"'"+x[0]+"'")})"><span class="em">${icoI?x[icoI]:ico}</span><b class="sm" style="color:var(--text-primary)">${x[nmI]}</b><span class="xs">${sel(x[0])?'выбрано ✓':ty}</span></button>`)});
+  if(pfG==='tower'){add(GSK,'game',k=>se.game===k,['shSel',"'game',$"],'Оформление','🎨',1);add(TSC,'tsc',k=>selv('tsc')===k,['shSel',"'tsc',$"],'Мир','🌍',1,3);add(TFX,'tfx',k=>se.tfx===k,['shSel',"'tfx',$"],'Эффект','✨',1,3)}
+  if(pfG==='meow'){add(MDB,'md',k=>mdPal===k,['mdUse','$'],'Поле','🎨',1);add(MFX,'mfx',k=>selv('mfx')===k,['shSel',"'mfx',$"],'Эффект','✨',1,3)}
+  if(pfG==='battle'){add(BSK,'bat',k=>se.bat===k,['shSel',"'bat',$"],'Оформление','🎨',1);add(BFX,'bfx',k=>selv('bfx')===k,['shSel',"'bfx',$"],'Эффект','✨',1,3)}
+  if(pfG==='quiz')add(QSK,'qz',k=>se.qz===k,['shSel',"'qz',$"],'Оформление','🎨',1);
+  h=`<div class="rw" style="margin-top:12px">${it.join('')||'<p class="sm" style="grid-column:1/-1;text-align:center;margin:16px 0">Пока ничего не куплено</p>'}</div><button class="btn2 mt" style="width:100%" onclick="go('shop');shTab='game';shGo('${pfG}')">В магазин</button>`}
+ return gp+h}
+function pfStats(){const pn=esc(S.pt?S.pt.name:'Партнёр'),P=pfP(),pp=P&&P.ps||null,me=pst;
+ const row=(l,a,b)=>`<div class="row" style="padding:10px 0;border-top:1px solid var(--border)"><span class="sp sm">${l}</span><b style="width:88px;text-align:right">${a}</b><b style="width:88px;text-align:right">${b}</b></div>`,
+ hd=`<div class="row" style="padding-bottom:6px"><span class="sp"></span><span class="xs" style="width:88px;text-align:right">Ты</span><span class="xs" style="width:88px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pn}</span></div>`,
+ sum=(o,k)=>o?PFG.reduce((a,g)=>a+((o[g[0]]||{})[k]||0),0):null,
+ pv=(v,f)=>v==null?'—':f?f(v):v,
+ mdS=sv=>{const v=Object.values(sv||{}).map(Number).filter(x=>x>0);return{n:Object.keys(sv||{}).length,b:v.length?Math.min(...v):0,a:v.length?Math.round(v.reduce((x,y)=>x+y,0)/v.length):0}};
+ if(!pfStatG)return `<div class="card mt">${hd}${row('Время в играх',fT(sum(me,'t')),pv(sum(pp,'t'),fT))}${row('Монет заработано',sum(me,'c')+' 🪙',pv(sum(pp,'c'),v=>v+' 🪙'))}</div>`+PFG.map(g=>`<button class="card row mt" style="width:100%;text-align:left" onclick="pfStatG='${g[0]}';drawRewards()"><span style="font-size:30px">${g[1]}</span><div class="sp"><b class="ff">${g[2]}</b><p class="xs">Ты: ${fT(me[g[0]].t)} · ${pn}: ${pp&&pp[g[0]]?fT(pp[g[0]].t):'—'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`).join('')+(pp?'':'<p class="xs" style="text-align:center;margin-top:12px">Данные партнёра появятся, когда он зайдёт в приложение с новой версией</p>');
+ const g=pfStatG,gi=PFG.find(x=>x[0]===g),m=me[g],q=pp&&pp[g]||null;let x='';
+ x+=row('Время в игре',fT(m.t),pv(q&&q.t,fT))+row('Заходов',m.s,pv(q&&q.s))+row('Монет заработано',m.c+' 🪙',pv(q&&q.c,v=>v+' 🪙'))+row('Наград получено',m.k,pv(q&&q.k));
+ if(g==='tower')x+=row('Лучший рекорд (этажей)',+LS('twbf')||0,pv(P&&P.tf))+row('Лучший счёт',+LS('twbs')||0,pv(P&&P.ts))+row('Общий рекорд пары',S.game.blocks,S.game.blocks);
+ if(g==='meow'){const a=mdS(md.me.solved),pr=md.rows.find(r=>r.user_id!==S.uid),b=mdS(pr&&pr.solved);x+=row('Пройдено уровней',a.n,b.n)+row('Лучшее время',a.b?mdF(a.b):'—',b.b?mdF(b.b):'—')+row('Среднее время',a.a?mdF(a.a):'—',b.a?mdF(b.a):'—')+row('Лучшая серия',mdBest(),'—')}
+ if(g==='battle')x+=row('Побед',m.k,pv(q&&q.k));
+ if(g==='quiz')x+=row('Ответов',(S.quiz||[]).filter(r=>r.user_id===S.uid).length,(S.quiz||[]).filter(r=>r.user_id!==S.uid).length);
+ return `<div class="row" style="margin:12px 0"><button class="pill" onclick="pfStatG=null;drawRewards()"><i class="fa-solid fa-arrow-left"></i> Статистика</button><b class="ff">${gi[1]} ${gi[2]}</b></div><div class="card">${hd}${x}</div>`}
 </script></body></html>
