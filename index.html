@@ -2170,6 +2170,9 @@ setInterval(()=>{if(document.hidden)return;document.querySelectorAll('.lrp').for
 /* ---------- Магазин: вкладки «Дом» и «Стикеры» ---------- */
 SHT.push(['home','Дом'],['room','Комнаты'],['stk','Стикеры']);SHM.push('home','room','stk');
 let shHC='all';window.lrCat=c=>{shHC=c;drawShop()};
+/* экспорт локальных данных магазина для позднего скрипта комнат (иначе он падал на «F is not defined») */
+window.F=F;window.FUR=FUR;window.CATS=CATS;window.THEMES=THEMES;
+['clamp','lr','lrCtl','lrDraw','lrSave','lrStage','lrThId','lrThS'].forEach(n=>{try{if(!(n in window))Object.defineProperty(window,n,{configurable:true,get:()=>eval(n),set:v=>{eval(n+'=v')}})}catch(e){console.warn('export',n,e)}});Object.defineProperty(window,'shHC',{configurable:true,get:()=>shHC,set:v=>{shHC=v}});
 {const d0=drawShop;drawShop=function(){d0.apply(this,arguments);if(cur!=='shop'||!['home','room','stk'].includes(shTab))return;
  const it=(k,ico,nm,pr,act)=>`<button onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${pr===0?'бесплатно':own(k)?'куплено ✓':pr+' 🪙'}</span></button>`;let h='';
  if(shTab==='home'){$('shHead').innerHTML=`<div class="tabs" style="margin-bottom:10px;overflow-x:auto">${CATS.map(c=>`<button class="${shHC===c[0]?'on':''}" style="white-space:nowrap;padding:0 10px;font-size:13px" onclick="lrCat('${c[0]}')">${c[1]}</button>`).join('')}</div>`;
