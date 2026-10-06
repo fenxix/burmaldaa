@@ -945,7 +945,7 @@ function ago(t){const m=Math.floor((Date.now()-new Date(t))/6e4);return m<1?'т�
 const online=m=>m&&Date.now()-new Date(m.seen_at)<7e4;
 function openModal(){$('modal').classList.add('on')}
 
-async function auth(){let {data:{session}}=await sb.auth.getSession();
+async function auth(){try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}let {data:{session}}=await sb.auth.getSession();
  if(!session){const {data,error}=await sb.auth.signInAnonymously();if(error){toast('Включи Anonymous sign-ins в Supabase → Auth');throw error}session=data.session}
  S.uid=session.user.id}
 
@@ -955,7 +955,7 @@ async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m
  if(mode==='join'&&!code){err('Введи код комнаты');return toast('Введи код комнаты')}
  const bs=[...document.querySelectorAll('#modal .btn')];bs.forEach(b=>b.disabled=true);err('Подключаемся…');
  try{
-  const job=(async()=>{await auth();const r=mode==='create'?await sb.rpc('couple_create_room',{p_name:name}):await sb.rpc('couple_join_room',{p_code:code,p_name:name});if(r.error)throw r.error;return r.data})();
+  const job=(async()=>{await auth();let r=mode==='create'?await sb.rpc('couple_create_room',{p_name:name}):await sb.rpc('couple_join_room',{p_code:code,p_name:name});if(r.error&&mode==='join'&&String(r.error.message||'').includes('room_full')){const r2=await sb.rpc('couple_recover_member',{p_code:code,p_name:name});if(!r2.error)r=r2;else if(!String(r2.error.message||'').includes('does not exist'))r.error=r2.error}if(r.error)throw r.error;return r.data})();
   const data=await Promise.race([job,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),20000))]);
   const d=Array.isArray(data)?data[0]:data;
   if(!d||!d.room_id)throw new Error('Сервер вернул неожиданный ответ: '+JSON.stringify(data));
@@ -964,7 +964,7 @@ async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m
   if(S.me){$('modal').classList.remove('on');err('')}
   else err('Код принят, но комната не загрузилась: '+(S.lerr?S.lerr.message:'участник не найден'))}
  catch(e){const t=String(e.message||e);
-  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
+  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('member_not_found')?'Комната заполнена, и участника с таким именем нет. Введи имя точно так, как было раньше':t.includes('member_online')?'Этот аккаунт сейчас в сети на другом устройстве. Закрой там приложение и подожди 2 минуты':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
   err(msg);toast(msg)}
  finally{bs.forEach(b=>b.disabled=false)}}
 
