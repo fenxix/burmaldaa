@@ -542,8 +542,8 @@ function petsPanel(){const h=$('lrPets');if(!h||cur!=='loveroom')return;try{lrPi
 const petById=id=>allPets().find(x=>x[0]===id);
 const grow=(id,add,extra)=>{const o=pt2.rows[id]||{},a=stg(o.xp||0),xp=(o.xp||0)+add,b=stg(xp);petSet(id,{xp,...extra});if(a!==b)toast(petById(id)[2]+' вырос(ла): '+b[0]+'! 🎉')};
 const jump=id=>{document.querySelectorAll('.lrp2[data-p="'+id+'"]').forEach(e=>{e.classList.add('jmp');setTimeout(()=>e.classList.remove('jmp'),1000)})};
-window.ptFeed=id=>{go('dining')};
-window.ptTuck=id=>{go('sleep')};
+window.ptFeed=id=>{dnBack='loveroom';go('dining')};
+window.ptTuck=id=>{dnBack='loveroom';go('sleep')};
 window.ptCall=id=>{petSet(id,{rk:lr.k,x:50,y:78,placed_at:iso()});petsSync();petsPanel()};
 function petTap(id,e){const p=petById(id);if(!p)return;const s=petState(p,new Date());pt2.sel=id;const el=document.querySelector('#lrStage .lrp2[data-p="'+id+'"]');
  if(!s.sleep&&el)lrPetTap(e,el);sayP(id,s.sleep?'💤':s.rest?'🥱':s.hun>=1?'🍖?':['💗','😊','🥰','🎵','✨'][Math.random()*5|0]);petsPanel()}
@@ -558,7 +558,7 @@ document.addEventListener('pointerup',e=>{const g=pt2.drag;if(!g)return;pt2.drag
 {const s2=lrStage;lrStage=function(){return s2.apply(this,arguments).replace(/<div class="lrp sit"[^>]*>[^<]*<\/div>/g,'')}}
 {const d2=lrDraw;lrDraw=function(){d2.apply(this,arguments);try{petsSync();petsPanel()}catch(e){console.error('pets',e)}}}
 {const h2=lrHome;lrHome=function(){h2.apply(this,arguments);try{petsSync()}catch(e){console.error('pets',e)}}}
-$('lrTh').previousElementSibling.insertAdjacentHTML('beforebegin','<p class="xs mt" id="lrPickT">Питомцы в комнате</p><div class="row" id="lrPick" style="gap:8px;overflow-x:auto;padding-bottom:4px"></div><p class="xs mt">Питомцы: тяни пальцем. К кровати ночью — уложить, к холодильнику или столу — покормить</p><div id="lrPets"></div>');
+$('lrTh').previousElementSibling.insertAdjacentHTML('beforebegin','<p class="xs mt" id="lrPickT">Питомцы в комнате</p><div class="row" id="lrPick" style="gap:8px;overflow-x:auto;padding-bottom:4px"></div><p class="xs mt">Питомцы: тяни пальцем. Сами они не едят и не спят — корми на «Столе и холодильнике», укладывай в «Спальне»</p><div id="lrPets"></div>');
 async function petsLoad(){if(!S.room)return;const {data,error}=await sb.from(PTB).select('*').eq('room_id',S.room);if(error)return;const old=pt2.rows;pt2.rows={};(data||[]).forEach(r=>{pt2.rows[r.pet]=r;const o=old[r.pet];if(o&&o.fed_at&&r.fed_at!==o.fed_at){sayP(r.pet,'😋');jump(r.pet)}});
  const miss=allPets().filter(p=>!pt2.rows[p[0]]);if(miss.length&&!pt2.mk){pt2.mk=1;await sb.from(PTB).upsert(miss.map(p=>({room_id:S.room,pet:p[0]})),{onConflict:'room_id,pet',ignoreDuplicates:true});pt2.mk=0;const r=await sb.from(PTB).select('*').eq('room_id',S.room);(r.data||[]).forEach(x=>pt2.rows[x.pet]=x)}
  petsSync();petsPanel()}
@@ -1872,6 +1872,7 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 $('app').insertAdjacentHTML('beforeend',`<section class="screen" id="loveroom"><div class="head"><button class="back" onclick="go('home')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button><h2>Наша комната</h2><span class="pill on" id="lrCoins" style="margin-left:auto"></span></div>
 <div class="lr" id="lrStage"></div>
 <div class="row mt" style="gap:8px"><button class="btn2" id="lrEd" style="flex:1" onclick="lrEdit()"></button><button class="pill" onclick="shTab='home';go('shop');RB.shop='loveroom'"><i class="fa-solid fa-bag-shopping"></i> Магазин</button></div>
+<div class="row mt" style="gap:8px"><button class="pill on" style="flex:1;min-height:44px" onclick="dnBack='loveroom';go('dining')">🍽️ Стол и холодильник</button><button class="pill on" style="flex:1;min-height:44px" onclick="dnBack='loveroom';go('sleep')">🛏️ Спальня</button></div>
 <div class="row mt" id="lrTools" style="display:none;justify-content:center;gap:8px"><button class="pill" onclick="lrAdj('f')" aria-label="Отразить">↔</button><button class="pill" onclick="lrAdj('-')" aria-label="Меньше">−</button><button class="pill" onclick="lrAdj('+')" aria-label="Больше">+</button><button class="pill" onclick="lrToggle(lr.sel)" aria-label="Убрать"><i class="fa-solid fa-trash"></i></button></div>
 <p class="xs mt">Стены и пол</p><div class="row" id="lrTh" style="gap:8px;overflow-x:auto;padding-bottom:4px"></div><p class="xs mt">Мебель</p><div class="rw" id="lrInv"></div></section>
 <div class="modal" id="cdm"><div class="card" id="cdc" style="width:100%;max-height:92%;overflow:auto"></div></div>`);
@@ -2488,7 +2489,7 @@ $('app').insertAdjacentHTML('beforeend',`<section class="screen !p-0 !overflow-h
  <div class="absolute right-[6%] top-[27%] text-3xl">🪴</div><div class="absolute left-[40%] top-[17%] text-2xl opacity-80">🖼️</div>
  <div class="relative z-10 flex h-full flex-col">
   <div class="flex items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
-   <button class="back" onclick="go('more')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button>
+   <button class="back" onclick="go(window.dnBack||'more')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button>
    <h2 class="text-xl font-semibold drop-shadow">Обеденный стол</h2>
    <span id="dnCoins" class="ml-auto rounded-full bg-black/35 px-3 py-1.5 text-xs font-bold"></span></div>
   <div class="relative flex-1 select-none">
@@ -2580,7 +2581,7 @@ function dnLeave(){clearInterval(dn.t);if(dn.ch){sb.removeChannel(dn.ch);dn.ch=n
 try{NAVG.dining='more'}catch{}
 {const p=petsLoad;petsLoad=async function(){const r=await p.apply(this,arguments);try{dnRender()}catch{}return r}}
 {const d=drawMore;drawMore=function(){d.apply(this,arguments);try{const b=$('moreBody'),n=pets().filter(p=>live(p[0]).sat<50).length;
- if(b&&b.firstElementChild)b.firstElementChild.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="go('dining')"><span class="ico"><i class="fa-solid fa-utensils"></i></span><div class="sp"><b class="ff" style="font-size:16px">Обеденный стол</b><p class="xs">${n?n+' хочет кушать 🍖':'Холодильник и кормление'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
+ if(b&&b.firstElementChild)b.firstElementChild.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="dnBack='more';go('dining')"><span class="ico"><i class="fa-solid fa-utensils"></i></span><div class="sp"><b class="ff" style="font-size:16px">Обеденный стол</b><p class="xs">${n?n+' хочет кушать 🍖':'Холодильник и кормление'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
 }catch(e){console.error('dining',e)}})();
 </script>
 
@@ -2606,7 +2607,7 @@ $('app').insertAdjacentHTML('beforeend',`<section class="screen !p-0 !overflow-h
  <div class="absolute left-[8%] top-[52%] flex flex-col items-center"><i class="h-8 w-8 rounded-full bg-amber-300/90 shadow-[0_0_40px_16px_rgba(251,191,36,.4)] animate-pulse"></i><i class="h-10 w-11 rounded-t-lg bg-[#7d4f2d]"></i></div>
  <div class="relative z-10 flex h-full flex-col">
   <div class="flex items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
-   <button class="back" onclick="go('more')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button>
+   <button class="back" onclick="go(window.dnBack||'more')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button>
    <h2 class="text-xl font-semibold drop-shadow">Спальня</h2>
    <span id="slInfo" class="ml-auto rounded-full bg-black/35 px-3 py-1.5 text-xs font-bold"></span></div>
   <div class="relative flex-1 select-none">
@@ -2667,8 +2668,8 @@ function slLeave(){clearInterval(sl.t);sl.bed=null;sl.p=0;sl.cov=null}
 try{NAVG.sleep='more'}catch{}
 {const p=petsLoad;petsLoad=async function(){const r=await p.apply(this,arguments);try{slRender()}catch{}return r}}
 {const d=drawMore;drawMore=function(){d.apply(this,arguments);try{const b=$('moreBody'),L=pets().map(p=>live(p[0])),n=L.filter(s=>s.st==='idle'&&s.en<30).length,z=L.filter(s=>s.st==='sleeping').length,
- a=b&&(b.querySelector('[onclick="go(\'dining\')"]')||b.firstElementChild);
- if(a)a.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="go('sleep')"><span class="ico"><i class="fa-solid fa-bed"></i></span><div class="sp"><b class="ff" style="font-size:16px">Спальня</b><p class="xs">${n?n+' хочет спать 🥱':z?'Спят: '+z+' 💤':'Укладывание питомцев'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
+ a=b&&(b.querySelector('[onclick="dnBack=\'more\';go(\'dining\')"]')||b.firstElementChild);
+ if(a)a.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="dnBack='more';go('sleep')"><span class="ico"><i class="fa-solid fa-bed"></i></span><div class="sp"><b class="ff" style="font-size:16px">Спальня</b><p class="xs">${n?n+' хочет спать 🥱':z?'Спят: '+z+' 💤':'Укладывание питомцев'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
 }catch(e){console.error('sleep',e)}})();
 </script>
 
