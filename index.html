@@ -423,10 +423,7 @@ lrLoad=async function(){if(!S.room||lr.drag)return;const {data,error}=await sb.f
 window.rmGo=async k=>{const r=RM.find(x=>x[0]===k);if(!r)return;
  if(r[2]>0&&!own('rm:'+k)){await buy('rm:'+k,r[2],()=>{});if(!own('rm:'+k))return}
  lr.k=k;try{localStorage.setItem('lrk',k)}catch{}lr.sel=null;lr.edit=false;lr.items=[];await lrLoad()};
-const rmTabs=()=>{const b=$('lrRooms');if(b)b.innerHTML=RM.map(r=>`<button class="lrt ${lr.k===r[0]?'on':''}" style="width:auto;flex:none;padding:8px 14px" onclick="rmGo('${r[0]}')"><b>${r[1]}</b><span class="xs">${lr.k===r[0]?'здесь ✓':r[2]===0||own('rm:'+r[0])?'зайти':r[2]+' 🪙'}</span></button>`).join('')};
-$('lrStage').insertAdjacentHTML('beforebegin','<div class="row" id="lrRooms" style="gap:8px;overflow-x:auto;margin-bottom:10px"></div>');
 $('lrTools').insertAdjacentHTML('afterbegin','<button class="pill" onclick="lrAdj(\'r\')" aria-label="Повернуть">⟳</button>');
-{const d0=lrDraw;lrDraw=function(){d0.apply(this,arguments);if(cur==='loveroom')rmTabs()}}
 
 /* --- время суток и поворот предметов --- */
 const tod=()=>{const h=new Date().getHours();return h>=6&&h<17?'':h<20?'rgba(255,140,60,.14)':'rgba(10,15,60,.38)'};
@@ -535,10 +532,113 @@ window.lrPick=id=>{const sel=lrSelIds(),all=lrAllPets(),nm=(all.find(p=>p[0]===i
  saveGame({room_pets:next.length?next.join(','):'-'});
  toast(sel.includes(id)?nm+' уходит из комнаты':nm+' заселяется в комнату');
  petsLoad();petsSync();petsPanel();lrDraw()};
-function petsPanel(){const h=$('lrPets');if(!h||cur!=='loveroom')return;try{lrPickDraw()}catch(e){console.error('pick',e)}const now=new Date(),pts=allPets();
- const html=pts.length?pts.map((p,i)=>{const s=petState(p,now,i),rn=(RM.find(r=>r[0]===s.rk)||[])[1]||'',nx=ST[ST.indexOf(s.sg)+1],pr=nx?Math.min(100,Math.round((s.xp-s.sg[1])/(nx[1]-s.sg[1])*100)):100;
-  return `<div class="card row mt" style="gap:10px;padding:10px;${pt2.sel===p[0]?'border-color:var(--pink)':''}">${pArt(p,Math.round(22+12*s.sg[2]))}<div class="sp" style="min-width:0"><b class="ff" style="font-size:14px">${p[2]} · ${s.sg[0]}</b><p class="xs">${['сыт 😋','проголодался 🍖','очень голоден 🥺'][s.hun]} · ${s.sleep?'спит 💤':s.rest?'не спит 🥱':'бодрствует'} · ${rn}</p><div class="pgb"><i style="width:${pr}%"></i></div></div><div style="display:grid;gap:4px"><button class="pill" onclick="ptFeed('${p[0]}')" aria-label="Покормить">🍖</button>${(s.rest||s.sleep)?`<button class="pill on" onclick="ptTuck('${p[0]}')" aria-label="Уложить">🌙</button>`:''}${s.rk!==lr.k?`<button class="pill" onclick="ptCall('${p[0]}')" aria-label="Позвать">👋</button>`:''}</div></div>`}).join(''):'<p class="sm" style="text-align:center;margin-top:8px">Выбери питомца в магазине — он поселится здесь 🐾</p>';
+/* ===== НОВЫЙ UI КОМНАТЫ: стили ===== */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`
+#loveroom{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
+#loveroom.hudopen{padding-bottom:calc(46dvh + env(safe-area-inset-bottom,0px))}
+/* дверь */
+.lrdoor{position:absolute;right:4cqw;top:24%;width:17cqw;height:31cqw;min-height:0;min-width:0;padding:0;z-index:3;border:0;cursor:pointer;perspective:60cqw;border-radius:9cqw 9cqw 0 0;background:linear-gradient(#1a1030,#0b0718);box-shadow:0 0 0 1.2cqw #6b4522,0 1.4cqw 4cqw rgba(0,0,0,.4)}
+.lrdoor .dr{position:absolute;inset:0;border-radius:inherit;transform-origin:left center;transition:transform .35s ease;background:linear-gradient(135deg,#a06a3c,#6f4524);box-shadow:inset 0 0 0 .8cqw rgba(0,0,0,.18)}
+.lrdoor .dr::before{content:'';position:absolute;inset:14% 16% 38%;border:.6cqw solid rgba(0,0,0,.22);border-radius:6cqw 6cqw .6cqw .6cqw}
+.lrdoor .dr::after{content:'';position:absolute;inset:66% 16% 8%;border:.6cqw solid rgba(0,0,0,.22);border-radius:.6cqw}
+.lrdoor .kn{position:absolute;right:2.2cqw;top:52%;width:2.4cqw;height:2.4cqw;border-radius:50%;background:radial-gradient(#ffe9a8,#d9a441);box-shadow:0 0 1.6cqw rgba(255,214,120,.7)}
+.lrdoor.open .dr{transform:rotateY(-62deg)}
+.lrdoor .nm{position:absolute;left:50%;top:calc(100% + 2.4cqw);transform:translateX(-50%);white-space:nowrap;font:600 2.8cqw Montserrat,sans-serif;color:#fff;padding:.7cqw 2.6cqw;border-radius:999px;background:rgba(13,11,27,.74);border:1px solid rgba(230,210,255,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.lrdoor.ed{pointer-events:none;opacity:.4}
+.lrdm{display:none;position:fixed;z-index:11;flex-direction:column;gap:4px;padding:6px;border-radius:18px;background:rgba(18,19,43,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(230,210,255,.16);box-shadow:0 18px 48px rgba(0,0,0,.5)}
+.lrdm.on{display:flex;animation:lrup .18s ease-out}
+.lrdm button{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:42px;padding:8px 12px;border-radius:12px;border:1px solid transparent;background:transparent;text-align:left;font-size:13px;color:var(--text-primary)}
+.lrdm button b{font-weight:600}.lrdm button span{font-size:11px;color:var(--text-muted)}
+.lrdm button.on{border-color:rgba(var(--pr),.6);background:rgba(var(--pr),.1)}
+/* нижний HUD */
+.lrhud{position:fixed;left:0;right:0;bottom:0;margin:0 auto;width:100%;max-width:430px;z-index:9;pointer-events:none;display:flex;flex-direction:column;gap:8px;padding:0 12px calc(10px + env(safe-area-inset-bottom,0px))}
+.lrhud>*{pointer-events:auto}
+.lrbar{display:flex;gap:8px;padding:6px;border-radius:24px;background:rgba(13,11,27,.94);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(230,210,255,.15);box-shadow:0 -10px 34px rgba(3,2,14,.35),0 0 28px rgba(var(--sr),.1)}
+.lrbar button{position:relative;flex:1;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:18px;border:1px solid transparent;background:transparent;font:600 13px Montserrat,sans-serif;color:var(--text-secondary)}
+.lrbar button i{font-size:18px}
+.lrbar button.on{color:var(--text-primary);border-color:rgba(var(--pr),.72);background:linear-gradient(135deg,rgba(var(--pr),.16),rgba(var(--sr),.13));box-shadow:0 0 20px rgba(var(--pr),.14)}
+.lrbar button.ed::after{content:'';position:absolute;top:8px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink)}
+.lrtools{display:none;align-self:center;justify-content:center;gap:8px;padding:6px;border-radius:999px;background:rgba(13,11,27,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(230,210,255,.15)}
+/* выезжающие панели */
+.lrsheet{display:none;padding:8px 12px 12px;border-radius:22px;background:rgba(18,19,43,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(230,210,255,.16);box-shadow:0 24px 60px rgba(0,0,0,.45);animation:lrup .22s ease-out}
+.lrhud:not([data-s=""]) .lrsheet{display:block}
+.lrhud:not([data-s=""]) .lrstrip,.lrhud:not([data-s=""]) .lrtools{display:none!important}
+.lrgrab{display:flex;justify-content:center;padding:2px 0 8px}.lrgrab span{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.18)}
+.lrpane{display:none;max-height:34dvh;overflow-y:auto;overscroll-behavior:contain}
+.lrhud[data-s="fur"] #lrPaneFur,.lrhud[data-s="pets"] #lrPanePets{display:block}
+#lrInv{grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}#lrInv button{padding:10px 4px}#lrInv .lrv{font-size:28px}
+#lrTh{grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}#lrTh .lrt{width:auto;min-width:0}
+.lrpick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+@keyframes lrup{from{opacity:0;transform:translateY(14px)}}
+/* ряд питомцев */
+.lrstrip{display:flex;justify-content:center;align-items:flex-end;gap:14px;padding:10px 12px;border-radius:22px;background:rgba(13,11,27,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(230,210,255,.12)}
+.pk{position:relative;width:64px;display:grid;gap:5px;justify-items:center}
+.pk .pkf{width:54px;height:54px;min-height:0;padding:0;border-radius:18px;display:grid;place-items:center;background:var(--glass-strong);border:1px solid var(--border);transition:transform .15s,border-color .15s,box-shadow .15s}
+.pk.sel .pkf{border-color:rgba(var(--pr),.6)}
+.pk.open .pkf{border-color:var(--pink);box-shadow:0 0 18px rgba(var(--pr),.35);transform:translateY(-2px)}
+.pk.away .pkf{opacity:.55;filter:saturate(.5)}
+.pk .pgb{width:100%;margin-top:0;height:4px}
+.pki{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;line-height:1}
+.hg{display:inline-flex;gap:2px;align-items:center}.hg i{width:6px;height:6px;border-radius:2px;background:rgba(255,255,255,.14)}
+.hg.h0 i{background:#7ee2a8}.hg.h1 i:nth-child(-n+2){background:#ffc46b}.hg.h2 i:first-child{background:#ff6b8a;animation:pkp 1s infinite}
+@keyframes pkp{50%{opacity:.3}}
+.pkr{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font:600 9px Montserrat,sans-serif;font-style:normal;white-space:nowrap;padding:2px 6px;border-radius:999px;background:rgba(13,11,27,.9);border:1px solid var(--border);color:var(--text-secondary)}
+.pkm{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:3;display:grid;gap:6px;justify-items:center;padding:8px 10px;border-radius:18px;white-space:nowrap;background:rgba(18,19,43,.97);border:1px solid rgba(230,210,255,.16);box-shadow:0 14px 40px rgba(0,0,0,.5);animation:lrpop .16s ease-out}
+.pkm small{font-size:10px;color:var(--text-muted)}
+.pkb{display:flex;gap:6px}
+.pkm button{width:42px;height:42px;min-height:0;padding:0;border-radius:50%;display:grid;place-items:center;font-size:19px;background:var(--glass-strong);border:1px solid var(--border)}
+.pkm button.on{border-color:rgba(var(--pr),.72);background:rgba(var(--pr),.14);box-shadow:0 0 14px rgba(var(--pr),.3)}
+@keyframes lrpop{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.9)}}
+`}));
+
+/* ===== НОВАЯ petsPanel(): компактный ряд «лиц» над нижней панелью ===== */
+function petsPanel(){const h=$('lrPets');if(!h||cur!=='loveroom')return;try{lrPickDraw()}catch(e){console.error('pick',e)}
+ const now=new Date(),pts=allPets();
+ /* сначала те, кто в текущей комнате; остальные — приглушённо, с подписью комнаты */
+ const rows=pts.map((p,i)=>({p,s:petState(p,now,i)})).sort((a,b)=>(b.s.rk===lr.k)-(a.s.rk===lr.k));
+ const html=rows.length?rows.map(({p,s})=>{
+  const id=p[0],here=s.rk===lr.k,rn=(RM.find(r=>r[0]===s.rk)||[])[1]||'',nx=ST[ST.indexOf(s.sg)+1],
+   pr=nx?Math.min(100,Math.round((s.xp-s.sg[1])/(nx[1]-s.sg[1])*100)):100,open=pt2.menu===id,
+   hun=['сыт','голоден','очень голоден'][s.hun],st=s.sleep?['💤','спит']:s.rest?['🥱','устал']:['☀️','бодр'];
+  return `<div class="pk${here?'':' away'}${open?' open':''}${pt2.sel===id?' sel':''}">`+
+   (open?`<div class="pkm" role="menu"><small>${p[2]} · ${s.sg[0]}${here?'':' · '+rn}</small><div class="pkb">`+
+    `<button class="${here?'':'on'}" onclick="ptAct('Call','${id}')" aria-label="Позвать к себе" title="Позвать к себе">👋</button>`+
+    `<button class="${s.hun>=1?'on':''}" onclick="ptAct('Feed','${id}')" aria-label="Покормить" title="Покормить">🍖</button>`+
+    `<button class="${s.rest||s.sleep?'on':''}" onclick="ptAct('Tuck','${id}')" aria-label="Уложить спать" title="Уложить спать">🌙</button></div></div>`:'')+
+   `<button class="pkf" onclick="ptMenu('${id}')" aria-label="${p[2]}: действия" aria-expanded="${open}">${pArt(p,Math.round(26+8*s.sg[2]))}</button>`+
+   (here?'':`<em class="pkr">${rn}</em>`)+
+   `<div class="pgb" title="Опыт: ${s.sg[0]}, ${pr}%"><i style="width:${pr}%"></i></div>`+
+   `<div class="pki"><span class="hg h${s.hun}" title="${hun}" aria-label="${hun}"><span style="font-size:11px;margin-right:3px">🍖</span><i></i><i></i><i></i></span><span title="${st[1]}" aria-label="${st[1]}">${st[0]}</span></div></div>`}).join('')
+  :'<p class="xs" style="padding:4px 8px;text-align:center">Нажми «Питомцы», чтобы поселить кого-нибудь 🐾</p>';
  if(h._h!==html){h._h=html;h.innerHTML=html}}
+window.ptMenu=id=>{pt2.menu=pt2.menu===id?null:id;pt2.sel=id;petsPanel()};
+window.ptAct=(k,id)=>{pt2.menu=null;const f=window['pt'+k];if(f)f(id);petsPanel()};
+document.addEventListener('pointerdown',e=>{if(pt2.menu&&!e.target.closest('#lrPets')){pt2.menu=null;petsPanel()}});
+
+/* ===== Дверь: выбор комнаты (RM → rmGo) ===== */
+const rmDoorHtml=()=>{const r=RM.find(x=>x[0]===lr.k)||RM[0];return `<button class="lrdoor${lr.edit?' ed':''}" id="lrDoor" onclick="rmDoor(event)" aria-haspopup="true" aria-label="Дверь — выбрать комнату (сейчас: ${r[1]})"><span class="dr"><i class="kn"></i></span><b class="nm">${r[1]} ▾</b></button>`};
+const rmClose=()=>{const m=$('lrDoorMenu'),d=$('lrDoor');if(m)m.classList.remove('on');if(d)d.classList.remove('open')};
+window.rmDoor=e=>{if(e)e.stopPropagation();const m=$('lrDoorMenu'),d=$('lrDoor');if(!m||!d)return;if(m.classList.contains('on')){rmClose();return}
+ if(hud.open){hud.open=null;hudSync()}pt2.menu=null;petsPanel();
+ m.innerHTML=RM.map(r=>{const here=lr.k===r[0],ok=r[2]===0||own('rm:'+r[0]);return `<button role="menuitem" class="${here?'on':''}" onclick="rmPick('${r[0]}')"><b>${r[1]}</b><span>${here?'здесь ✓':ok?'зайти':r[2]+' 🪙'}</span></button>`}).join('');
+ const b=d.getBoundingClientRect(),w=200,vw=document.documentElement.clientWidth;
+ m.style.width=w+'px';m.style.left=Math.max(8,Math.min(vw-w-8,b.right-w))+'px';m.style.top=Math.max(8,Math.min(b.bottom+36,innerHeight-RM.length*46-110))+'px';
+ m.classList.add('on');d.classList.add('open')};
+window.rmPick=k=>{rmClose();if(k!==lr.k)rmGo(k)};
+document.addEventListener('pointerdown',e=>{const m=$('lrDoorMenu');if(m&&m.classList.contains('on')&&!e.target.closest('#lrDoorMenu,#lrDoor'))rmClose()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){rmClose();if(hud.open){hud.open=null;hudSync()}}});
+{const d0=lrDraw;lrDraw=function(){d0.apply(this,arguments);if(cur!=='loveroom')return;const st=$('lrStage');if(!st)return;st.insertAdjacentHTML('beforeend',rmDoorHtml());const m=$('lrDoorMenu');if(m&&m.classList.contains('on'))$('lrDoor').classList.add('open')}}
+
+/* ===== Нижняя панель (HUD): «Мебель» / «Питомцы» ===== */
+const hud={open:null,ft:'inv'};
+const hudSync=()=>{const h=$('lrHud');if(!h)return;h.dataset.s=hud.open||'';$('loveroom').classList.toggle('hudopen',!!hud.open);
+ $('hbFur').classList.toggle('on',hud.open==='fur');$('hbPets').classList.toggle('on',hud.open==='pets');
+ $('lrInv').style.display=hud.ft==='inv'?'':'none';$('lrTh').style.display=hud.ft==='th'?'grid':'none';
+ document.querySelectorAll('#lrFTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===hud.ft))};
+window.hudOpen=n=>{hud.open=hud.open===n?null:n;pt2.menu=null;rmClose();hudSync();petsPanel()};
+window.hudFur=t=>{hud.ft=t;hudSync()};
+{const c0=lrCtl;lrCtl=function(){c0.apply(this,arguments);const b=$('hbFur');if(b)b.classList.toggle('ed',!!lr.edit)}}
+{const g0=window.go;window.go=function(s){const r=g0.apply(this,arguments);if(s==='loveroom'){hud.open=null;pt2.menu=null;rmClose();hudSync()}return r}}
 const petById=id=>allPets().find(x=>x[0]===id);
 const grow=(id,add,extra)=>{const o=pt2.rows[id]||{},a=stg(o.xp||0),xp=(o.xp||0)+add,b=stg(xp);petSet(id,{xp,...extra});if(a!==b)toast(petById(id)[2]+' вырос(ла): '+b[0]+'! 🎉')};
 const jump=id=>{document.querySelectorAll('.lrp2[data-p="'+id+'"]').forEach(e=>{e.classList.add('jmp');setTimeout(()=>e.classList.remove('jmp'),1000)})};
@@ -558,7 +658,6 @@ document.addEventListener('pointerup',e=>{const g=pt2.drag;if(!g)return;pt2.drag
 {const s2=lrStage;lrStage=function(){return s2.apply(this,arguments).replace(/<div class="lrp sit"[^>]*>[^<]*<\/div>/g,'')}}
 {const d2=lrDraw;lrDraw=function(){d2.apply(this,arguments);try{petsSync();petsPanel()}catch(e){console.error('pets',e)}}}
 {const h2=lrHome;lrHome=function(){h2.apply(this,arguments);try{petsSync()}catch(e){console.error('pets',e)}}}
-$('lrTh').previousElementSibling.insertAdjacentHTML('beforebegin','<p class="xs mt" id="lrPickT">Питомцы в комнате</p><div class="row" id="lrPick" style="gap:8px;overflow-x:auto;padding-bottom:4px"></div><p class="xs mt">Питомцы: тяни пальцем. Сами они не едят и не спят — корми на «Столе и холодильнике», укладывай в «Спальне»</p><div id="lrPets"></div>');
 async function petsLoad(){if(!S.room)return;const {data,error}=await sb.from(PTB).select('*').eq('room_id',S.room);if(error)return;const old=pt2.rows;pt2.rows={};(data||[]).forEach(r=>{pt2.rows[r.pet]=r;const o=old[r.pet];if(o&&o.fed_at&&r.fed_at!==o.fed_at){sayP(r.pet,'😋');jump(r.pet)}});
  const miss=allPets().filter(p=>!pt2.rows[p[0]]);if(miss.length&&!pt2.mk){pt2.mk=1;await sb.from(PTB).upsert(miss.map(p=>({room_id:S.room,pet:p[0]})),{onConflict:'room_id,pet',ignoreDuplicates:true});pt2.mk=0;const r=await sb.from(PTB).select('*').eq('room_id',S.room);(r.data||[]).forEach(x=>pt2.rows[x.pet]=x)}
  petsSync();petsPanel()}
@@ -1871,10 +1970,30 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 
 $('app').insertAdjacentHTML('beforeend',`<section class="screen" id="loveroom"><div class="head"><button class="back" onclick="go('home')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button><h2>Наша комната</h2><span class="pill on" id="lrCoins" style="margin-left:auto"></span></div>
 <div class="lr" id="lrStage"></div>
-<div class="row mt" style="gap:8px"><button class="btn2" id="lrEd" style="flex:1" onclick="lrEdit()"></button><button class="pill" onclick="shTab='home';go('shop');RB.shop='loveroom'"><i class="fa-solid fa-bag-shopping"></i> Магазин</button></div>
-<div class="row mt" style="gap:8px"><button class="pill on" style="flex:1;min-height:44px" onclick="dnBack='loveroom';go('dining')">🍽️ Стол и холодильник</button><button class="pill on" style="flex:1;min-height:44px" onclick="dnBack='loveroom';go('sleep')">🛏️ Спальня</button></div>
-<div class="row mt" id="lrTools" style="display:none;justify-content:center;gap:8px"><button class="pill" onclick="lrAdj('f')" aria-label="Отразить">↔</button><button class="pill" onclick="lrAdj('-')" aria-label="Меньше">−</button><button class="pill" onclick="lrAdj('+')" aria-label="Больше">+</button><button class="pill" onclick="lrToggle(lr.sel)" aria-label="Убрать"><i class="fa-solid fa-trash"></i></button></div>
-<p class="xs mt">Стены и пол</p><div class="row" id="lrTh" style="gap:8px;overflow-x:auto;padding-bottom:4px"></div><p class="xs mt">Мебель</p><div class="rw" id="lrInv"></div></section>
+<div class="lrdm" id="lrDoorMenu" role="menu" aria-label="Выбор комнаты"></div>
+<div class="lrhud" id="lrHud" data-s="">
+ <div class="lrsheet" id="lrSheet">
+  <div class="lrgrab"><span></span></div>
+  <div class="lrpane" id="lrPaneFur">
+   <div class="row" style="gap:8px">
+    <button class="btn2" id="lrEd" onclick="lrEdit()"></button>
+    <button class="pill" onclick="shTab='home';go('shop');RB.shop='loveroom'"><i class="fa-solid fa-bag-shopping"></i> Магазин</button>
+    <button class="pill" onclick="hudOpen(null)" aria-label="Закрыть">✕</button>
+   </div>
+   <div class="tabs mt" id="lrFTabs"><button class="on" data-t="inv" onclick="hudFur('inv')">Мебель</button><button data-t="th" onclick="hudFur('th')">Стены и пол</button></div>
+   <div class="rw" id="lrInv"></div>
+   <div id="lrTh" style="display:none"></div>
+  </div>
+  <div class="lrpane" id="lrPanePets">
+   <div class="row" style="justify-content:space-between;gap:8px"><b class="ff" id="lrPickT" style="font-size:13px">Питомцы в комнате</b><button class="pill" onclick="hudOpen(null)" aria-label="Закрыть">✕</button></div>
+   <div class="lrpick" id="lrPick"></div>
+   <p class="xs mt">Тяни питомца пальцем по комнате. Тап по иконке над панелью — позвать, покормить, уложить.</p>
+  </div>
+ </div>
+ <div class="lrtools" id="lrTools"><button class="pill on" onclick="lrEdit()" aria-label="Готово">✓ Готово</button><button class="pill" onclick="lrAdj('f')" aria-label="Отразить">↔</button><button class="pill" onclick="lrAdj('-')" aria-label="Меньше">−</button><button class="pill" onclick="lrAdj('+')" aria-label="Больше">+</button><button class="pill" onclick="lrToggle(lr.sel)" aria-label="Убрать"><i class="fa-solid fa-trash"></i></button></div>
+ <div class="lrstrip" id="lrPets"></div>
+ <nav class="lrbar" aria-label="Управление комнатой"><button id="hbFur" onclick="hudOpen('fur')"><i class="fa-solid fa-couch"></i><span>Мебель</span></button><button id="hbPets" onclick="hudOpen('pets')"><i class="fa-solid fa-paw"></i><span>Питомцы</span></button></nav>
+</div></section>
 <div class="modal" id="cdm"><div class="card" id="cdc" style="width:100%;max-height:92%;overflow:auto"></div></div>`);
 
 /* ---------- Комната ---------- */
