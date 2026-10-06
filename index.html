@@ -492,14 +492,14 @@ const ACT={sofa:'😌',chair:'😌',tv:'📺',shelf:'📖',piano:'🎵',game:'�
 const isBed=id=>/^bed|^rug$/.test(id),isFood=id=>/^(fridge|table2|stove)$/.test(id);
 const nightInfo=d=>{const h=d.getHours(),st=new Date(d);if(h<7)st.setDate(st.getDate()-1);st.setHours(22,0,0,0);return {n:h>=22||h<7,st,key:st.toDateString()}};
 const bedSpot=i=>{for(const k of rmsOwn()){const fs=roomFur(k),b=fs.find(o=>/^bed/.test(o.f[0]))||fs.find(o=>o.f[0]==='sofa'||o.f[0]==='rug');if(b)return {rk:k,x:b.r.x+(i%3-1)*5,y:b.r.y-1}}return {rk:'main',x:24+i*9,y:86}};
-function petState(p,now,i){i=i||0;const row=pt2.rows[p[0]]||{},ms=+now,xp=row.xp||0,sg=stg(xp),fed=row.fed_at?+new Date(row.fed_at):ms,hr=(ms-fed)/36e5,hun=hr>=8?2:hr>=3?1:0,ni=nightInfo(now),hh=now.getHours();
- let sleep=false,rest=false;if(ni.n){const tk=row.tucked_at&&+new Date(row.tucked_at)>=+ni.st;rest=!tk&&!(hh>=4&&hh<7)&&hsh(p[0]+ni.key)%100<45;sleep=!rest}
+function petState(p,now,i){i=i||0;const row=pt2.rows[p[0]]||{},ms=+now,xp=row.xp||0,sg=stg(xp),fed=row.fed_at?+new Date(row.fed_at):ms,hr=(ms-fed)/36e5,hun=window.petLive?(q=>q<20?2:q<50?1:0)(window.petLive(p[0]).sat):(hr>=8?2:hr>=3?1:0),ni=nightInfo(now),hh=now.getHours();
+ let sleep=false,rest=false;{const l=window.petLive&&window.petLive(p[0]);if(l){sleep=l.st==='sleeping';rest=!sleep&&l.st==='idle'&&l.en<30}else if(ni.n){const tk=row.tucked_at&&+new Date(row.tucked_at)>=+ni.st;rest=!tk&&!(hh>=4&&hh<7)&&hsh(p[0]+ni.key)%100<45;sleep=!rest}}
  let pos,act=null,lie=false;const held=row.placed_at&&row.x!=null&&ms-+new Date(row.placed_at)<24e4;
  if(held){pos={rk:row.rk||'main',x:row.x,y:row.y};const n=roomFur(pos.rk).map(o=>({o,d:Math.hypot(o.r.x-pos.x,(o.r.y-pos.y)*1.2)})).sort((a,b)=>a.d-b.d)[0];if(n&&n.d<12)act=n.o.f[0]}
  else if(sleep)pos=bedSpot(i);
  else{const b=Math.floor(ms/15e4),h=hsh(p[0]+b),rs=rmsOwn();let tg=null;
-  if(hun>=1)for(const k of rs){const o=roomFur(k).find(o=>isFood(o.f[0]));if(o){tg=[k,o];break}}
-  if(!tg){const k=rs.length>1&&h%100>=55?rs[(h>>>3)%rs.length]:'main',fs=roomFur(k);if(fs.length&&(h>>>7)%100<65)tg=[k,fs[(h>>>11)%fs.length]];else pos={rk:k,x:14+(h>>>9)%72,y:64+(h>>>13)%26}}
+  
+  if(!tg){const k=rs.length>1&&h%100>=55?rs[(h>>>3)%rs.length]:'main',fs=roomFur(k).filter(o=>!/^(fridge|table2|stove|coffee|pizza|cake|wine|corn)$/.test(o.f[0]));if(fs.length&&(h>>>7)%100<65)tg=[k,fs[(h>>>11)%fs.length]];else pos={rk:k,x:14+(h>>>9)%72,y:64+(h>>>13)%26}}
   if(tg&&tg[1]&&tg[1].r){pos={rk:tg[0],x:tg[1].r.x+((h>>>5)%9-4),y:tg[1].r.y+3};act=tg[1].f[0]}else if(!pos)pos={rk:'main',x:14+(h>>>9)%72,y:64+(h>>>13)%26}}
  if(act&&isBed(act)){lie=true}if(sleep)lie=true;
  pos.x=Math.max(6,Math.min(94,pos.x));pos.y=Math.max(30,Math.min(94,pos.y));
@@ -537,22 +537,22 @@ window.lrPick=id=>{const sel=lrSelIds(),all=lrAllPets(),nm=(all.find(p=>p[0]===i
  petsLoad();petsSync();petsPanel();lrDraw()};
 function petsPanel(){const h=$('lrPets');if(!h||cur!=='loveroom')return;try{lrPickDraw()}catch(e){console.error('pick',e)}const now=new Date(),pts=allPets();
  const html=pts.length?pts.map((p,i)=>{const s=petState(p,now,i),rn=(RM.find(r=>r[0]===s.rk)||[])[1]||'',nx=ST[ST.indexOf(s.sg)+1],pr=nx?Math.min(100,Math.round((s.xp-s.sg[1])/(nx[1]-s.sg[1])*100)):100;
-  return `<div class="card row mt" style="gap:10px;padding:10px;${pt2.sel===p[0]?'border-color:var(--pink)':''}">${pArt(p,Math.round(22+12*s.sg[2]))}<div class="sp" style="min-width:0"><b class="ff" style="font-size:14px">${p[2]} · ${s.sg[0]}</b><p class="xs">${['сыт 😋','проголодался 🍖','очень голоден 🥺'][s.hun]} · ${s.sleep?'спит 💤':s.rest?'не спит 🥱':'бодрствует'} · ${rn}</p><div class="pgb"><i style="width:${pr}%"></i></div></div><div style="display:grid;gap:4px"><button class="pill" onclick="ptFeed('${p[0]}')" aria-label="Покормить">🍖</button>${s.rest?`<button class="pill on" onclick="ptTuck('${p[0]}')" aria-label="Уложить">🌙</button>`:''}${s.rk!==lr.k?`<button class="pill" onclick="ptCall('${p[0]}')" aria-label="Позвать">👋</button>`:''}</div></div>`}).join(''):'<p class="sm" style="text-align:center;margin-top:8px">Выбери питомца в магазине — он поселится здесь 🐾</p>';
+  return `<div class="card row mt" style="gap:10px;padding:10px;${pt2.sel===p[0]?'border-color:var(--pink)':''}">${pArt(p,Math.round(22+12*s.sg[2]))}<div class="sp" style="min-width:0"><b class="ff" style="font-size:14px">${p[2]} · ${s.sg[0]}</b><p class="xs">${['сыт 😋','проголодался 🍖','очень голоден 🥺'][s.hun]} · ${s.sleep?'спит 💤':s.rest?'не спит 🥱':'бодрствует'} · ${rn}</p><div class="pgb"><i style="width:${pr}%"></i></div></div><div style="display:grid;gap:4px"><button class="pill" onclick="ptFeed('${p[0]}')" aria-label="Покормить">🍖</button>${(s.rest||s.sleep)?`<button class="pill on" onclick="ptTuck('${p[0]}')" aria-label="Уложить">🌙</button>`:''}${s.rk!==lr.k?`<button class="pill" onclick="ptCall('${p[0]}')" aria-label="Позвать">👋</button>`:''}</div></div>`}).join(''):'<p class="sm" style="text-align:center;margin-top:8px">Выбери питомца в магазине — он поселится здесь 🐾</p>';
  if(h._h!==html){h._h=html;h.innerHTML=html}}
 const petById=id=>allPets().find(x=>x[0]===id);
 const grow=(id,add,extra)=>{const o=pt2.rows[id]||{},a=stg(o.xp||0),xp=(o.xp||0)+add,b=stg(xp);petSet(id,{xp,...extra});if(a!==b)toast(petById(id)[2]+' вырос(ла): '+b[0]+'! 🎉')};
 const jump=id=>{document.querySelectorAll('.lrp2[data-p="'+id+'"]').forEach(e=>{e.classList.add('jmp');setTimeout(()=>e.classList.remove('jmp'),1000)})};
-window.ptFeed=id=>{const p=petById(id);if(!p)return;const s=petState(p,new Date());if(s.sleep)return toast(p[2]+' спит — не буди 💤');if(s.hun<1)return toast(p[2]+' сыт(а) 😋');grow(id,1,{fed_at:iso()});jump(id);sayP(id,'😋');petsPanel()};
-window.ptTuck=id=>{const p=petById(id);if(!p)return;const s=petState(p,new Date());if(!s.rest)return;grow(id,1,{tucked_at:iso()});sayP(id,'💤');petsPanel()};
+window.ptFeed=id=>{go('dining')};
+window.ptTuck=id=>{go('sleep')};
 window.ptCall=id=>{petSet(id,{rk:lr.k,x:50,y:78,placed_at:iso()});petsSync();petsPanel()};
 function petTap(id,e){const p=petById(id);if(!p)return;const s=petState(p,new Date());pt2.sel=id;const el=document.querySelector('#lrStage .lrp2[data-p="'+id+'"]');
  if(!s.sleep&&el)lrPetTap(e,el);sayP(id,s.sleep?'💤':s.rest?'🥱':s.hun>=1?'🍖?':['💗','😊','🥰','🎵','✨'][Math.random()*5|0]);petsPanel()}
 function petDrop(id,x,y){const p=petById(id);if(!p)return;const now=new Date(),s=petState(p,now),n=roomFur(lr.k).map(o=>({f:o.f[0],d:Math.hypot(o.r.x-x,(o.r.y-y)*1.2)})).sort((a,b)=>a.d-b.d)[0],f=n&&n.d<14?n.f:null;
  const u={rk:lr.k,x:Math.round(x*10)/10,y:Math.round(y*10)/10,placed_at:iso()};pt2.sel=id;
- if(f&&isBed(f)&&s.rest){grow(id,1,{...u,tucked_at:iso()});sayP(id,'💤');petsPanel();return}
- if(f&&isFood(f)&&s.hun>=1&&!s.sleep){grow(id,1,{...u,fed_at:iso()});jump(id);sayP(id,'😋');petsPanel();return}
+ 
+ 
  petSet(id,u);sayP(id,f?(isBed(f)?'😴':ACT[f]||'😊'):'😮');petsPanel()}
-document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('#lrStage .lrp2');if(!el||lr.edit)return;pt2.drag={id:el.dataset.p,el,r:el.parentNode.getBoundingClientRect(),x0:e.clientX,y0:e.clientY,mv:0};e.preventDefault()});
+document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('#lrStage .lrp2');if(!el||lr.edit)return;if(el.classList.contains('slp')){toast('Спит 💤 — не буди');return}pt2.drag={id:el.dataset.p,el,r:el.parentNode.getBoundingClientRect(),x0:e.clientX,y0:e.clientY,mv:0};e.preventDefault()});
 document.addEventListener('pointermove',e=>{const g=pt2.drag;if(!g)return;if(!g.mv&&Math.hypot(e.clientX-g.x0,e.clientY-g.y0)<8)return;g.mv=1;g.el.classList.add('drag');g.x=Math.max(6,Math.min(94,(e.clientX-g.r.left)/g.r.width*100));g.y=Math.max(30,Math.min(94,(e.clientY-g.r.top)/g.r.height*100));g.el.style.left=g.x+'%';g.el.style.top=g.y+'%'});
 document.addEventListener('pointerup',e=>{const g=pt2.drag;if(!g)return;pt2.drag=null;g.el.classList.remove('drag');if(g.mv)petDrop(g.id,g.x,g.y);else petTap(g.id,e)});
 {const s2=lrStage;lrStage=function(){return s2.apply(this,arguments).replace(/<div class="lrp sit"[^>]*>[^<]*<\/div>/g,'')}}
@@ -2466,10 +2466,12 @@ const RT={idle:[10,4,3],sleeping:[3,-15,1],walking:[12,8,-10]};
 const cl=v=>Math.max(0,Math.min(100,v));
 const pets=()=>{let a=[];try{a=lrPets()}catch{}if(!a.length){try{const p=petOf();if(p)a=[p]}catch{}}return a};
 /* текущие Голод(сытость)/Энергия/Настроение питомца — снимок из БД минус время */
-function live(id){const r=pt2.rows[id]||{},now=Date.now(),st=r.status||'idle';let sat=r.satiety,en=r.energy,mo=r.mood,h=0;
- if(sat==null){const f=r.fed_at?+new Date(r.fed_at):now;sat=100-10*(now-f)/36e5;en=80;mo=70}
- else h=Math.max(0,(now-+new Date(r.stats_at||now))/36e5);
- const k=RT[st]||RT.idle;sat=cl(sat-k[0]*h);en=cl(en-k[1]*h);mo=cl(mo-(k[2]+(sat<30?6:0))*h);return {sat,en,mo,st}}
+function live(id){const r=pt2.rows[id]||{},now=Date.now();let st=r.status||'idle',sat=r.satiety,en=r.energy,mo=r.mood,t0=now,un=r.status_until?+new Date(r.status_until):null;
+ if(sat==null){const f=r.fed_at?+new Date(r.fed_at):now;sat=100-10*(now-f)/36e5;en=80;mo=70}else t0=+new Date(r.stats_at||now);
+ const adv=(k0,to)=>{const h=Math.max(0,(to-t0)/36e5),k=RT[k0]||RT.idle;sat=cl(sat-k[0]*h);en=cl(en-k[1]*h);mo=cl(mo-(k[2]+(sat<30?6:0))*h);t0=to};
+ if(st!=='idle'&&un&&un<=now){adv(st,Math.max(t0,un));st='idle'}
+ adv(st,now);return {sat,en,mo,st,until:st==='idle'?null:un}}
+window.petLive=live;window.petsOf=pets;
 const lvl=s=>s<20?2:s<50?1:0;
 const HB=[['Хочу кушать… 🍖','Животик урчит 🥺','Покорми меня, пожалуйста!'],['Умираю с голоду!! 😭','Живот совсем пустой 😿']];
 const UB={excited:'О, еда?! 🤩',eating:'Ням-ням-ням 😋',happy:'Вкуснотища! 💗',full:'Животик полный 😌'};
@@ -2580,6 +2582,94 @@ try{NAVG.dining='more'}catch{}
 {const d=drawMore;drawMore=function(){d.apply(this,arguments);try{const b=$('moreBody'),n=pets().filter(p=>live(p[0]).sat<50).length;
  if(b&&b.firstElementChild)b.firstElementChild.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="go('dining')"><span class="ico"><i class="fa-solid fa-utensils"></i></span><div class="sp"><b class="ff" style="font-size:16px">Обеденный стол</b><p class="xs">${n?n+' хочет кушать 🍖':'Холодильник и кормление'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
 }catch(e){console.error('dining',e)}})();
+</script>
+
+<!-- ===== v13: Спальня (укладывание питомцев) ===== -->
+<style>
+@keyframes slIn{0%{transform:translateY(90px) scale(.5);opacity:0}60%{transform:translateY(-14px) scale(1.08);opacity:1}100%{transform:none}}
+@keyframes slZ{0%{transform:translate(0,0) scale(.6);opacity:0}30%{opacity:1}100%{transform:translate(18px,-48px) scale(1.2);opacity:0}}
+#sleep .back{display:grid;place-items:center;width:40px;height:40px;border-radius:999px;background:rgba(0,0,0,.35)}
+</style>
+<script>
+(()=>{try{
+if(!window.petLive||!window.petsOf)return;
+const live=window.petLive,pets=window.petsOf,cl=v=>Math.max(0,Math.min(100,v));
+const sl={bed:null,p:0,cov:null,drag:0,t:0,sig:''};
+const art=(p,px,closed)=>{let a;try{a=pArt(p,px)}catch{a=`<span style="font-size:${px}px">${p[1]}</span>`}return `<div class="lrp2${closed?' slp':''}" style="position:relative;left:auto;top:auto;transform:none;transition:none;cursor:default;font-size:${px}px">${a}</div>`};
+const errMsg=e=>{const m=e.message||'';return m==='rested'?'Совсем не хочет спать ⚡':m==='busy'?'Питомец сейчас занят':/function|schema cache|does not exist|column/.test(m)?'Выполни SQL-миграцию (pets_migration_2.sql)':m};
+
+$('app').insertAdjacentHTML('beforeend',`<section class="screen !p-0 !overflow-hidden" id="sleep">
+ <div class="absolute inset-0 bg-gradient-to-b from-[#150f33] via-[#241a55] to-[#3b2468]"></div>
+ ${Array.from({length:16},()=>`<i class="absolute h-1 w-1 rounded-full bg-white/80 animate-pulse" style="left:${Math.random()*96}%;top:${Math.random()*34}%;animation-delay:${(Math.random()*3).toFixed(1)}s"></i>`).join('')}
+ <div class="absolute inset-x-0 bottom-0 top-[60%] bg-gradient-to-b from-[#4b2e57] to-[#2e1b3d]"></div>
+ <div class="absolute right-[9%] top-[11%] grid h-20 w-20 place-items-center rounded-full bg-indigo-200/15 text-5xl shadow-[0_0_50px_14px_rgba(165,180,252,.25)]">🌙</div>
+ <div class="absolute left-[8%] top-[52%] flex flex-col items-center"><i class="h-8 w-8 rounded-full bg-amber-300/90 shadow-[0_0_40px_16px_rgba(251,191,36,.4)] animate-pulse"></i><i class="h-10 w-11 rounded-t-lg bg-[#7d4f2d]"></i></div>
+ <div class="relative z-10 flex h-full flex-col">
+  <div class="flex items-center gap-3 px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+12px)]">
+   <button class="back" onclick="go('more')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button>
+   <h2 class="text-xl font-semibold drop-shadow">Спальня</h2>
+   <span id="slInfo" class="ml-auto rounded-full bg-black/35 px-3 py-1.5 text-xs font-bold"></span></div>
+  <div class="relative flex-1 select-none">
+   <div id="slHint" class="absolute left-1/2 top-[8%] z-40 -translate-x-1/2"><div class="animate-bounce"><div id="slHintT" class="whitespace-nowrap rounded-2xl bg-white px-3.5 py-2 text-xs font-bold text-[#3a2450] shadow-lg"></div></div></div>
+   <div class="absolute left-[7%] top-[22%] z-0 h-[30%] w-[86%] rounded-t-[2.2rem] bg-gradient-to-b from-[#a1693f] to-[#7d4f2d] shadow-lg"></div>
+   <div class="absolute left-1/2 top-[40%] z-[5] h-[9%] w-[48%] -translate-x-1/2 rounded-[2rem] bg-white shadow"></div>
+   <div class="absolute left-[5%] top-[46%] z-[6] h-[30%] w-[90%] rounded-3xl bg-rose-100 shadow"></div>
+   <div id="slPet" class="absolute left-1/2 top-[63%] z-10 -translate-x-1/2 -translate-y-full"></div>
+   <div class="absolute left-[6%] top-[49%] z-20 h-[27%] w-[88%]"><div id="slBlanket" class="h-full touch-none rounded-3xl bg-[#8f80ff] bg-[linear-gradient(45deg,rgba(255,255,255,.14)_25%,transparent_25%,transparent_75%,rgba(255,255,255,.14)_75%)] bg-[length:30px_30px] shadow-[0_8px_20px_rgba(0,0,0,.4)]" style="transform:translateY(62%);pointer-events:none"><i class="block h-5 rounded-t-3xl bg-[#b3a8ff]"></i></div></div>
+   <div class="pointer-events-none absolute left-[4%] top-[72%] z-30 h-[8%] w-[92%] rounded-2xl bg-gradient-to-b from-[#a1693f] to-[#6e4425] shadow-lg"></div>
+  </div>
+  <div class="shrink-0 rounded-t-3xl bg-[#1d1544]/90 px-3 pb-[calc(env(safe-area-inset-bottom,0px)+14px)] pt-3 backdrop-blur"><div id="slCards" class="flex gap-3 overflow-x-auto pb-1"></div></div>
+ </div>
+ <div id="slDim" class="pointer-events-none absolute inset-0 z-20 bg-[#0a0620]/0 transition-colors duration-1000"></div>
+</section>`);
+
+const setP=(p,anim)=>{sl.p=cl(p*100)/100;const b=$('slBlanket');b.style.transition=anim?'transform .3s ease-out':'none';b.style.transform='translateY('+((1-sl.p)*62)+'%)'};
+function slRender(force){if(cur!=='sleep'||sl.drag)return;
+ const L=pets().map(p=>({p,s:live(p[0])})),cv=sl.cov&&sl.cov.until>Date.now()?sl.cov.id:null,bed=sl.bed||cv,sleepers=L.filter(x=>x.s.st==='sleeping').length;
+ const sig=JSON.stringify([L.map(x=>[x.p[0],x.s.st]),sl.bed,cv]);
+ if(!force&&sig===sl.sig)return slBars(L);sl.sig=sig;
+ const bp=bed&&L.find(x=>x.p[0]===bed),r=bp?pt2.rows[bed]||{}:{},sg=typeof stg==='function'?stg(r.xp||0):[0,0,.85],px=Math.round(54+38*sg[2]);
+ $('slPet').innerHTML=bp?`<div class="relative animate-[slIn_.7s_ease-out]">${art(bp.p,px,!!cv)}${cv?[0,.8,1.6].map(d=>`<span class="absolute -right-3 top-0 text-lg font-bold text-sky-200 animate-[slZ_2.4s_ease-out_infinite]" style="animation-delay:${d}s">z</span>`).join(''):''}</div>`:'';
+ const lying=!!sl.bed;setP(cv?1:lying?sl.p:0,1);$('slBlanket').style.pointerEvents=lying?'auto':'none';
+ $('slHint').style.display=cv?'none':'block';$('slHintT').textContent=lying?'Потяни одеяло вверх ☝️ или потыкай в него':'Выбери, кого уложить 👇';
+ $('slDim').classList.toggle('bg-[#0a0620]/50',sleepers>0||!!cv);$('slDim').classList.toggle('bg-[#0a0620]/0',!(sleepers>0||cv));
+ $('slInfo').textContent=sleepers?'💤 спит: '+sleepers:'Спокойной ночи';
+ $('slCards').innerHTML=L.map(x=>{const id=x.p[0],s=x.s,ly=sl.bed===id,zz=s.st==='sleeping',aw=s.st==='walking',left=zz&&s.until?Math.max(0,s.until-Date.now()):0,
+  tx=zz?'Спит 💤'+(left?' · ещё ~'+(left>36e5?Math.round(left/36e5)+' ч':Math.max(1,Math.round(left/6e4))+' мин'):''):aw?'Гуляет 🌳':s.en<30?'Хочет спать 🥱':'Не спит',
+  btn=zz?`<button onclick="slWake('${id}')" class="mt-2 w-full rounded-full bg-amber-400 py-1.5 text-[11px] font-bold text-[#3a2450] active:scale-95">Разбудить ☀️</button>`:ly?`<div class="mt-2 rounded-full bg-white/15 py-1.5 text-[11px] font-bold">В кровати 🛏️</div>`:aw?`<div class="mt-2 rounded-full bg-white/10 py-1.5 text-[11px] font-bold opacity-60">Занят</div>`:`<button onclick="slPut('${id}')" class="mt-2 w-full rounded-full py-1.5 text-[11px] font-bold active:scale-95 ${s.en<95?'bg-pink-500':'bg-white/15'}">Уложить 🛏️</button>`;
+  return `<div class="w-[132px] shrink-0 rounded-2xl bg-white/10 p-2.5 text-center ${ly?'ring-2 ring-pink-400':''}"><div class="flex justify-center">${art(x.p,44,zz)}</div><b class="mt-1 block truncate text-xs">${esc(x.p[2])}</b><span class="block text-[10px] opacity-75">${tx}</span><i class="mt-1.5 block h-1.5 overflow-hidden rounded bg-white/15"><b data-e="${id}" class="block h-full rounded bg-sky-400 transition-all duration-700"></b></i><span class="text-[10px]">⚡ <span data-n="${id}"></span></span>${btn}</div>`}).join('')||'<p class="p-3 text-xs opacity-70">В комнате нет питомцев 🐾</p>';
+ slBars(L)}
+function slBars(L){L.forEach(x=>{const b=document.querySelector('[data-e="'+x.p[0]+'"]'),n=document.querySelector('[data-n="'+x.p[0]+'"]');if(b)b.style.width=x.s.en+'%';if(n)n.textContent=Math.round(x.s.en)})}
+
+window.slPut=id=>{if(sl.bed&&sl.bed!==id)return toast('Сначала накрой одеялом того, кто в кровати 🛏️');
+ if(sl.cov&&sl.cov.until>Date.now())return toast('Подожди секунду — питомец засыпает 💤');
+ const s=live(id);if(s.st!=='idle')return;if(s.en>=95)return toast('Ещё полон сил ⚡ — спать не хочет');
+ sl.bed=id;sl.p=0;slRender(1)};
+async function slCover(){const id=sl.bed;if(!id)return;
+ const l=live(id),hrs=Math.max(.5,Math.min(10,(100-l.en)/15)),until=new Date(Date.now()+hrs*36e5).toISOString();
+ setP(1,1);sl.cov={id,until:Date.now()+2400};sl.bed=null;try{navigator.vibrate&&navigator.vibrate(25)}catch{}slRender(1);
+ setTimeout(()=>{slRender(1)},2500);
+ const {data,error}=await sb.rpc('couple_pet_set_status',{p_room:S.room,p_pet:id,p_status:'sleeping',p_until:until});
+ if(error){sl.cov=null;sl.bed=id;sl.p=.6;toast(errMsg(error));return slRender(1)}
+ pt2.rows[id]=Object.assign(pt2.rows[id]||{pet:id},data);try{petsSync()}catch{}slRender(1)}
+window.slWake=async id=>{const {data,error}=await sb.rpc('couple_pet_set_status',{p_room:S.room,p_pet:id,p_status:'idle'});
+ if(error)return toast(errMsg(error));pt2.rows[id]=Object.assign(pt2.rows[id]||{pet:id},data);try{petsSync()}catch{}toast('Доброе утро ☀️');slRender(1)};
+
+/* одеяло: тянем вверх или тыкаем */
+let dr=null;const bl=$('slBlanket');
+bl.addEventListener('pointerdown',e=>{if(!sl.bed)return;dr={y:e.clientY,p:sl.p,mv:0};sl.drag=1;bl.style.transition='none';e.preventDefault()});
+document.addEventListener('pointermove',e=>{if(!dr)return;const d=dr.y-e.clientY;if(Math.abs(d)>6)dr.mv=1;setP(dr.p+d/170,0)});
+document.addEventListener('pointerup',()=>{if(!dr)return;const g=dr;dr=null;sl.drag=0;const p=g.mv?sl.p:sl.p+.34;setP(p,1);if(sl.p>=.85)slCover();else slRender(1)});
+
+function slEnter(){clearInterval(sl.t);sl.t=setInterval(()=>slRender(),1000);try{petsLoad()}catch{}slRender(1)}
+function slLeave(){clearInterval(sl.t);sl.bed=null;sl.p=0;sl.cov=null}
+{const f=window.go;window.go=function(s){const r=f.apply(this,arguments);if(s==='sleep')slEnter();else slLeave();return r}}
+try{NAVG.sleep='more'}catch{}
+{const p=petsLoad;petsLoad=async function(){const r=await p.apply(this,arguments);try{slRender()}catch{}return r}}
+{const d=drawMore;drawMore=function(){d.apply(this,arguments);try{const b=$('moreBody'),L=pets().map(p=>live(p[0])),n=L.filter(s=>s.st==='idle'&&s.en<30).length,z=L.filter(s=>s.st==='sleeping').length,
+ a=b&&(b.querySelector('[onclick="go(\'dining\')"]')||b.firstElementChild);
+ if(a)a.insertAdjacentHTML('afterend',`<button class="card row mt" style="width:100%;text-align:left" onclick="go('sleep')"><span class="ico"><i class="fa-solid fa-bed"></i></span><div class="sp"><b class="ff" style="font-size:16px">Спальня</b><p class="xs">${n?n+' хочет спать 🥱':z?'Спят: '+z+' 💤':'Укладывание питомцев'}</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`)}catch{}}}
+}catch(e){console.error('sleep',e)}})();
 </script>
 
 </body></html>
