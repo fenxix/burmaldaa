@@ -482,7 +482,7 @@ const PTB='couple_pets',pt2={rows:{},sel:null,drag:null,say:{},n:-1};
 const hsh=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const ST=[['Малыш',0,.62],['Подросток',4,.85],['Взрослый',12,1.1]];
 const stg=x=>{let s=ST[0];for(const t of ST)if(x>=t[1])s=t;return s};
-const allPets=()=>lrPets();
+const allPets=()=>{try{const a=lrPets();return Array.isArray(a)?a:[]}catch(e){return []}};
 const rmsOwn=()=>RM.filter(r=>r[2]===0||own('rm:'+r[0])).map(r=>r[0]);
 const roomFur=k=>(lr.all||[]).filter(r=>k==='main'?!String(r.item).includes('~'):String(r.item).startsWith(k+'~')).map(r=>({r:{...r,item:k==='main'?r.item:r.item.slice(k.length+1)}})).map(o=>({r:o.r,f:FUR.find(x=>x[0]===o.r.item)})).filter(o=>o.f&&o.f[8]!=='wall'&&o.f[7]!==1);
 const ACT={sofa:'😌',chair:'😌',tv:'📺',shelf:'📖',piano:'🎵',game:'🎮',bath:'🫧',plant:'🌿',flow:'🌷',cactus:'🌵',tree:'🎄',bear:'🧸',candle:'🕯️',globe:'🌍',balloon:'🎈',fridge:'🍖',stove:'🍳',table2:'🍽️',coffee:'☕',pizza:'🍕',cake:'🎂',wine:'🍷',proj:'🎬',corn:'🍿',clap:'🎬',fount:'💦',tree2:'🍃',sunf:'🌻',lamp:'✨',bfly:'🦋',tent:'🏕️',cup:'🏆'};
@@ -617,9 +617,10 @@ document.addEventListener('pointerdown',e=>{if(pt2.menu&&!e.target.closest('#lrP
 
 /* ===== Дверь: выбор комнаты (RM → rmGo) ===== */
 const rmDoorHtml=()=>{const r=RM.find(x=>x[0]===lr.k)||RM[0];return `<button class="lrdoor${lr.edit?' ed':''}" id="lrDoor" onclick="rmDoor(event)" aria-haspopup="true" aria-label="Дверь — выбрать комнату (сейчас: ${r[1]})"><span class="dr"><i class="kn"></i></span><b class="nm">${r[1]} ▾</b></button>`};
+const rmMenu=()=>{let m=$('lrDoorMenu');if(!m){m=document.createElement('div');m.id='lrDoorMenu';m.className='lrdm';m.setAttribute('role','menu');m.setAttribute('aria-label','Выбор комнаты');($('loveroom')||$('app')||document.body).appendChild(m)}return m};
 const rmClose=()=>{const m=$('lrDoorMenu'),d=$('lrDoor');if(m)m.classList.remove('on');if(d)d.classList.remove('open')};
-window.rmDoor=e=>{if(e)e.stopPropagation();const m=$('lrDoorMenu'),d=$('lrDoor');if(!m||!d)return;if(m.classList.contains('on')){rmClose();return}
- if(hud.open){hud.open=null;hudSync()}pt2.menu=null;petsPanel();
+window.rmDoor=e=>{if(e&&e.type==='click'&&e.detail>0&&e.target&&e.target.closest&&!e.target.closest('.dr'))return;if(e)e.stopPropagation();const m=rmMenu(),d=$('lrDoor');if(!m||!d)return;if(m.classList.contains('on')){rmClose();return}
+ try{if(hud.open){hud.open=null;hudSync()}pt2.menu=null;petsPanel()}catch(err){console.error('rmDoor/pets',err)}
  m.innerHTML=RM.map(r=>{const here=lr.k===r[0],ok=r[2]===0||own('rm:'+r[0]);return `<button role="menuitem" class="${here?'on':''}" onclick="rmPick('${r[0]}')"><b>${r[1]}</b><span>${here?'здесь ✓':ok?'зайти':r[2]+' 🪙'}</span></button>`}).join('');
  const b=d.getBoundingClientRect(),w=200,vw=document.documentElement.clientWidth;
  m.style.width=w+'px';m.style.left=Math.max(8,Math.min(vw-w-8,b.right-w))+'px';m.style.top=Math.max(8,Math.min(b.bottom+36,innerHeight-RM.length*46-110))+'px';
@@ -806,9 +807,11 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 .lr{isolation:isolate;contain:paint}.scn{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 #roomCard{position:relative;z-index:3}#lrCard{position:relative;z-index:1;overflow:hidden}
 .lrp2 .pb,.lrp2 .pb.tx{position:absolute;right:auto;width:auto;height:auto;border:0;border-radius:14px;display:block;background:#fff;color:#2a1d33;font-weight:700;font-size:5.2cqw;line-height:1.15;padding:.3em .7em;left:50%;top:-4%;transform:translate(calc(-50% + var(--bx,0cqw)),-100%);white-space:nowrap;z-index:9;box-shadow:0 2px 8px #0006;animation:none}
-.lrp2 .pb:empty{display:none}.lrp2 .pb.tx{font-size:4.6cqw}
+.lrp2{z-index:30}.lrp2 .pb:empty{display:none}.lrp2 .pb.tx{font-size:4.6cqw}
 .lrp2.slp .pb{animation:ptz2 2.4s infinite}@keyframes ptz2{50%{transform:translate(calc(-50% + var(--bx,0cqw)),-120%);opacity:.6}}`}));
 }
+/* экспорт для соседних <script> (еда, сон, дом питомцев): иначе pt2/petsSync/... там не видны */
+try{Object.assign(window,{pt2,PTB,stg,pArt,petsLoad,petsSync,petsPanel,petState,allPets})}catch(e){console.error('pets-export',e)}
 
 </script>
 <script>
@@ -2009,6 +2012,7 @@ const lrSelIds=()=>{const g=S.game||{},raw=String(g.room_pets||'').split(',').fi
  let ids=raw.filter(uq);if(!ids.length)ids=[g.pet,...lrOwnedIds()].filter(uq);
  return ids.slice(0,LR_MAXP)};
 const lrPets=()=>{const all=lrAllPets();return lrSelIds().map(id=>all.find(x=>x[0]===id)).filter(Boolean)};
+window.lrPets=lrPets;window.lrSelIds=lrSelIds;window.lrAllPets=lrAllPets;
 function lrStage(edit){
  const it=lr.items.map(d=>{const f=FUR.find(x=>x[0]===d.item);if(!f)return'';const z=f[7]!==undefined?f[7]:Math.round(d.y);
   return `<div class="lri${edit?' ed':''}${edit&&lr.sel===d.item?' sel':''}" data-k="${f[0]}" style="left:${d.x}%;top:${d.y}%;z-index:${z};font-size:${(f[4]*(d.scale||1)).toFixed(1)}cqw;transform:translate(-50%,-50%) scaleX(${d.flip?-1:1})">${f[1]}</div>`}).join('');
