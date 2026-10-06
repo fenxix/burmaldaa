@@ -964,7 +964,7 @@ async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m
   if(S.me){$('modal').classList.remove('on');err('')}
   else err('Код принят, но комната не загрузилась: '+(S.lerr?S.lerr.message:'участник не найден'))}
  catch(e){const t=String(e.message||e);
-  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
+  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('room_full')?'В комнате уже двое, и твоего имени среди них нет. Впиши имя точно так же, как раньше (например, «Сеня»), и тогда старый аккаунт заменится на этот':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
   err(msg);toast(msg)}
  finally{bs.forEach(b=>b.disabled=false)}}
 
@@ -2170,6 +2170,8 @@ setInterval(()=>{if(document.hidden)return;document.querySelectorAll('.lrp').for
 /* ---------- Магазин: вкладки «Дом» и «Стикеры» ---------- */
 SHT.push(['home','Дом'],['room','Комнаты'],['stk','Стикеры']);SHM.push('home','room','stk');
 let shHC='all';window.lrCat=c=>{shHC=c;drawShop()};
+/* Мост для последнего <script> (магазин «Дома/Природа», огород): эти переменные живут внутри замыкания, снаружи их не видно */
+Object.defineProperties(window,{F:{value:F,configurable:true,writable:true},FUR:{value:FUR,configurable:true,writable:true},CATS:{value:CATS,configurable:true,writable:true},THEMES:{value:THEMES,configurable:true,writable:true},clamp:{value:clamp,configurable:true,writable:true},shHC:{get:()=>shHC,set:v=>{shHC=v},configurable:true},lrCtl:{get:()=>lrCtl,set:v=>{lrCtl=v},configurable:true},lrDraw:{get:()=>lrDraw,set:v=>{lrDraw=v},configurable:true},lrSave:{get:()=>lrSave,set:v=>{lrSave=v},configurable:true},lrStage:{get:()=>lrStage,set:v=>{lrStage=v},configurable:true},lrThId:{get:()=>lrThId,set:v=>{lrThId=v},configurable:true},lrThS:{get:()=>lrThS,set:v=>{lrThS=v},configurable:true}});
 /* экспорт локальных данных магазина для позднего скрипта комнат (иначе он падал на «F is not defined») */
 window.F=F;window.FUR=FUR;window.CATS=CATS;window.THEMES=THEMES;
 ['clamp','lr','lrCtl','lrDraw','lrSave','lrStage','lrThId','lrThS'].forEach(n=>{try{if(!(n in window))Object.defineProperty(window,n,{configurable:true,get:()=>eval(n),set:v=>{eval(n+'=v')}})}catch(e){console.warn('export',n,e)}});Object.defineProperty(window,'shHC',{configurable:true,get:()=>shHC,set:v=>{shHC=v}});
