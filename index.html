@@ -945,7 +945,7 @@ function ago(t){const m=Math.floor((Date.now()-new Date(t))/6e4);return m<1?'т�
 const online=m=>m&&Date.now()-new Date(m.seen_at)<7e4;
 function openModal(){$('modal').classList.add('on')}
 
-async function auth(){try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}let {data:{session}}=await sb.auth.getSession();
+async function auth(){let {data:{session}}=await sb.auth.getSession();
  if(!session){const {data,error}=await sb.auth.signInAnonymously();if(error){toast('Включи Anonymous sign-ins в Supabase → Auth');throw error}session=data.session}
  S.uid=session.user.id}
 
@@ -955,7 +955,7 @@ async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m
  if(mode==='join'&&!code){err('Введи код комнаты');return toast('Введи код комнаты')}
  const bs=[...document.querySelectorAll('#modal .btn')];bs.forEach(b=>b.disabled=true);err('Подключаемся…');
  try{
-  const job=(async()=>{await auth();let r=mode==='create'?await sb.rpc('couple_create_room',{p_name:name}):await sb.rpc('couple_join_room',{p_code:code,p_name:name});if(r.error&&mode==='join'&&String(r.error.message||'').includes('room_full')){const r2=await sb.rpc('couple_recover_member',{p_code:code,p_name:name});if(!r2.error)r=r2;else if(!String(r2.error.message||'').includes('does not exist'))r.error=r2.error}if(r.error)throw r.error;return r.data})();
+  const job=(async()=>{await auth();const r=mode==='create'?await sb.rpc('couple_create_room',{p_name:name}):await sb.rpc('couple_join_room',{p_code:code,p_name:name});if(r.error)throw r.error;return r.data})();
   const data=await Promise.race([job,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),20000))]);
   const d=Array.isArray(data)?data[0]:data;
   if(!d||!d.room_id)throw new Error('Сервер вернул неожиданный ответ: '+JSON.stringify(data));
@@ -964,7 +964,7 @@ async function enter(mode){const name=$('nm').value.trim(),m=$('merr'),err=t=>{m
   if(S.me){$('modal').classList.remove('on');err('')}
   else err('Код принят, но комната не загрузилась: '+(S.lerr?S.lerr.message:'участник не найден'))}
  catch(e){const t=String(e.message||e);
-  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('member_not_found')?'Комната заполнена, и участника с таким именем нет. Введи имя точно так, как было раньше':t.includes('member_online')?'Этот аккаунт сейчас в сети на другом устройстве. Закрой там приложение и подожди 2 минуты':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
+  const msg=t.includes('room_not_found')?'Комната не найдена. Проверь код':t.includes('room_full')?'В комнате уже двое. Один из них может быть твой старый аккаунт: зайди с того устройства и убери его':t==='timeout'?'Нет ответа от сервера. Проверь интернет или отключи VPN':'Ошибка: '+t;
   err(msg);toast(msg)}
  finally{bs.forEach(b=>b.disabled=false)}}
 
@@ -3231,6 +3231,27 @@ function gvBadge(){const st=$('lrStage');if(!st||cur!=='loveroom')return;const d
  if(!n){if(b)b.remove();return}if(!b){b=document.createElement('div');b.className='gvbadge';st.appendChild(b)}b.style.left=d.x+'%';b.style.top=d.y+'%';b.textContent='🧺 '+n}
 setInterval(()=>{try{if(!document.hidden)gvBadge()}catch{}},15000);
 {const c1=lrCtl;lrCtl=function(){c1.apply(this,arguments);try{gvBadge();if(gv.open)gvRender()}catch(e){console.error('garden-veg',e)}}}
+
+/* ===== Магазин: разделы «Дома» и «Природа» (сезоны, местность, семена) во вкладке «Дом» ===== */
+if(!CATS.some(c=>c[0]==='houses'))CATS.splice(1,0,['houses','Дома'],['nature','Природа']);
+window.gShopNat=async(kind,k)=>{const o=(kind==='s'?GSE:GTE).find(x=>x[0]===k);if(!o)return;const key=(kind==='s'?'gs:':'gt:')+k;
+ if(o[2]>0&&!own(key)){await buy(key,o[2],()=>{});if(!own(key))return}
+ try{drawShop()}catch{}
+ if(!own('rm:garden'))return toast('Открыто! Применить можно в саду — комната «Сад» открывается в разделе «Комнаты»');
+ try{await rmGo('garden');go('loveroom');const c=gCur();await gardenSet(kind==='s'?c[0]:k,kind==='s'?k:c[1]);toast('Сад: '+o[1]+' 🌿')}catch(e){console.error('gShopNat',e)}};
+window.gShopSeed=k=>{const C=CROPS[k];if(C)buy('crop:'+k,C.p,()=>{gv.seed=k;toast('Семена открыты: '+C.e);try{drawShop()}catch{}})};
+{const d9=drawShop;drawShop=function(){const r=d9.apply(this,arguments);try{
+ if(cur!=='shop'||shTab!=='home'||(shHC!=='houses'&&shHC!=='nature'))return r;
+ const L=$('shList');if(!L)return r;
+ const cd=(ico,nm,sub,act,on)=>`<button class="${on?'on':''}" onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${sub}</span></button>`,hd=t=>`<p class="ff" style="grid-column:1/-1;margin:10px 0 0">${t}</p>`;
+ let h='';
+ if(shHC==='houses')h=`<p class="sm" style="grid-column:1/-1;text-align:center">Дом стоит в саду. Купленные дома можно менять в саду, вкладка «Дома»</p>`+HOUSES.map(x=>cd(hico(x),x[1],hsel()===x[0]?'выбрано ✓':x[2]===0?'выбрать':own('house:'+x[0])?'куплено ✓':x[2]+' 🪙',`lrHouse('${x[0]}')`,hsel()===x[0])).join('');
+ else{const c=gCur(),sw=p=>`<span class="sw" style="display:block;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,${p[0]} 50%,${p[2]} 50%)"></span>`;
+  h=`<p class="sm" style="grid-column:1/-1;text-align:center">Меняют вид сада: небо, землю и погоду. Применяются в комнате «Сад»</p>`+hd('Сезоны')
+   +GSE.map(s=>cd(sw(GPAL.meadow[s[0]]),s[1],s[2]===0?'бесплатно':own('gs:'+s[0])?'куплено ✓':s[2]+' 🪙',`gShopNat('s','${s[0]}')`,false)).join('')
+   +hd('Местность')+GTE.map(t=>cd(sw(GPAL[t[0]].summer),t[1],t[2]===0?'бесплатно':own('gt:'+t[0])?'куплено ✓':t[2]+' 🪙',`gShopNat('t','${t[0]}')`,false)).join('')
+   +hd('Семена для огорода')+Object.entries(CROPS).map(([k,C])=>cd(`<span class="lrv">${C.e}</span>`,C.n,C.p===0?'бесплатно':own('crop:'+k)?'куплено ✓':C.p+' 🪙',C.p===0?`toast('Эти семена бесплатные 🌱')`:`gShopSeed('${k}')`,false)).join('')}
+ L.innerHTML=h}catch(e){console.error('shop-nature',e)}return r}}
 }catch(e){console.error('room-v2',e)}})();
 </script>
 </body></html>
