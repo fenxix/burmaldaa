@@ -168,6 +168,7 @@ input[type=datetime-local]{color-scheme:dark}
  <div class="card row mt" id="noteCard" style="padding:12px" onclick="go('notes')"></div>
  <div class="card row mt" id="taskCard" style="padding:12px" onclick="go('tasks')"></div>
  <div class="card row mt" id="emoCard" style="padding:12px"></div>
+ <div class="card mt" id="treeCard"></div>
 </section>
 
 <section class="screen" id="tower">
@@ -195,7 +196,6 @@ input[type=datetime-local]{color-scheme:dark}
   <button class="game" onclick="go('meowdoku')"><div class="thumb" id="mdThumb" style="justify-content:center;align-items:center"></div><div class="sp"><b style="font-weight:600">Meowdoku</b><p class="sm">Расставляйте котиков и открывайте новых героев</p><span class="badge" id="mdBadge">0 / 12 уровней</span></div><i class="fa-solid fa-chevron-right sm"></i></button>
   <button class="game" onclick="go('quiz')"><div class="thumb" style="justify-content:center;align-items:center;font-size:34px">🎯</div><div class="sp"><b style="font-weight:600">Угадайка</b><p class="sm">Один вопрос в день: совпадут ли ваши ответы?</p><span class="badge" id="qBadge">—</span></div><i class="fa-solid fa-chevron-right sm"></i></button>
  </div>
- <div class="card mt" id="treeCard"></div>
 </section>
 
 <section class="screen" id="more">
@@ -1801,13 +1801,37 @@ html[data-deco=velvet] .card{border-color:rgba(var(--sr),.32);box-shadow:0 0 18p
 const svgU=s=>`url("data:image/svg+xml,${encodeURIComponent(s)}")`,
 tail=svgU("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 34'><path d='M2 2C18 2 12 24 25 24' fill='none' stroke='#E5405E' stroke-width='3' stroke-linecap='round'/><path d='M30 31L22 23C18 18 24 12 30 18C36 12 42 18 38 23Z' fill='#FF4D6D'/></svg>"),
 paw=(x,y)=>[[0,0,4.5],[-8,-9,2.3],[0,-13,2.3],[8,-9,2.3]].map(([dx,dy,r])=>`radial-gradient(circle ${r}px at ${x(dx)} ${y(dy)},rgb(var(--pr)) 96%,transparent)`).join(',');
+const cmCss=()=>{const mk=(w,h,p)=>svgU(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}'>${p}</svg>`),
+P=(l,r,w,h,o)=>{const m=`${l},${r}`,pos=`left ${o}px bottom,right ${o}px bottom`,sz=`${w}px ${h}px`;return `-webkit-mask-image:${m};mask-image:${m};-webkit-mask-position:${pos};mask-position:${pos};-webkit-mask-size:${sz};mask-size:${sz};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat`},
+B=(h,bg,m)=>`content:"";position:absolute;left:0;right:0;top:${1-h}px;height:${h}px;background:${bg};pointer-events:none;${m}`,
+ac='linear-gradient(rgba(var(--pr),.72),rgba(var(--pr),.36))',
+inn=(c,r,x,y,col)=>`radial-gradient(${c} ${r} at ${x}px ${y}px,${col} 96%,transparent),radial-gradient(${c} ${r} at calc(100% - ${x}px) ${y}px,${col} 96%,transparent)`,
+st="stroke='#000' stroke-linejoin='round'",
+cat=[mk(38,26,`<path d='M4 25L10 4L32 25Z' ${st} stroke-width='4'/>`),mk(38,26,`<path d='M34 25L28 4L6 25Z' ${st} stroke-width='4'/>`)],
+hn=[mk(24,28,`<path d='M3 27C2 14 7 6 18 1C14 9 15 18 21 27Z' ${st} stroke-width='2'/>`),mk(24,28,`<path d='M21 27C22 14 17 6 6 1C10 9 9 18 3 27Z' ${st} stroke-width='2'/>`)],
+bn=[-8,8].map(a=>mk(24,46,`<ellipse cx='12' cy='24' rx='8' ry='21' transform='rotate(${a} 12 24)'/>`)),
+br=mk(26,14,"<circle cx='13' cy='13' r='12'/>"),
+wing="<path d='M29 20C22 4 5 3 1 10C6 12 6 15 4 18C8 19 8 23 6 26C13 28 22 29 29 20Z' fill='#fff' stroke='#CFE3FF' stroke-width='1.5' stroke-linejoin='round'/>",
+w1=mk(30,36,wing),w2=mk(30,36,`<g transform='translate(30 0) scale(-1 1)'>${wing}</g>`),
+cp='polygon(0 100%,0 22%,25% 56%,50% 0,75% 56%,100% 22%,100% 100%)';
+return `html[data-cmod=cat] .card::before{${B(26,`${inn('ellipse','4px 7px',33,18,'rgba(255,255,255,.55)')},${ac}`,P(cat[0],cat[1],38,26,14))}}
+html[data-cmod=cat] .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.3;background:${paw(d=>`calc(100% - ${18-d}px)`,d=>`calc(100% - ${11-d}px)`)},${paw(d=>`${20+d}px`,d=>`${22+d}px`)}}
+html[data-cmod=devil] .card::before{${B(28,'linear-gradient(#FF6B86,#8E1B32)',P(hn[0],hn[1],24,28,18))}}
+html[data-cmod=devil] .card::after{content:"";position:absolute;right:22px;bottom:-24px;width:44px;height:34px;background:${tail} no-repeat center/contain;pointer-events:none}
+html[data-cmod=bunny] .card::before{${B(46,`${inn('ellipse','3.5px 15px',34,25,'rgba(255,170,205,.85)')},${ac}`,P(bn[0],bn[1],24,46,22))}}
+html[data-cmod=bear] .card::before{${B(14,`${inn('circle','5px',29,11,'rgba(255,255,255,.4)')},${ac}`,P(br,br,26,14,16))}}
+html[data-cmod=bear] .card::after{content:"🧸";position:absolute;right:12px;top:8px;font-size:22px;opacity:.28;pointer-events:none}
+html[data-cmod=angel] .card::before{content:"";position:absolute;left:50%;top:-11px;width:54px;height:13px;margin-left:-27px;border:3px solid #FFE27A;border-radius:50%;box-shadow:0 0 10px rgba(255,226,122,.85),inset 0 0 5px rgba(255,226,122,.6);pointer-events:none}
+html[data-cmod=angel] .card::after{content:"";position:absolute;inset:0;pointer-events:none;background:${w1} no-repeat -10px 50%/26px 32px,${w2} no-repeat calc(100% + 10px) 50%/26px 32px}
+html[data-cmod=flowers] .card::before{content:"";position:absolute;left:14px;right:14px;top:-9px;height:12px;pointer-events:none;background:radial-gradient(circle 4px at 8px 6px,#FF8FB8 94%,transparent),radial-gradient(circle 3px at 18px 7px,#fff 94%,transparent),radial-gradient(circle 3.5px at 27px 5px,#FFD23F 94%,transparent),linear-gradient(transparent 5px,#5BBF6A 5px,#5BBF6A 7px,transparent 7px);background-size:36px 12px,36px 12px,36px 12px,100% 12px;background-repeat:repeat-x,repeat-x,repeat-x,no-repeat}
+html[data-cmod=flowers] .card::after{content:"🌸";position:absolute;right:12px;bottom:-10px;font-size:18px;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+html[data-cmod=crown] .card{border-color:rgba(255,205,80,.5);box-shadow:0 0 16px rgba(255,200,70,.12)}
+html[data-cmod=crown] .card::before{content:"";position:absolute;left:50%;top:-16px;width:46px;height:18px;margin-left:-23px;background:linear-gradient(#FFE58A,#D99A00);-webkit-clip-path:${cp};clip-path:${cp};pointer-events:none}
+html[data-cmod=crown] .card::after{content:"✦";position:absolute;right:16px;top:6px;color:#FFD54A;font-size:12px;text-shadow:0 0 8px #FFD54A;pointer-events:none}`};
 NS(`html[data-cmod] .card{position:relative;overflow:visible}
 html[data-cmod] .modal .card::before,html[data-cmod] .modal .card::after{display:none}
-html[data-cmod=cat] .card::before{content:"";position:absolute;left:16px;right:16px;top:-10px;height:12px;background:linear-gradient(rgba(var(--pr),.6),rgba(var(--pr),.28));-webkit-clip-path:polygon(0 100%,7% 0,18% 100%,82% 100%,93% 0,100% 100%);clip-path:polygon(0 100%,7% 0,18% 100%,82% 100%,93% 0,100% 100%);pointer-events:none}
-html[data-cmod=cat] .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.3;background:${paw(d=>`calc(100% - ${18-d}px)`,d=>`calc(100% - ${11-d}px)`)},${paw(d=>`${20+d}px`,d=>`${22+d}px`)}}
-html[data-cmod=devil] .card::before{content:"";position:absolute;left:20px;right:20px;top:-13px;height:15px;background:linear-gradient(#FF4D6D,#8E1B32);-webkit-clip-path:polygon(0 100%,3% 55%,10% 0,20% 100%,80% 100%,90% 0,97% 55%,100% 100%);clip-path:polygon(0 100%,3% 55%,10% 0,20% 100%,80% 100%,90% 0,97% 55%,100% 100%);pointer-events:none}
-html[data-cmod=devil] .card::after{content:"";position:absolute;right:22px;bottom:-24px;width:44px;height:34px;background:${tail} no-repeat center/contain;pointer-events:none}`);
-const CM=[['cat','Кошачьи ушки и лапки',900,'🐱'],['devil','Дьявольские рожки и хвост',900,'😈']];
+${cmCss()}`);
+const CM=[['cat','Кошачьи ушки и лапки',900,'🐱'],['devil','Дьявольские рожки и хвост',900,'😈'],['bunny','Зайкины ушки',900,'🐰'],['bear','Ушки мишки',900,'🐻'],['angel','Нимб и крылышки',1000,'😇'],['flowers','Цветочный венок',900,'🌸'],['crown','Золотая корона',1200,'👑']];
 const cmSel=()=>{try{return localStorage.getItem('sel_cmod')||''}catch{return''}};
 function cmodApply(){let k=cmSel();const w=S.wal;if(k&&w&&Array.isArray(w.owned)&&!own('cmod:'+k))k='';const r=document.documentElement;k&&CM.some(m=>m[0]===k)?r.setAttribute('data-cmod',k):r.removeAttribute('data-cmod')}
 window.cmodSet=k=>{try{localStorage.setItem('sel_cmod',k||'')}catch{}cmodApply();drawShop()};
@@ -2360,6 +2384,66 @@ safe('furniture',()=>{
   F('pst3',C('🖼️','🌅','left:24%;top:26%;font-size:.45em'),'Постер «Закат»',60,13,50,28,'wall',1));
  FUR.forEach(f=>{if(window.NEWFUR&&NEWFUR[f[0]])f[1]=NEWFUR[f[0]]});
 });
+
+/* ---------- v11: плашки, +5 оформлений в каждую категорию, новые деревья, дерево на главной ---------- */
+safe('v11themes',()=>[
+ ['mint','Мятная свежесть','#34D399','#A7F3D0','#FDE68A','52,211,153','253,230,138',['#06150F','#0A2018','#12362A'],'#0B2A1E','fa-leaf',260],
+ ['dusk','Сумеречный лаванд','#A78BFA','#DDD6FE','#FB7185','167,139,250','251,113,133',['#0E0B1F','#17122E','#251C45'],'#1A1433','fa-moon',280],
+ ['candy','Сахарная вата','#F9A8D4','#FBCFE8','#93C5FD','249,168,212','147,197,253',['#1F1020','#2B1630','#3E2146'],'#321A38','fa-ice-cream',300],
+ ['desert','Пустынный оазис','#F59E0B','#FCD34D','#14B8A6','245,158,11','20,184,166',['#1B1004','#27180A','#3A2511'],'#2E1C0C','fa-sun',320],
+ ['noir','Нуар','#E5E7EB','#FFFFFF','#9CA3AF','229,231,235','156,163,175',['#050505','#0D0D0F','#18181B'],'#101012','fa-film',340]
+].forEach(d=>{DK.push(d);DECO.push([d[0],d[1],d[2],d[3],d[4],d[5],d[6],999,{b:d[7],p:d[8],fx:d[0]}]);FXX[d[0]]=[d[9],14]}));
+safe('v11treeskins',()=>TSK.push(
+ ['mint','Мятный лес',170,'hue-rotate(40deg) saturate(1.1)'],
+ ['rose','Розовый рассвет',190,'hue-rotate(150deg) saturate(1.2) brightness(1.1)'],
+ ['ink','Чернильное древо',210,'grayscale(.6) hue-rotate(200deg) brightness(.85) drop-shadow(0 0 6px #7C83FF)'],
+ ['lava','Лавовое древо',260,'hue-rotate(-90deg) saturate(1.8) brightness(1.05) drop-shadow(0 0 8px #FF5A1F)'],
+ ['night','Ночное сияние',240,'hue-rotate(110deg) saturate(1.4) brightness(.9) drop-shadow(0 0 8px #A78BFA)']));
+safe('v11species',()=>TSP.push(
+ ['sp_pine','Заснеженная ель',550,()=>TR('#6B4423')+'<polygon points="100,16 128,60 72,60" fill="#2F8F57"/><polygon points="100,36 138,90 62,90" fill="#2A7F4E"/><polygon points="100,60 148,124 52,124" fill="#256F45"/><path d="M100 16L113 38L100 33L87 38Z" fill="#F4FAFF"/><path d="M100 36L120 68L100 62L80 68Z" fill="#F4FAFF"/><path d="M100 60L130 100L100 92L70 100Z" fill="#F4FAFF"/>'],
+ ['sp_baobab','Баобаб',600,()=>'<path d="M88 94L66 84M112 94L132 82" stroke="#9A6B43" stroke-width="5" stroke-linecap="round"/><path d="M78 158Q86 118 82 92Q100 86 118 92Q114 118 122 158Z" fill="#9A6B43"/><path d="M96 100Q94 130 96 158" stroke="#7E5532" stroke-width="3" fill="none" opacity=".5"/><g fill="#4CAF6A"><circle cx="70" cy="80" r="16"/><circle cx="96" cy="68" r="20"/><circle cx="128" cy="78" r="17"/><circle cx="108" cy="84" r="14" fill="#3E9A5A"/></g>'],
+ ['sp_willow','Плакучая ива',650,()=>TR('#7A5A3A')+'<ellipse cx="100" cy="52" rx="42" ry="22" fill="#6FBF73"/>'+[-44,-31,-18,-5,8,21,34,47].map((d,i)=>`<path d="M${100+d} 56Q${103+d} ${88+i%3*8} ${98+d} ${118+i%2*12}" stroke="${i%2?'#58A860':'#6FBF73'}" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')],
+ ['sp_palm','Пальма с кокосами',700,()=>'<path d="M96 158Q88 110 104 70" stroke="#A9794A" stroke-width="9" fill="none" stroke-linecap="round"/>'+[[0,1],[-38,1],[38,1],[-76,.9],[76,.9]].map(([a,s])=>`<g transform="translate(104 70) rotate(${a}) scale(${s})"><path d="M0 0C-16 -18 -14 -40 0 -54C14 -40 16 -18 0 0Z" fill="#3FA34D"/></g>`).join('')+'<circle cx="98" cy="76" r="5" fill="#7A4B22"/><circle cx="110" cy="78" r="5" fill="#6B3F1B"/>'],
+ ['sp_bamboo','Бамбуковая роща',600,()=>[[78,60,'#6BC46D'],[100,34,'#58B35F'],[122,52,'#6BC46D']].map(([x,y,c])=>`<rect x="${x-5}" y="${y}" width="10" height="${158-y}" rx="4" fill="${c}"/>`+[22,50,78,106].map(o=>y+o<150?`<rect x="${x-6}" y="${y+o}" width="12" height="3" rx="1.5" fill="#3F8F47"/>`:'').join('')+`<path d="M${x} ${y+10}q18 -4 26 8q-16 2 -26 -8Z" fill="#8BE08D"/><path d="M${x} ${y+30}q-18 -4 -26 8q16 2 26 -8Z" fill="#8BE08D"/>`).join('')]));
+safe('v11tower',()=>[
+ ['gs25','Морской бриз',260,{n:'Морской бриз',bg:['#0A3A4A','#031219'],h:[185,205],dh:12,s:75,l:66,gr:'#0E4E60',star:'#BEF0FF'},[185,195,205,175,215,190,200],75,66],
+ ['gs26','Мятное мороженое',270,{n:'Мятное мороженое',bg:['#1F4A3F','#09201A'],h:[150,330],dh:20,s:70,l:78,gr:'#2A5C50',star:'#D7FFEF'},[150,330,160,320,140,340,155],70,78],
+ ['gs27','Золотая осень',280,{n:'Золотая осень',bg:['#4A2A0A','#150A03'],h:[25,45],dh:-8,s:90,l:58,gr:'#5A3410',star:'#FFD9A0'},[25,35,45,15,40,30,20],90,58],
+ ['gs28','Ночной Токио',330,{n:'Ночной Токио',bg:['#14052E','#030012'],h:[320,190],dh:30,s:95,l:60,gr:'#1E0A44',star:'#FF9AF5'},[320,190,300,200,330,180,310],95,60],
+ ['gs29','Лунная соната',300,{n:'Лунная соната',bg:['#101A3A','#02040E'],h:[225,260],dh:14,s:60,l:76,gr:'#1A2650',star:'#E0E7FF'},[225,235,250,260,215,245,230],60,76]
+].forEach(g=>{GSK.push(g);TH[g[0]]=Object.assign({paid:1},g[3])}));
+safe('v11meow',()=>[
+ ['mm13','Мятная карамель',170,[150,330,160,320,140,340,155],70,72],
+ ['mm14','Закатная лава',200,[8,22,35,0,15,28,350],90,52],
+ ['mm15','Ледяная гавань',190,[195,205,185,215,175,225,200],65,68],
+ ['mm16','Сиреневый туман',180,[275,290,260,300,250,310,270],55,72],
+ ['mm17','Лесной мох',160,[95,110,80,125,65,140,100],50,42]
+].forEach(m=>{MDB.push(m);MDP.push([m[0],m[1],m[3],m[4],m[5],2])}));
+safe('v11battle',()=>{const NB=[
+ ['bs23','Полярное сияние',200,'rgba(94,234,212,.12)','rgba(167,243,230,.4)','#14B8A6','#99F6E4','rgba(244,114,182,.9)','#CCFBF1','🌌'],
+ ['bs24','Вулканический остров',210,'rgba(120,40,20,.22)','rgba(255,140,70,.4)','#C2410C','#FDBA74','rgba(255,220,60,.95)','#FED7AA','🌋'],
+ ['bs25','Тропическая лагуна',190,'rgba(45,212,191,.13)','rgba(167,243,208,.4)','#0D9488','#5EEAD4','rgba(251,113,133,.9)','#ECFEFF','🏝️'],
+ ['bs26','Тёмная вода',190,'rgba(15,23,42,.45)','rgba(100,116,139,.45)','#334155','#94A3B8','rgba(239,68,68,.95)','#CBD5E1','🌑'],
+ ['bs27','Розовый фламинго',200,'rgba(251,113,133,.13)','rgba(253,164,175,.4)','#F43F5E','#FDA4AF','rgba(250,204,21,.9)','#FFE4E6','🦩']];
+ const v=x=>`--c-cell:${x[3]};--c-line:${x[4]};--c-s1:${x[5]};--c-s2:${x[6]};--c-hit:${x[7]};--c-miss:${x[8]}`;
+ NB.forEach(x=>{BSK.push(x.slice(0,9));try{BEM[x[0]]=x[9]}catch{}});
+ mkStyle(NB.map(x=>`.bd[data-bsk=${x[0]}]{${v(x)}}html[data-bs=${x[0]}]{${v(x)}}.bd[data-bsk=${x[0]}] .cell.hit::after{content:"${x[9]}"}`).join(''))});
+safe('v11quiz',()=>{const NQ=[
+ ['qs8','Мятный чай',150,'linear-gradient(135deg,rgba(110,231,183,.2),rgba(209,250,229,.06))','#6EE7B7','rgba(110,231,183,.3)'],
+ ['qs9','Космос',190,'linear-gradient(160deg,rgba(30,27,75,.75),rgba(8,6,28,.8))','#A5B4FC','rgba(165,180,252,.35)'],
+ ['qs10','Закат',160,'linear-gradient(135deg,rgba(251,146,60,.22),rgba(244,63,94,.1))','#FB923C','rgba(251,146,60,.3)'],
+ ['qs11','Бумажная записка',140,'linear-gradient(135deg,rgba(254,243,199,.22),rgba(253,230,138,.08))','#FCD34D','rgba(252,211,77,.28)'],
+ ['qs12','Лёд',170,'linear-gradient(135deg,rgba(186,230,253,.24),rgba(224,242,254,.08))','#7DD3FC','rgba(125,211,252,.32)']];
+ NQ.forEach(x=>QSK.push(x));mkStyle(NQ.map(x=>`html[data-qs=${x[0]}]{--q-bg:${x[3]};--q-bd:${x[4]};--q-gl:${x[5]}}`).join(''))});
+safe('v11rooms',()=>THEMES.push(
+ ['rm_mint','Мятная кухня',150,'#7fd8b5','#bdf0d8','#e8d9b5','#c9b890','linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px) 0 0/100% 26px','none'],
+ ['rm_star','Звёздная ночь',200,'#1a1f4a','#2c2f6e','#1b1636','#0c0a1e','radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 45% 65%,#fff,transparent)','none'],
+ ['rm_sakura','Сакура',180,'#ffc2da','#ffe3ee','#a67c5b','#7a5640','radial-gradient(circle at 25% 30%,rgba(255,255,255,.5) 0 3px,transparent 4px) 0 0/40px 40px','none'],
+ ['rm_loft','Лофт',170,'#6b6f78','#8b8f99','#4a3f36','#2e2620','repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 46px)','repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 38px)'],
+ ['rm_beach','Пляжный домик',190,'#8fd8ff','#d7f3ff','#f0d9a6','#d9bd82','repeating-linear-gradient(90deg,rgba(255,255,255,.18) 0 3px,transparent 3px 24px)','none']));
+{const r0=render;render=function(){const x=r0.apply(this,arguments);try{const h=document.getElementById('home'),t=document.getElementById('treeCard');if(h&&t&&h.lastElementChild!==t)h.appendChild(t)}catch{}return x}}
+RAR['cmod:bunny']=RAR['cmod:bear']=RAR['cmod:flowers']='e';RAR['cmod:angel']='e';RAR['cmod:crown']='l';
+PRC['cmod:bunny']=PRC['cmod:bear']=PRC['cmod:flowers']=900;PRC['cmod:angel']=1000;PRC['cmod:crown']=1200;
 
 /* ---------- 2. Экономика: 4 тира редкости. Тир задаётся порогами по прежней цене, цена внутри тира растёт линейно от нижней до верхней границы «коридора» ---------- */
 const FXT=[140,170,200],FXB=[[90,140],[300,420],[600,800],[1200,1200]];
