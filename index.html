@@ -568,7 +568,7 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 .lrpane{display:none;max-height:34dvh;overflow-y:auto;overscroll-behavior:contain}
 .lrhud[data-s="fur"] #lrPaneFur,.lrhud[data-s="pets"] #lrPanePets{display:block}
 #lrInv{grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}#lrInv button{padding:10px 4px}#lrInv .lrv{font-size:28px}
-#lrTh{grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}#lrTh .lrt{width:auto;min-width:0}
+#lrTh{grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}#lrHs{grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}#lrHs .lrt{width:auto;min-width:0}#lrTh .lrt{width:auto;min-width:0}
 .lrpick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 @keyframes lrup{from{opacity:0;transform:translateY(14px)}}
 /* ряд питомцев */
@@ -2091,9 +2091,10 @@ $('app').insertAdjacentHTML('beforeend',`<section class="screen" id="loveroom"><
     <button class="pill" onclick="shTab='home';go('shop');RB.shop='loveroom'"><i class="fa-solid fa-bag-shopping"></i> Магазин</button>
     <button class="pill" onclick="hudOpen(null)" aria-label="Закрыть">✕</button>
    </div>
-   <div class="tabs mt" id="lrFTabs"><button class="on" data-t="inv" onclick="hudFur('inv')">Мебель</button><button data-t="th" onclick="hudFur('th')">Стены и пол</button></div>
+   <div class="tabs mt" id="lrFTabs"><button class="on" data-t="inv" onclick="hudFur('inv')">Мебель</button><button data-t="th" onclick="hudFur('th')">Стены и пол</button><button data-t="hs" style="display:none" onclick="hudFur('hs')">Дома</button></div>
    <div class="rw" id="lrInv"></div>
    <div id="lrTh" style="display:none"></div>
+   <div id="lrHs" style="display:none"></div>
   </div>
   <div class="lrpane" id="lrPanePets">
    <div class="row" style="justify-content:space-between;gap:8px"><b class="ff" id="lrPickT" style="font-size:13px">Питомцы в комнате</b><button class="pill" onclick="hudOpen(null)" aria-label="Закрыть">✕</button></div>
@@ -2141,7 +2142,7 @@ window.lrTheme=async id=>{const t=THEMES.find(x=>x[0]===id);if(!t)return false;
  lr.items=lr.items.filter(i=>!old.includes(i));lr.items.push(row);lrDraw();
  for(const o of old)if(o.item!==row.item)await sb.from(T).delete().eq('room_id',S.room).eq('item',o.item);
  await lrSave(row);return true};
-function lrCtl(){$('lrTh').innerHTML=THEMES.map(t=>`<button class="lrt ${lrThId()===t[0]?'on':''}" onclick="lrTheme('${t[0]}')"><span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span><b>${t[1]}</b><span class="xs">${lrThId()===t[0]?'выбрано ✓':t[2]===0||own('room:'+t[0])?'выбрать':t[2]+' 🪙'}</span></button>`).join('');
+function lrCtl(){$('lrTh').innerHTML=THEMES.filter(t=>!/^g:/.test(t[0])).map(t=>`<button class="lrt ${lrThId()===t[0]?'on':''}" onclick="lrTheme('${t[0]}')"><span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span><b>${t[1]}</b><span class="xs">${lrThId()===t[0]?'выбрано ✓':t[2]===0||own('room:'+t[0])?'выбрать':t[2]+' 🪙'}</span></button>`).join('');
  const ow=FUR.filter(f=>own('fur:'+f[0]));
  $('lrInv').innerHTML=ow.length?ow.map(f=>{const on=lr.items.some(d=>d.item===f[0]);return `<button class="${on?'on':''}" onclick="lrToggle('${f[0]}')"><span class="lrv">${f[1]}</span><b class="sm" style="color:var(--text-primary)">${f[2]}</b><span class="xs">${on?'в комнате ✓':'поставить'}</span></button>`}).join(''):'<p class="sm" style="grid-column:1/-1;text-align:center">Пока пусто — загляни в магазин 🛋️</p>';
  $('lrTools').style.display=lr.edit&&lr.sel?'flex':'none';$('lrEd').classList.toggle('on',lr.edit);
@@ -2173,7 +2174,7 @@ let shHC='all';window.lrCat=c=>{shHC=c;drawShop()};
  const it=(k,ico,nm,pr,act)=>`<button onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${pr===0?'бесплатно':own(k)?'куплено ✓':pr+' 🪙'}</span></button>`;let h='';
  if(shTab==='home'){$('shHead').innerHTML=`<div class="tabs" style="margin-bottom:10px;overflow-x:auto">${CATS.map(c=>`<button class="${shHC===c[0]?'on':''}" style="white-space:nowrap;padding:0 10px;font-size:13px" onclick="lrCat('${c[0]}')">${c[1]}</button>`).join('')}</div>`;
   h=FUR.filter(f=>shHC==='all'||f[8]===shHC).map(f=>it('fur:'+f[0],`<span class="lrv">${f[1]}</span>`,f[2],f[3],`buy('fur:${f[0]}',${f[3]},()=>lrBought('${f[0]}'))`)).join('')}
- if(shTab==='room')h=THEMES.map(t=>it('room:'+t[0],`<span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span>`,t[1],t[2],`lrTheme('${t[0]}').then(ok=>ok&&go('loveroom'))`)).join('')+(window.HSHOP?HSHOP():'');
+ if(shTab==='room')h=THEMES.filter(t=>!/^g:/.test(t[0])).map(t=>it('room:'+t[0],`<span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span>`,t[1],t[2],`lrTheme('${t[0]}').then(ok=>ok&&go('loveroom'))`)).join('')+(window.HSHOP?HSHOP():'');
  if(shTab==='stk')h=PACKS.map(p=>it('stk:'+p[0],`<span class="lrv">${p[3].slice(0,3).join('')}</span>`,p[1],p[2],`buy('stk:${p[0]}',${p[2]},()=>toast('Набор открыт — наклеивай на записки 💌'))`)).join('');
  $('shList').innerHTML=h}}
 
@@ -3035,7 +3036,201 @@ const hico=x=>`<svg viewBox="0 0 48 40" width="54" height="45"><path d="M24 3L3 
 window.houseVars=()=>{const h=hh();return `--hc1:${h[3]};--hc2:${h[4]};--hc3:${h[5]}`};
 window.lrHouse=async id=>{const h=HOUSES.find(x=>x[0]===id);if(!h)return;if(h[2]>0&&!own('house:'+id)){await buy('house:'+id,h[2],()=>{});if(!own('house:'+id))return}try{localStorage.setItem('sel_house',id)}catch{}toast('Дом в саду: '+h[1]+' 🏠');lrDraw();try{drawShop()}catch{}};
 window.HSHOP=()=>'<p class="ff" style="grid-column:1/-1;margin:14px 0 2px">🏠 Дома для сада</p>'+HOUSES.filter(x=>x[2]>0).map(x=>`<button onclick="lrHouse('${x[0]}')">${hico(x)}<b class="sm" style="color:var(--text-primary)">${x[1]}</b><span class="xs">${hsel()===x[0]?'выбрано ✓':own('house:'+x[0])?'выбрать':x[2]+' 🪙'}</span></button>`).join('');
-{const c0=lrCtl;lrCtl=function(){c0.apply(this,arguments);const g=$('lrTh');if(g)g.insertAdjacentHTML('beforeend','<p class="ff" style="grid-column:1/-1;margin:8px 0 0">🏠 Дом в саду</p>'+HOUSES.filter(x=>x[2]===0||own('house:'+x[0])).map(x=>`<button class="lrt ${hsel()===x[0]?'on':''}" onclick="lrHouse('${x[0]}')"><span style="display:block">${hico(x)}</span><b>${x[1]}</b></button>`).join(''))}}
+
+/* ===== Сад: сезоны + местность (вместо стен и пола) и вкладка «Дома» ===== */
+const GSE=[['spring','Весна',60],['summer','Лето',0],['autumn','Осень',60],['winter','Зима',100]];
+const GTE=[['meadow','Луг',0],['forest','Лес',120],['beach','Пляж',150],['mount','Горы',150]];
+const GPAL={
+ meadow:{spring:['#9bd6ff','#e4f6ff','#6cbf55','#4a9a3f'],summer:['#7ec8ff','#d6f1ff','#3f8f4a','#2a6a35'],autumn:['#e9a77a','#f8dcb8','#a9893a','#7a5a24'],winter:['#a9bfd6','#e6eef7','#f1f5fa','#cdd9e6']},
+ forest:{spring:['#a7dcc0','#e3f5e8','#5aa34a','#3d7a36'],summer:['#6fb7a0','#bfe3d3','#2f6f3a','#1f4f2b'],autumn:['#d99a6a','#f3d2a8','#8a5a2a','#5c3a1a'],winter:['#9fb4c8','#dbe6f0','#e8eef5','#bccad9']},
+ beach:{spring:['#8fd3f5','#e0f4fb','#ecd9a6','#d6bf86'],summer:['#4fc3f7','#bdeaff','#f2d49b','#d9b06c'],autumn:['#c9b3a0','#efe0cf','#d8c096','#b89d6c'],winter:['#a0b4c6','#dfe8f0','#d9d0bd','#b8ad96']},
+ mount:{spring:['#9ccfee','#e6f4fb','#7fb06a','#5a8a4c'],summer:['#76bff0','#cfeaf9','#5f9a52','#3f7438'],autumn:['#d8a37c','#f5dbbd','#9a7a3c','#6e5226'],winter:['#aebfd2','#e9f0f7','#eef3f8','#c4d1df']}};
+const GFP={meadow:{spring:'radial-gradient(rgba(255,255,255,.18) 2px,transparent 2.5px) 0 0/26px 26px',summer:'radial-gradient(rgba(255,255,255,.18) 2px,transparent 2.5px) 0 0/26px 26px',autumn:'radial-gradient(rgba(255,170,60,.3) 2px,transparent 2.5px) 0 0/26px 26px',winter:'radial-gradient(rgba(255,255,255,.8) 2px,transparent 2.5px) 0 0/26px 26px'},
+ forest:{spring:'radial-gradient(rgba(255,255,255,.14) 2px,transparent 2.5px) 0 0/28px 28px',summer:'radial-gradient(rgba(0,0,0,.14) 2px,transparent 2.5px) 0 0/28px 28px',autumn:'radial-gradient(rgba(255,150,40,.32) 2.5px,transparent 3px) 0 0/24px 24px',winter:'radial-gradient(rgba(255,255,255,.8) 2px,transparent 2.5px) 0 0/26px 26px'},
+ beach:{spring:'radial-gradient(rgba(0,0,0,.09) 1.5px,transparent 2px) 0 0/22px 22px',summer:'radial-gradient(rgba(0,0,0,.1) 1.5px,transparent 2px) 0 0/22px 22px',autumn:'radial-gradient(rgba(0,0,0,.12) 1.5px,transparent 2px) 0 0/22px 22px',winter:'radial-gradient(rgba(255,255,255,.7) 1.5px,transparent 2px) 0 0/22px 22px'},
+ mount:{spring:'radial-gradient(rgba(255,255,255,.14) 2px,transparent 2.5px) 0 0/26px 26px',summer:'radial-gradient(rgba(255,255,255,.12) 2px,transparent 2.5px) 0 0/26px 26px',autumn:'radial-gradient(rgba(0,0,0,.14) 2px,transparent 2.5px) 0 0/26px 26px',winter:'radial-gradient(rgba(255,255,255,.85) 2px,transparent 2.5px) 0 0/26px 26px'}};
+GTE.forEach(t=>GSE.forEach(s=>{const id='g:'+t[0]+':'+s[0];if(THEMES.some(x=>x[0]===id))return;const p=GPAL[t[0]][s[0]];THEMES.push([id,t[1]+' · '+s[1],0,p[0],p[1],p[2],p[3],'none',GFP[t[0]][s[0]]])}));
+const gCur=()=>{const m=/^g:(\w+):(\w+)$/.exec(lrThId());return m?[m[1],m[2]]:['meadow','summer']};
+const gR=(x,y,w,h,f,r)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"${r?` rx="${r}"`:''}/>`,
+ gC=(x,y,r,f)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`,
+ gE=(x,y,rx,ry,f)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}"/>`,
+ gP=(d,f,s,w)=>`<path d="${d}" fill="${f||'none'}"${s?` stroke="${s}" stroke-width="${w||1}"`:''}/>`,
+ gN=(n,f)=>Array.from({length:n},(_,i)=>f(i)).join('');
+function gScene(te,se){
+ const W=se==='winter',A=se==='autumn',S=se==='spring';
+ const cl=W?'#f4f7fb':A?'#fbeee0':'#fff';
+ let h=(se==='summer'?gC(80,14,8,'#ffe066'):S?gC(80,14,6,'#fff3b0'):A?gC(18,32,7,'#ffb36b'):gC(82,14,6,'rgba(255,255,255,.9)'))
+  +gE(22,16,11,4,cl)+gE(31,13,8,4,cl)+gE(60,22,10,3.5,cl);
+ if(te==='meadow'){
+  const hedge={spring:'#5aa84a',summer:'#2f7d3a',autumn:'#8a7a2c',winter:'#dfe8ef'}[se];
+  const fl={spring:['#ff9ec6','#fff','#ffe066'],summer:['#ff7fb0','#fff','#ffd23f'],autumn:['#e07a2f','#c0502a','#e0b030'],winter:['#fff','#eef4fa','#fff']}[se];
+  h+=gR(0,38,100,17,hedge,4)+gR(0,45,100,2,'#e0d4bc')+gN(20,i=>gR(i*5+1,40,3,15,'#f4ead8',1))
+   +gN(7,i=>W?gE(8+i*14,73+(i%3)*8,4,1.6,fl[i%3]):gC(8+i*14,72+(i%3)*8,2,fl[i%3]));
+ }else if(te==='forest'){
+  const cr={spring:['#6dbd5a','#8fd070'],summer:['#2f7d3a','#3f9a4a'],autumn:['#d9822b','#c0502a','#e0b030'],winter:['#2f6b4a','#3d7a56']}[se];
+  h+=gR(0,48,100,7,{spring:'#5aa84a',summer:'#2a6a35',autumn:'#7a5a24',winter:'#dfe8ef'}[se])
+   +gN(10,i=>{const x=4+i*10.5;return gR(x-.8,40,1.6,15,'#6b4522')+gP(`M${x-6} 46L${x} 24L${x+6} 46Z`,cr[i%cr.length])+(W?gP(`M${x-2.6} 33L${x} 24L${x+2.6} 33Z`,'#fff'):'')})
+   +gN(6,i=>A?gE(10+i*16,78+(i%3)*6,3,1.4,['#d9822b','#c0502a','#e0b030'][i%3]):W?gE(10+i*16,78+(i%3)*6,4,1.6,'#fff'):gC(10+i*16,78+(i%3)*6,1.8,['#ff9ec6','#fff','#ffe066'][i%3]));
+ }else if(te==='beach'){
+  const sea={spring:'#4fb8e0',summer:'#2aa7dc',autumn:'#6d99b5',winter:'#7f98ad'}[se];
+  h+=gR(0,34,100,21,sea)+gP('M0 40Q6 37 12 40T24 40T36 40T48 40T60 40T72 40T84 40T96 40T108 40','','rgba(255,255,255,.6)',.8)
+   +gP('M0 47Q6 44 12 47T24 47T36 47T48 47T60 47T72 47T84 47T96 47T108 47','','rgba(255,255,255,.55)',.8)+gR(0,53,100,2,'#fff')
+   +(se==='summer'?gP('M10 46a10 10 0 0 1 20 0z','#ff6f91')+gR(19.6,46,.8,10,'#8a5a2a'):'')
+   +gP('M88 55Q86 42 90 30','','#8a5a2a',2)+gE(90,29,7,2.4,W?'#7fa08a':'#3f9a4a')+gE(86,32,5,2,W?'#7fa08a':'#2f7d3a')
+   +gN(6,i=>W?gE(10+i*16,76+(i%3)*7,4,1.6,'#fff'):gC(10+i*16,76+(i%3)*7,1.6,['#fff','#ffb3c7','#ffe0a0'][i%3]));
+ }else{
+  const m={spring:['#86a9c9','#6a90b5'],summer:['#7a9bbd','#5f84ab'],autumn:['#a0866e','#86684f'],winter:['#b8c8da','#9fb3cb']}[se];
+  const hill={spring:'#7fb06a',summer:'#5f9a52',autumn:'#9a7a3c',winter:'#eef3f8'}[se];
+  h+=gP('M-5 55L18 22L34 44L48 28L66 55Z',m[0])+gP('M30 55L56 18L84 55Z',m[1])+gP('M60 55L82 30L105 55Z',m[0])
+   +gP('M18 22L14.2 28.5L17 27L19 29L21.8 27.5Z','#fff')+gP('M56 18L50.6 27L54 25.5L56 28L59 25.5L61.4 27.5Z','#fff')+gP('M82 30L78.5 36L81 34.5L83 36.5L85.6 35Z','#fff')
+   +gP('M0 55Q25 44 50 50T100 46V55Z',hill)
+   +gN(5,i=>gP(`M${12+i*18} 62l3 -7l3 7z`,W?'#fff':A?'#c0702a':'#2f7d3a'))+gN(5,i=>gE(20+i*16,82+(i%2)*6,4,1.6,W?'#fff':'#8a8a8a'));
+ }
+ return '<svg class="scn" viewBox="0 0 100 100" preserveAspectRatio="none">'+h+'</svg>'}
+{const s0=lrStage;lrStage=function(){let h=s0.apply(this,arguments);if(lr.k==='garden'){const c=gCur(),sv=gScene(c[0],c[1]);h=h.replace(/<svg class="scn"[\s\S]*?<\/svg>/,()=>sv)}return h}}
+{const t0=lrThS;lrThS=function(){if(lr.k!=='garden')return t0.apply(this,arguments);const c=gCur(),t=THEMES.find(x=>x[0]==='g:'+c[0]+':'+c[1]);return `--w1:${t[3]};--w2:${t[4]};--f1:${t[5]};--f2:${t[6]};--wp:${t[7]};--fp:${t[8]}`}}
+window.gardenSet=async(te,se)=>{const t=GTE.find(x=>x[0]===te),s=GSE.find(x=>x[0]===se);if(!t||!s)return;
+ for(const [k,p] of [['gt:'+te,t[2]],['gs:'+se,s[2]]])if(p>0&&!own(k)){await buy(k,p,()=>{});if(!own(k))return}
+ await lrTheme('g:'+te+':'+se)};
+const hsTab=()=>document.querySelector('#lrFTabs [data-t="hs"]');
+const hsSync=()=>{const b=hsTab(),p=$('lrHs');if(b&&p)p.style.display=b.classList.contains('on')&&lr.k==='garden'?'grid':'none'};
+try{new MutationObserver(hsSync).observe($('lrFTabs'),{subtree:true,attributes:true,attributeFilter:['class']})}catch(e){console.error('hsObs',e)}
+{const c0=lrCtl;lrCtl=function(){c0.apply(this,arguments);try{
+ const gd=lr.k==='garden',tb=hsTab(),th=document.querySelector('#lrFTabs [data-t="th"]');
+ if(th)th.textContent=gd?'Природа':'Стены и пол';if(tb)tb.style.display=gd?'':'none';
+ if(!gd&&tb&&tb.classList.contains('on'))window.hudFur('inv');
+ if(gd){const c=gCur(),st=(k,p)=>lrThId()&&own(k)||p===0?'выбрать':p+' 🪙',
+  btn=(on,fn,pal,name,k,p)=>`<button class="lrt ${on?'on':''}" onclick="${fn}"><span class="sw" style="background:linear-gradient(135deg,${pal[0]} 50%,${pal[2]} 50%)"></span><b>${name}</b><span class="xs">${on?'выбрано ✓':(p===0||own(k))?'выбрать':p+' 🪙'}</span></button>`;
+  $('lrTh').innerHTML='<p class="ff" style="grid-column:1/-1;margin:2px 0 0">Сезон</p>'+GSE.map(s=>btn(c[1]===s[0],`gardenSet('${c[0]}','${s[0]}')`,GPAL[c[0]][s[0]],s[1],'gs:'+s[0],s[2])).join('')
+   +'<p class="ff" style="grid-column:1/-1;margin:8px 0 0">Местность</p>'+GTE.map(t=>btn(c[0]===t[0],`gardenSet('${t[0]}','${c[1]}')`,GPAL[t[0]][c[1]],t[1],'gt:'+t[0],t[2])).join('')}
+ const hs=$('lrHs');if(hs)hs.innerHTML=HOUSES.map(x=>`<button class="lrt ${hsel()===x[0]?'on':''}" onclick="lrHouse('${x[0]}')"><span style="display:block">${hico(x)}</span><b>${x[1]}</b><span class="xs">${hsel()===x[0]?'выбрано ✓':(x[2]===0||own('house:'+x[0]))?'выбрать':x[2]+' 🪙'}</span></button>`).join('');
+ hsSync()}catch(e){console.error('garden-ui',e)}}}
+
+
+/* ===== Сад: анимация сезонов, декор, огород ===== */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`
+.gfx{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:94}
+.gfx i{position:absolute;top:-6%;font-style:normal;animation:gfall var(--d) linear var(--w) infinite}
+.gfx.winter i{width:calc(1.1cqw*var(--s));height:calc(1.1cqw*var(--s));border-radius:50%;background:#fff;box-shadow:0 0 1.2cqw rgba(255,255,255,.8);opacity:.92}
+.gfx.autumn i{font-size:calc(3.4cqw*var(--s));animation:gfall var(--d) linear var(--w) infinite,gspin 3.2s ease-in-out var(--w) infinite alternate}
+.gfx.spring i{width:calc(1.6cqw*var(--s));height:calc(1cqw*var(--s));border-radius:80% 20%;background:#ffc2d9;animation:gfall var(--d) linear var(--w) infinite,gspin 2.6s ease-in-out var(--w) infinite alternate}
+@keyframes gfall{0%{top:-6%;margin-left:0}50%{margin-left:var(--x)}100%{top:104%;margin-left:0}}
+@keyframes gspin{from{transform:rotate(-40deg)}to{transform:rotate(60deg)}}
+@media (prefers-reduced-motion:reduce){.gfx i{animation:none!important}}
+.lri[data-k="gvbed"]{cursor:pointer}
+.gvbadge{position:absolute;transform:translate(-50%,-210%);z-index:96;pointer-events:none;font:700 3.2cqw Montserrat,sans-serif;color:#fff;background:rgba(13,11,27,.78);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:.5cqw 2cqw;animation:gbnc 1.4s ease-in-out infinite}
+@keyframes gbnc{50%{margin-top:-1cqw}}
+.gv{position:fixed;inset:0;z-index:900;display:none;flex-direction:column;color:#fff;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);background:#1a2a1a}
+.gv.on{display:flex}
+.gvh{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(10,8,22,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:relative;z-index:2}
+.gvh h2{font:700 20px Cinzel,serif;flex:1}
+.gvh .gvx{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);font-size:18px}
+.gvg{flex:1;min-height:0;display:grid;place-items:center;padding:12px;background-size:26px 26px,100% 100%}
+.gvfr{width:min(94vw,calc((100dvh - 330px)*4/3));padding:3.2%;border-radius:18px;background:linear-gradient(145deg,#a8683d,#6e4322);box-shadow:0 14px 30px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.12)}
+.gvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:2.4%;padding:2.4%;border-radius:12px;background:#3d2412;box-shadow:inset 0 3px 10px rgba(0,0,0,.6)}
+.gvc{position:relative;aspect-ratio:1;border-radius:12px;display:grid;place-items:center;overflow:hidden;padding:0;touch-action:manipulation;background:repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 3px,transparent 3px 13px),linear-gradient(145deg,#8a5a34,#6b4224);box-shadow:inset 0 0 0 2px rgba(0,0,0,.22)}
+.gvc.e{background:repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 3px,transparent 3px 13px),linear-gradient(145deg,#7a4e2c,#5e3820);opacity:.9}
+.gvc.wet{background:repeating-linear-gradient(90deg,rgba(0,0,0,.28) 0 3px,transparent 3px 13px),linear-gradient(145deg,#4f2f18,#3a2010)}
+.gvc.dry{background:repeating-linear-gradient(90deg,rgba(0,0,0,.1) 0 3px,transparent 3px 13px),linear-gradient(145deg,#a37a52,#8a6038)}
+.gvp1{font-size:clamp(24px,9vw,42px);line-height:1;transition:transform .6s;filter:drop-shadow(0 3px 2px rgba(0,0,0,.4))}
+.gvc.rd .gvp1{animation:gvb 1s ease-in-out infinite}
+@keyframes gvb{50%{transform:translateY(-8%) scale(1.08)}}
+.gvw{position:absolute;right:6%;top:4%;font-size:clamp(12px,4vw,18px);animation:gvp 1.2s ease-in-out infinite}
+@keyframes gvp{50%{transform:scale(1.25);opacity:.6}}
+.gvs2{position:absolute;left:8%;top:6%;font-size:clamp(11px,3.6vw,16px);animation:gvp 1.4s ease-in-out infinite}
+.gvc small{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:600 clamp(8px,2.6vw,11px) Montserrat,sans-serif;text-shadow:0 1px 2px #000}
+.gvbar{position:absolute;left:8%;right:8%;bottom:3px;height:4px;border-radius:3px;background:rgba(0,0,0,.35);overflow:hidden}
+.gvbar b{display:block;height:100%;background:linear-gradient(90deg,#7ddc8a,#ffd23f);transition:width .6s}
+.gvc.splash::after{content:'💦';position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(20px,8vw,34px);animation:gvsp .8s ease-out forwards}
+@keyframes gvsp{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:translateY(-30%) scale(1.3)}}
+.gvt{display:flex;margin:0 12px 8px;padding:4px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14)}
+.gvt button{flex:1;min-height:42px;border-radius:10px;color:rgba(255,255,255,.7);font-weight:600;font-size:14px}.gvt .on{background:rgba(255,255,255,.16);color:#fff;box-shadow:inset 0 -2px 0 var(--pink)}
+.gvp{max-height:30dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 12px 14px;background:rgba(10,8,22,.55)}
+.gvr{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px}
+.gvs{flex:none;width:86px;display:grid;gap:2px;justify-items:center;padding:10px 4px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.gvs.on{border-color:var(--pink);box-shadow:0 0 16px rgba(var(--pr),.35)}.gvs span{font-size:30px;line-height:1.1}.gvs b{font-size:12px}.gvs small{font-size:10px;opacity:.75}
+.gvp .btn{width:100%;margin-top:6px}.gvhint{font-size:12px;opacity:.8;margin:2px 0 6px;text-align:center}
+`}));
+
+/* — анимированные сезонные частицы — */
+const gGfx=se=>{if(se!=='winter'&&se!=='autumn'&&se!=='spring')return'';const n=se==='winter'?26:12;
+ return `<div class="gfx ${se}" aria-hidden="true">`+Array.from({length:n},(_,i)=>`<i style="left:${(i*37+11)%97}%;--s:${(.8+(i%4)*.35).toFixed(2)};--d:${(se==='winter'?7:9)+(i%5)*1.6}s;--w:-${((i*1.7)%9).toFixed(1)}s;--x:${(i%2?1:-1)*(3+(i%3)*2)}cqw">${se==='autumn'?['🍁','🍂','🍂'][i%3]:''}</i>`).join('')+'</div>'};
+{const s0=lrStage;lrStage=function(){const h=s0.apply(this,arguments);if(lr.k!=='garden')return h;return h+gGfx(gCur()[1])}}
+
+/* — новый декор для сада (покупается в магазине, раздел «Сад») — */
+const gSv=(h,b)=>`<svg viewBox="0 0 100 ${h}" style="width:1em;height:${h/100}em;display:block;overflow:visible"><g stroke="rgba(0,0,0,.28)" stroke-width="1">${b}</g></svg>`;
+const gRc=(x,y,w,h,f,r)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"${r?` rx="${r}"`:''}/>`;
+[['gvbed',gSv(60,gRc(2,18,96,40,'#8a5a2a',5)+gRc(7,23,86,30,'#5a3419',3)+[0,1,2].map(r=>`<path d="M10 ${31+r*9}H90" stroke="#3d2412" stroke-width="2.4" fill="none"/>`).join('')+[0,1,2,3,4].map(i=>`<path d="M${16+i*17} 26q-4 -9 0 -13q4 4 0 13z" fill="#4caf50"/><circle cx="${16+i*17}" cy="${36+(i%2)*9}" r="3.2" fill="${['#ff9a3d','#e53935','#ffd23f','#ff9a3d','#e53935'][i]}"/>`).join('')),'Огород',300,30,32,76],
+ ['gslide',gSv(90,gRc(8,22,5,64,'#c9772b',1)+gRc(30,22,5,64,'#c9772b',1)+[0,1,2,3].map(i=>gRc(8,34+i*13,27,3,'#e0a56e')).join('')+gRc(5,17,34,6,'#8a5a2a',2)+`<path d="M37 24Q72 28 92 84L80 84Q64 42 37 34Z" fill="#ff6f91"/><path d="M0 86H100" stroke="#6b4522" stroke-width="3"/>`),'Горка',170,22,70,72],
+ ['gswing',gSv(80,gRc(6,6,88,5,'#8a5a2a',2)+`<path d="M12 8L3 78M88 8L97 78" stroke="#8a5a2a" stroke-width="4" fill="none"/><path d="M42 11V52M58 11V52" stroke="#555" stroke-width="1.6"/>`+gRc(37,52,26,5,'#ff9f43',2)),'Качели',150,22,18,70],
+ ['gsand',gSv(50,gRc(4,14,92,34,'#8a5a2a',5)+gRc(9,19,82,24,'#f2d49b',3)+gRc(24,24,13,11,'#e9c87f',2)+gRc(27,19,7,6,'#e9c87f',1)+gRc(66,25,11,10,'#38bdf8',2)),'Песочница',90,18,50,86],
+ ['gbench',gSv(55,gRc(8,6,84,8,'#a8683d',2)+gRc(8,18,84,8,'#a8683d',2)+gRc(14,26,6,24,'#6b4522',1)+gRc(80,26,6,24,'#6b4522',1)),'Скамейка',70,16,12,64],
+ ['gpond',gSv(50,`<ellipse cx="50" cy="28" rx="47" ry="19" fill="#6b4522"/><ellipse cx="50" cy="28" rx="42" ry="15" fill="#4fb8e0"/><path d="M26 28q8 -5 16 0M58 24q8 -4 14 0" stroke="rgba(255,255,255,.6)" fill="none"/><ellipse cx="38" cy="30" rx="6" ry="2.6" fill="#3f9a4a"/><ellipse cx="64" cy="32" rx="5" ry="2.2" fill="#3f9a4a"/><circle cx="38" cy="29" r="1.8" fill="#ff9ec6"/>`),'Пруд',140,24,52,60,3],
+ ['gmbox','📮','Почтовый ящик',50,9,92,84],['gbike','🚲','Велосипед',80,13,22,84]
+].forEach(a=>{if(!FUR.some(f=>f[0]===a[0]))FUR.push([a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],'outdoor'])});
+
+/* — огород — */
+const CROPS={carrot:{e:'🥕',n:'Морковь',g:12,w:5,p:0,s:15,m:1},berry:{e:'🍓',n:'Клубника',g:20,w:8,p:0,s:12,m:6},tomato:{e:'🍅',n:'Томат',g:30,w:12,p:80,s:14,m:3},potato:{e:'🥔',n:'Картошка',g:40,w:15,p:100,s:20,m:2},corn:{e:'🌽',n:'Кукуруза',g:45,w:15,p:120,s:24,m:4},pumpkin:{e:'🎃',n:'Тыква',g:60,w:20,p:160,s:28,m:5},melon:{e:'🍉',n:'Арбуз',g:90,w:30,p:200,s:30,m:8}};
+const GVY=2,gv={open:false,tab:'seed',seed:'carrot',feed:null,tm:0};
+const gsec=()=>Math.floor(Date.now()/1000),gDB='couple_room_decor';
+const gfmt=s=>{const m=Math.ceil(s/60);return m<=1?'<1м':m<60?m+'м':Math.floor(m/60)+'ч'+(m%60?' '+m%60+'м':'')};
+const gvSlots=()=>{const m={};lr.items.forEach(r=>{const s=String(r.item);if(!s.startsWith('_plot:'))return;const a=s.split(':');if(a.length<6||!CROPS[a[2]])return;const o={slot:+a[1],crop:a[2],eff:+a[3]||0,t:+a[4]||0,m:+a[5]||0,item:s},c=m[o.slot];if(!c||o.t>c.t||(o.t===c.t&&o.m>c.m))m[o.slot]=o});return Array.from({length:12},(_,i)=>m[i]||null)};
+const gvInfo=(p,now)=>{const C=CROPS[p.crop],G=C.g*60,eff=Math.min(G,p.eff+Math.max(0,Math.min(now,p.m)-p.t)),ready=eff>=G;return{C,G,eff,ready,moist:!ready&&p.m>now,prog:eff/G,left:G-eff}};
+const gvInv=()=>{const o={};lr.items.forEach(r=>{const s=String(r.item);if(s.startsWith('_inv:')&&CROPS[s.slice(5)])o[s.slice(5)]=Math.max(0,Math.round(+r.x||0))});return o};
+const gvSetInv=(c,n)=>{const row={item:'_inv:'+c,x:Math.max(0,n),y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==row.item);lr.items.push(row);return lrSave(row)};
+const gvPut=async(slot,nr)=>{const olds=lr.items.filter(i=>String(i.item).startsWith('_plot:'+slot+':'));lr.items=lr.items.filter(i=>!olds.includes(i));if(nr)lr.items.push(nr);gvRender();
+ if(nr)await lrSave(nr);for(const o of olds)if(!nr||o.item!==nr.item)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',o.item)};
+const gvRow=(slot,c,eff,t,m)=>({item:`_plot:${slot}:${c}:${eff}:${t}:${m}`,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()});
+const gvVib=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch{}};
+async function gvWater(i,quiet){const p=gvSlots()[i];if(!p)return false;const now=gsec(),I=gvInfo(p,now);if(I.ready)return false;
+ if(I.moist&&p.m-now>I.C.w*30){if(!quiet)toast('Земля ещё влажная 💧');return false}
+ const cell=document.querySelector('#gvGrid')?.children[i];if(cell){cell.classList.add('splash');setTimeout(()=>cell.classList.remove('splash'),850)}gvVib();
+ await gvPut(i,gvRow(i,p.crop,Math.round(I.eff),now,now+I.C.w*60));return true}
+window.gvTap=async i=>{const p=gvSlots()[i],now=gsec();
+ if(!p){const C=CROPS[gv.seed];if(!C)return;if(C.p>0&&!own('crop:'+gv.seed))return toast('Сначала открой эти семена 🔒');gvVib();return gvPut(i,gvRow(i,gv.seed,0,now,now))}
+ const I=gvInfo(p,now);
+ if(I.ready){const inv=gvInv();gvVib();toast('+'+GVY+' '+I.C.e+' в урожай');gvPut(i,null);return gvSetInv(p.crop,(inv[p.crop]||0)+GVY)}
+ if(!I.moist)return gvWater(i);toast(I.C.n+': вырастет через '+gfmt(I.left)+' 🌱')};
+window.gvWaterAll=async()=>{const sl=gvSlots();let n=0;for(let i=0;i<12;i++)if(sl[i]&&await gvWater(i,true))n++;toast(n?'Полито: '+n+' 💧':'Поливать нечего — всё влажное или пусто')};
+window.gvSeed=k=>{const C=CROPS[k];if(!C)return;if(C.p>0&&!own('crop:'+k))return buy('crop:'+k,C.p,()=>{gv.seed=k;gvRender()});gv.seed=k;gvRender()};
+window.gvTab=t=>{gv.tab=t;gvRender()};
+window.gvPick=k=>{gv.feed=gv.feed===k?null:k;gvRender()};
+window.gvFeedPet=async pid=>{const c=gv.feed,C=CROPS[c];if(!C)return;const inv=gvInv();if(!(inv[c]>0))return;
+ if(!window.petLive||!window.pt2)return toast('Питомцы ещё не загрузились');
+ const L=window.petLive(pid);if(L.st!=='idle')return toast('Питомец сейчас занят 💤');if(L.sat>=95)return toast('Животик уже полный 😌');
+ const ts=new Date().toISOString(),u={satiety:Math.min(100,L.sat+C.s),energy:L.en,mood:Math.min(100,L.mo+C.m),stats_at:ts,fed_at:ts},prev=Object.assign({},pt2.rows[pid]);
+ pt2.rows[pid]=Object.assign(pt2.rows[pid]||{pet:pid},u);gvSetInv(c,inv[c]-1);gvRender();gvVib();
+ const {error}=await sb.from(PTB).upsert({room_id:S.room,pet:pid,...u},{onConflict:'room_id,pet'});
+ if(error){pt2.rows[pid]=prev;gvSetInv(c,inv[c]);gvRender();return toast('Не удалось покормить: '+error.message)}
+ const pp=(window.petsOf?petsOf():[]).find(x=>x[0]===pid);toast((pp?pp[2]+': ':'')+'ням '+C.e+'  🍖+'+C.s+' 💗+'+C.m);try{petsSync();petsPanel()}catch{}};
+function gvCell(p,i,now){if(!p)return['e',`<button class="gvc e" onpointerdown="gvTap(${i});event.preventDefault()" aria-label="Пустая грядка"></button>`,null];
+ const I=gvInfo(p,now),st=I.ready?'rd':I.moist?'wet':'dry',em=I.ready?I.C.e:I.prog<.4?'🌱':'🌿',tx=I.ready?'собрать':st==='dry'?'полить':gfmt(I.left),pc=Math.round(I.prog*100);
+ return[st+em+tx,`<button class="gvc ${st}" onpointerdown="gvTap(${i});event.preventDefault()" aria-label="${I.C.n}"><span class="gvp1" style="${I.ready?'':'transform:scale('+(.7+I.prog*.5).toFixed(2)+')'}">${em}</span>${st==='dry'?'<span class="gvw">💧</span>':''}${I.ready?'<span class="gvs2">✨</span>':''}<i class="gvbar"><b style="width:${pc}%"></b></i><small>${tx}</small></button>`,pc]}
+function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;const now=gsec(),sl=gvSlots(),inv=gvInv();
+ $('gvCoins').textContent=cn()+' 🪙';
+ const cs=sl.map((p,i)=>gvCell(p,i,now)),key=cs.map(c=>c[0]).join('~'),g=$('gvGrid');
+ if(g._k!==key){g._k=key;g.innerHTML=cs.map(c=>c[1]).join('')}else cs.forEach((c,i)=>{if(c[2]!=null){const b=g.children[i]&&g.children[i].querySelector('.gvbar b');if(b)b.style.width=c[2]+'%'}});
+ const pal=lr.k==='garden'?GPAL[gCur()[0]][gCur()[1]]:['','','#3f8f4a','#2a6a35'];
+ $('gvG').style.background=`radial-gradient(rgba(255,255,255,.14) 2px,transparent 2.5px) 0 0/26px 26px,linear-gradient(180deg,${pal[2]},${pal[3]})`;
+ const tot=Object.values(inv).reduce((a,b)=>a+b,0),ready=sl.filter(p=>p&&gvInfo(p,now).ready).length;
+ const tb=`<button class="${gv.tab==='seed'?'on':''}" onclick="gvTab('seed')">🌱 Грядки${ready?' · '+ready+' ✨':''}</button><button class="${gv.tab==='harv'?'on':''}" onclick="gvTab('harv')">🧺 Урожай${tot?' · '+tot:''}</button>`,tE=$('gvTabs');if(tE._h!==tb){tE._h=tb;tE.innerHTML=tb}
+ let h='';
+ if(gv.tab==='seed'){h=`<p class="gvhint">Выбери семена и тапни по пустой грядке. Сухая земля — тапни, чтобы полить 💧. Готовое — тапни, чтобы собрать</p><div class="gvr">`+Object.entries(CROPS).map(([k,C])=>{const lk=C.p>0&&!own('crop:'+k);return`<button class="gvs ${gv.seed===k?'on':''}" onclick="gvSeed('${k}')"><span>${C.e}</span><b>${C.n}</b><small>растёт ${C.g} мин</small><small>${lk?'🔒 '+C.p+' 🪙':gv.seed===k?'выбрано ✓':'выбрать'}</small></button>`}).join('')+`</div><button class="btn2" onclick="gvWaterAll()">💧 Полить всё</button>`}
+ else{const ks=Object.keys(inv).filter(k=>inv[k]>0);
+  if(!ks.length)h='<p class="gvhint" style="margin:14px 0">Урожая пока нет — посади овощи и собери 🥕<br>Собранным можно кормить питомцев</p>';
+  else{h=`<p class="gvhint">Выбери овощ, потом питомца, которого хочешь накормить</p><div class="gvr">`+ks.map(k=>{const C=CROPS[k];return`<button class="gvs ${gv.feed===k?'on':''}" onclick="gvPick('${k}')"><span>${C.e}</span><b>${C.n}</b><small>×${inv[k]}</small><small>🍖+${C.s} 💗+${C.m}</small></button>`}).join('')+'</div>';
+   if(gv.feed&&inv[gv.feed]>0){const ps=window.petsOf?petsOf():[];h+=ps.length?`<p class="gvhint">Кого накормим ${CROPS[gv.feed].e}?</p><div class="gvr">`+ps.map(p=>{let sat='';try{sat=Math.round(petLive(p[0]).sat)+'%'}catch{}return`<button class="gvs" onclick="gvFeedPet('${p[0]}')"><span>${p[1]}</span><b>${p[2]}</b><small>🍖 ${sat}</small></button>`}).join('')+'</div>':'<p class="gvhint">В комнате нет питомцев 🐾</p>'}}}
+ const pE=$('gvPanel');if(pE._h!==h){const sc=pE.querySelector('.gvr');const x=sc?sc.scrollLeft:0;pE._h=h;pE.innerHTML=h;const r2=pE.querySelector('.gvr');if(r2)r2.scrollLeft=x}}
+function gvOpen(){let R=$('gv');if(!R){R=document.createElement('div');R.id='gv';R.className='gv';R.setAttribute('role','dialog');R.setAttribute('aria-label','Огород');
+  R.innerHTML='<div class="gvh"><button class="gvx" onclick="gvClose()" aria-label="Закрыть"><i class="fa-solid fa-arrow-left"></i></button><h2>Огород</h2><span class="pill on" id="gvCoins"></span></div><div class="gvg" id="gvG"><div class="gvfr"><div class="gvgrid" id="gvGrid"></div></div></div><div class="gvt" id="gvTabs"></div><div class="gvp" id="gvPanel"></div>';document.body.appendChild(R)}
+ gv.open=true;R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);gvRender()}
+window.gvClose=()=>{gv.open=false;clearInterval(gv.tm);const R=$('gv');if(R)R.classList.remove('on');gvBadge()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gv.open)gvClose()});
+document.addEventListener('click',e=>{if(lr.edit||gv.open)return;const el=e.target.closest&&e.target.closest('#lrStage .lri[data-k="gvbed"]');if(el){e.stopPropagation();gvOpen()}});
+function gvBadge(){const st=$('lrStage');if(!st||cur!=='loveroom')return;const d=lr.items.find(i=>i.item==='gvbed');let b=st.querySelector('.gvbadge');const now=gsec(),n=d?gvSlots().filter(p=>p&&gvInfo(p,now).ready).length:0;
+ if(!n){if(b)b.remove();return}if(!b){b=document.createElement('div');b.className='gvbadge';st.appendChild(b)}b.style.left=d.x+'%';b.style.top=d.y+'%';b.textContent='🧺 '+n}
+setInterval(()=>{try{if(!document.hidden)gvBadge()}catch{}},15000);
+{const c1=lrCtl;lrCtl=function(){c1.apply(this,arguments);try{gvBadge();if(gv.open)gvRender()}catch(e){console.error('garden-veg',e)}}}
 }catch(e){console.error('room-v2',e)}})();
 </script>
 </body></html>
