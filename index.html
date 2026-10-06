@@ -645,7 +645,7 @@ window.ptAct=(k,id)=>{pt2.menu=null;const f=window['pt'+k];if(f)f(id);petsPanel(
 document.addEventListener('pointerdown',e=>{if(pt2.menu&&!e.target.closest('#lrPets')){pt2.menu=null;petsPanel()}});
 
 /* ===== Дверь: выбор комнаты (RM → rmGo) ===== */
-const rmDoorHtml=()=>{const r=RM.find(x=>x[0]===lr.k)||RM[0];return `<button class="lrdoor${lr.edit?' ed':''}" id="lrDoor" onclick="rmDoor(event)" aria-haspopup="true" aria-label="Дверь — выбрать комнату (сейчас: ${r[1]})"><span class="dr"><i class="kn"></i></span><b class="nm">${r[1]} ▾</b></button>`};
+const rmDoorHtml=()=>{const r=RM.find(x=>x[0]===lr.k)||RM[0];return `<button class="lrdoor k-${lr.k}${lr.edit?' ed':''}" style="${window.houseVars?houseVars():''}" id="lrDoor" onclick="rmDoor(event)" aria-haspopup="true" aria-label="Дверь — выбрать комнату (сейчас: ${r[1]})"><span class="dw"></span><span class="dr"><i class="kn"></i></span><b class="nm">${r[1]} ▾</b></button>`};
 const rmMenu=()=>{let m=$('lrDoorMenu');if(!m){m=document.createElement('div');m.id='lrDoorMenu';m.className='lrdm';m.setAttribute('role','menu');m.setAttribute('aria-label','Выбор комнаты');($('loveroom')||$('app')||document.body).appendChild(m)}return m};
 const rmClose=()=>{const m=$('lrDoorMenu'),d=$('lrDoor');if(m)m.classList.remove('on');if(d)d.classList.remove('open')};
 window.rmDoor=e=>{if(e&&e.type==='click'&&e.detail>0&&e.target&&e.target.closest&&!e.target.closest('.dr'))return;if(e)e.stopPropagation();const m=rmMenu(),d=$('lrDoor');if(!m||!d)return;if(m.classList.contains('on')){rmClose();return}
@@ -659,7 +659,7 @@ document.addEventListener('pointerdown',e=>{const m=$('lrDoorMenu');if(m&&m.clas
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){rmClose();if(hud.open){hud.open=null;hudSync()}}});
 
 /* дверь видна и в мини-комнате на главном экране */
-{const h3=lrHome;lrHome=function(){h3.apply(this,arguments);try{const m=document.querySelector('#lrCard .lr.mini');if(m&&!m.querySelector('.lrdoor'))m.insertAdjacentHTML('beforeend','<div class="lrdoor" aria-hidden="true" style="pointer-events:none"><span class="dr"><i class="kn"></i></span></div>')}catch(e){console.error('door',e)}}}
+{const h3=lrHome;lrHome=function(){h3.apply(this,arguments);try{const m=document.querySelector('#lrCard .lr.mini');if(m&&!m.querySelector('.lrdoor'))m.insertAdjacentHTML('beforeend',`<div class="lrdoor k-${lr.k}" aria-hidden="true" style="pointer-events:none;${window.houseVars?houseVars():''}"><span class="dw"></span><span class="dr"><i class="kn"></i></span></div>`)}catch(e){console.error('door',e)}}}
 {const d0=lrDraw;lrDraw=function(){d0.apply(this,arguments);if(cur!=='loveroom')return;const st=$('lrStage');if(!st)return;st.insertAdjacentHTML('beforeend',rmDoorHtml());const m=$('lrDoorMenu');if(m&&m.classList.contains('on'))$('lrDoor').classList.add('open')}}
 
 /* ===== Нижняя панель (HUD): «Мебель» / «Питомцы» ===== */
@@ -2153,7 +2153,7 @@ function lrInit(){if(lr.ch)sb.removeChannel(lr.ch);lr.ch=sb.channel('lr'+S.room)
 window.lrEdit=()=>{lr.edit=!lr.edit;if(!lr.edit)lr.sel=null;lrDraw()};
 window.lrToggle=async k=>{if(!k)return;const d=lr.items.find(i=>i.item===k);
  if(d){lr.items=lr.items.filter(i=>i!==d);if(lr.sel===k)lr.sel=null;lrDraw();await sb.from(T).delete().eq('room_id',S.room).eq('item',k)}
- else{const f=FUR.find(x=>x[0]===k);if(!f||!own('fur:'+k))return;const row={item:k,x:f[5],y:f[6],scale:1,flip:false};lr.items.push(row);lr.edit=true;lr.sel=k;lrDraw();lrSave(row)}};
+ else{const f=FUR.find(x=>x[0]===k);if(!f||!own('fur:'+k))return;const sp=window.lrSpot?lrSpot(f):[f[5],f[6]],row={item:k,x:sp[0],y:sp[1],scale:1,flip:false};lr.items.push(row);lr.edit=true;lr.sel=k;lrDraw();lrSave(row)}};
 window.lrAdj=op=>{const d=lr.items.find(i=>i.item===lr.sel);if(!d)return;if(op==='f')d.flip=!d.flip;if(op==='+')d.scale=Math.min(2,(d.scale||1)+.15);if(op==='-')d.scale=Math.max(.5,(d.scale||1)-.15);lrSave(d);lrDraw()};
 window.lrBought=k=>{go('loveroom');if(!lr.items.some(i=>i.item===k))lrToggle(k);else{lr.edit=true;lr.sel=k;lrDraw()}};
 document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('#lrStage .lri.ed');if(!el)return;lr.sel=el.dataset.k;lr.drag={el,r:$('lrStage').getBoundingClientRect()};lrCtl();e.preventDefault()});
@@ -2173,7 +2173,7 @@ let shHC='all';window.lrCat=c=>{shHC=c;drawShop()};
  const it=(k,ico,nm,pr,act)=>`<button onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${pr===0?'бесплатно':own(k)?'куплено ✓':pr+' 🪙'}</span></button>`;let h='';
  if(shTab==='home'){$('shHead').innerHTML=`<div class="tabs" style="margin-bottom:10px;overflow-x:auto">${CATS.map(c=>`<button class="${shHC===c[0]?'on':''}" style="white-space:nowrap;padding:0 10px;font-size:13px" onclick="lrCat('${c[0]}')">${c[1]}</button>`).join('')}</div>`;
   h=FUR.filter(f=>shHC==='all'||f[8]===shHC).map(f=>it('fur:'+f[0],`<span class="lrv">${f[1]}</span>`,f[2],f[3],`buy('fur:${f[0]}',${f[3]},()=>lrBought('${f[0]}'))`)).join('')}
- if(shTab==='room')h=THEMES.map(t=>it('room:'+t[0],`<span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span>`,t[1],t[2],`lrTheme('${t[0]}').then(ok=>ok&&go('loveroom'))`)).join('');
+ if(shTab==='room')h=THEMES.map(t=>it('room:'+t[0],`<span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span>`,t[1],t[2],`lrTheme('${t[0]}').then(ok=>ok&&go('loveroom'))`)).join('')+(window.HSHOP?HSHOP():'');
  if(shTab==='stk')h=PACKS.map(p=>it('stk:'+p[0],`<span class="lrv">${p[3].slice(0,3).join('')}</span>`,p[1],p[2],`buy('stk:${p[0]}',${p[2]},()=>toast('Набор открыт — наклеивай на записки 💌'))`)).join('');
  $('shList').innerHTML=h}}
 
@@ -2945,4 +2945,97 @@ try{NAVG.sleep='more'}catch{}
 }catch(e){console.error('sleep',e)}})();
 </script>
 
+
+<style>
+#loveroom.hudopen #lrStage{width:max(170px,min(100%,calc(46dvh - 130px)));margin-left:auto;margin-right:auto}
+.lrdoor .dw{position:absolute;pointer-events:none;z-index:-1}
+.lrdoor.k-main .dw,.lrdoor.k-bedroom .dw,.lrdoor.k-kitchen .dw,.lrdoor.k-cinema .dw,.lrdoor.k-bathroom .dw{left:-2.6cqw;right:-2.6cqw;top:-2.6cqw;bottom:0;border:2.6cqw solid #efe3d0;border-bottom:0;border-radius:11cqw 11cqw 0 0;box-shadow:0 .8cqw 2cqw rgba(0,0,0,.3)}
+.lrdoor.k-kitchen .dw,.lrdoor.k-bathroom .dw{border-color:#fff}.lrdoor.k-cinema .dw{border-color:#2a0d14}
+.k-kitchen .dr{background:linear-gradient(135deg,#f2efe8,#d9d3c6)}.k-kitchen .dr::before{background:linear-gradient(135deg,#cfe9ff,#9cc8ec);border-color:#fff}
+.k-bathroom .dr{background:linear-gradient(135deg,#f6fbff,#cfe3f2)}.k-bathroom .dr::before{background:rgba(190,225,250,.75);border-color:#fff}
+.k-cinema .dr{background:linear-gradient(135deg,#8a2433,#4a0f1a)}.k-cinema .dr::before,.k-cinema .dr::after{border-color:rgba(255,215,120,.35)}
+.lrdoor.k-cinema::before{content:'EXIT';position:absolute;left:50%;top:-9cqw;transform:translateX(-50%);background:#16a34a;color:#fff;font:700 2.4cqw sans-serif;padding:.6cqw 1.6cqw;border-radius:.8cqw;box-shadow:0 0 3cqw #22c55e}
+.lrdoor.k-balcony{box-shadow:none;background:#0b0718}
+.k-balcony .dw{left:-9cqw;right:-9cqw;top:-24cqw;bottom:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0 .5cqw,transparent .5cqw 4cqw),linear-gradient(#dcc8b4,#bfa58f);box-shadow:-1cqw 0 3cqw rgba(0,0,0,.35)}
+.lrdoor.k-balcony::before{content:'';position:absolute;left:-6cqw;top:3cqw;width:3cqw;height:4cqw;border-radius:1cqw 1cqw 2cqw 2cqw;background:#ffe9a8;box-shadow:0 0 6cqw 2cqw rgba(255,220,120,.55)}
+.lrdoor.k-garden{right:10cqw;box-shadow:none;background:#0b0718}
+.k-garden .dw{left:-9cqw;right:-9cqw;top:-8cqw;bottom:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 .5cqw,transparent .5cqw 4cqw),var(--hc1,#f1e1c6);box-shadow:inset 0 -2.4cqw 0 rgba(0,0,0,.1),0 1cqw 3cqw rgba(0,0,0,.3)}
+.k-garden .dw::before{content:'';position:absolute;left:-3.5cqw;right:-3.5cqw;bottom:100%;height:13cqw;background:var(--hc2,#c0503f);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.k-garden .dw::after{content:'';position:absolute;left:11%;top:24%;width:5.5cqw;height:5.5cqw;background:#bfe3ff;border:1cqw solid var(--hc3,#fff)}
+.lrdoor.k-garden .nm{top:calc(100% + 1.5cqw)}
+</style>
+<script>
+(()=>{try{
+const SV=(w,h,b)=>`<svg viewBox="0 0 ${w} ${h}" style="width:1em;height:${(h/w).toFixed(2)}em;display:block"><g stroke="rgba(0,0,0,.3)" stroke-width="1.2">${b}</g></svg>`;
+const bed=(fr,sh,pl,bl,x='')=>SV(100,66,`${x}<rect x="4" y="14" width="8" height="48" rx="3" fill="${fr}"/><rect x="88" y="26" width="8" height="36" rx="3" fill="${fr}"/><rect x="8" y="38" width="86" height="18" rx="5" fill="${sh}"/><rect x="6" y="52" width="90" height="9" rx="3" fill="${fr}"/><rect x="13" y="29" width="27" height="14" rx="7" fill="${pl}"/><path d="M40 36h50a5 5 0 0 1 5 5v12H40z" fill="${bl}"/>`);
+const bunk=SV(100,92,'<rect x="3" y="4" width="7" height="86" rx="3" fill="#8a5a36"/><rect x="90" y="4" width="7" height="86" rx="3" fill="#8a5a36"/><rect x="8" y="24" width="84" height="10" rx="4" fill="#fff"/><path d="M36 22h52a4 4 0 0 1 4 4v8H36z" fill="#6fa8dc"/><rect x="13" y="16" width="20" height="10" rx="5" fill="#fff"/><rect x="8" y="62" width="84" height="10" rx="4" fill="#fff"/><path d="M36 60h52a4 4 0 0 1 4 4v8H36z" fill="#f08cb0"/><rect x="13" y="54" width="20" height="10" rx="5" fill="#fff"/><rect x="8" y="36" width="84" height="5" fill="#8a5a36"/><rect x="8" y="74" width="84" height="6" fill="#8a5a36"/>');
+const nst=(c,k,l)=>SV(40,48,`${l?'<path d="M14 6l2-8h8l2 8z" fill="#ffe9a8"/>':''}<rect x="4" y="6" width="32" height="38" rx="3" fill="${c}"/><rect x="7" y="10" width="26" height="14" rx="2" fill="${k}"/><rect x="7" y="27" width="26" height="14" rx="2" fill="${k}"/><circle cx="20" cy="17" r="1.8" fill="#ffe9a8"/><circle cx="20" cy="34" r="1.8" fill="#ffe9a8"/><rect x="6" y="44" width="4" height="4" fill="${c}"/><rect x="30" y="44" width="4" height="4" fill="${c}"/>`);
+const A={
+basket:SV(60,34,'<path d="M5 22c2 8 14 11 25 11s23-3 25-11z" fill="#b08550"/><ellipse cx="30" cy="22" rx="27" ry="10" fill="#c9a06a"/><ellipse cx="30" cy="19" rx="22" ry="7" fill="#f6d7e3"/>'),
+dresser:SV(70,50,'<rect x="3" y="6" width="64" height="38" rx="3" fill="#b5835a"/><rect x="6" y="9" width="58" height="10" rx="2" fill="#cf9d70"/><rect x="6" y="21" width="58" height="10" rx="2" fill="#cf9d70"/><rect x="6" y="33" width="58" height="9" rx="2" fill="#cf9d70"/><circle cx="35" cy="14" r="1.8" fill="#ffe9a8"/><circle cx="35" cy="26" r="1.8" fill="#ffe9a8"/><circle cx="35" cy="37.5" r="1.8" fill="#ffe9a8"/><rect x="6" y="44" width="5" height="5" fill="#8a5a36"/><rect x="59" y="44" width="5" height="5" fill="#8a5a36"/>'),
+ward:SV(50,80,'<rect x="3" y="3" width="44" height="70" rx="3" fill="#d9c7a8"/><rect x="6" y="6" width="19" height="64" rx="2" fill="#e8dbc2"/><rect x="25" y="6" width="19" height="64" rx="2" fill="#e8dbc2"/><circle cx="22" cy="40" r="1.6" fill="#8a6a3a"/><circle cx="28" cy="40" r="1.6" fill="#8a6a3a"/><rect x="6" y="73" width="6" height="6" fill="#a98b5f"/><rect x="38" y="73" width="6" height="6" fill="#a98b5f"/>'),
+books:SV(50,70,'<rect x="3" y="3" width="44" height="64" rx="3" fill="#a8754a"/><rect x="6" y="6" width="38" height="17" fill="#6b4a36"/><rect x="6" y="26" width="38" height="17" fill="#6b4a36"/><rect x="6" y="46" width="38" height="17" fill="#6b4a36"/><g stroke="none"><rect x="8" y="9" width="5" height="14" fill="#e86a8a"/><rect x="14" y="11" width="5" height="12" fill="#6fa8dc"/><rect x="20" y="8" width="6" height="15" fill="#f2c94c"/><rect x="28" y="12" width="5" height="11" fill="#7fd1b3"/><rect x="9" y="30" width="6" height="13" fill="#9c6fc4"/><rect x="17" y="28" width="5" height="15" fill="#e86a8a"/><rect x="30" y="33" width="10" height="10" fill="#f2c94c"/><rect x="8" y="50" width="5" height="13" fill="#6fa8dc"/><rect x="15" y="52" width="6" height="11" fill="#e8dbc2"/><rect x="25" y="49" width="5" height="14" fill="#7fd1b3"/></g>'),
+desk:SV(70,50,'<rect x="2" y="14" width="66" height="6" rx="2" fill="#c9965f"/><rect x="6" y="20" width="5" height="26" fill="#a8754a"/><rect x="59" y="20" width="5" height="26" fill="#a8754a"/><rect x="40" y="20" width="19" height="14" rx="2" fill="#b5835a"/><rect x="14" y="4" width="22" height="10" rx="1.5" fill="#dfe6f0"/>'),
+tvs:SV(70,30,'<rect x="2" y="4" width="66" height="20" rx="3" fill="#6b4a36"/><rect x="5" y="7" width="29" height="14" rx="2" fill="#835a41"/><rect x="36" y="7" width="29" height="14" rx="2" fill="#835a41"/><rect x="6" y="24" width="5" height="5" fill="#4a3224"/><rect x="59" y="24" width="5" height="5" fill="#4a3224"/>'),
+fl:SV(24,80,'<path d="M5 4h14l4 20H1z" fill="#ffe9a8"/><rect x="11" y="24" width="2.5" height="48" fill="#8a7a6a"/><ellipse cx="12" cy="74" rx="9" ry="3.5" fill="#6f6256"/>'),
+tl:SV(24,30,'<path d="M5 2h14l4 14H1z" fill="#ffd9a8"/><rect x="11" y="16" width="2.5" height="9" fill="#8a7a6a"/><ellipse cx="12" cy="27" rx="7" ry="2.5" fill="#6f6256"/>'),
+arm:SV(54,48,'<rect x="4" y="6" width="46" height="26" rx="10" fill="#d97a9a"/><rect x="2" y="22" width="12" height="20" rx="5" fill="#c4607f"/><rect x="40" y="22" width="12" height="20" rx="5" fill="#c4607f"/><rect x="10" y="26" width="34" height="14" rx="5" fill="#e48ba9"/><rect x="8" y="42" width="4" height="5" fill="#6b4a36"/><rect x="42" y="42" width="4" height="5" fill="#6b4a36"/>'),
+pouf:SV(34,26,'<path d="M3 12h28v8c0 4-6 6-14 6S3 24 3 20z" fill="#b48ad8"/><ellipse cx="17" cy="12" rx="14" ry="5" fill="#c9a4ea"/>'),
+mir:SV(30,60,'<ellipse cx="15" cy="30" rx="12" ry="26" fill="#c9965f"/><ellipse cx="15" cy="30" rx="9.5" ry="23" fill="#cfe9f5"/><path d="M9 18q2-6 7-8" stroke="#fff" stroke-width="2" fill="none"/>'),
+clk:SV(30,30,'<circle cx="15" cy="15" r="13" fill="#c9965f"/><circle cx="15" cy="15" r="10.5" fill="#fff8ec"/><path d="M15 8v7l5 3" stroke="#4a3224" stroke-width="1.8" fill="none" stroke-linecap="round"/>'),
+fr:SV(60,40,'<rect x="2" y="4" width="26" height="32" rx="2" fill="#c9965f"/><rect x="5" y="7" width="20" height="26" fill="#ffd1e0"/><circle cx="15" cy="17" r="5" fill="#ff8fb4"/><rect x="32" y="10" width="26" height="22" rx="2" fill="#4a3224"/><rect x="35" y="13" width="20" height="16" fill="#bfe3ff"/><path d="M35 29l7-8 5 5 4-3 4 6z" fill="#7fc47a"/>')};
+const L=[
+F('bed5',bed('#5b7fa6','#cfe3f5','#fff','#6fa8dc'),'Голубая кровать',200,24,50,70,'bed'),
+F('bed6',bed('#e8d9c4','#fff','#fff','#f6b8d6'),'Кровать-облако',260,24,50,70,'bed'),
+F('bed7',bed('#4a2f20','#e9dccb','#f4ede2','#8b2e3c'),'Тёмное дерево',320,24,50,70,'bed'),
+F('bed8',bed('#4f9d84','#e1f4ec','#fff','#7fd1b3'),'Мятная кровать',220,24,50,70,'bed'),
+F('bed9',bunk,'Двухъярусная',380,22,50,66,'bed'),
+F('bed10',bed('#c9a227','#fff6e8','#fff','#f4a6c6','<path d="M6 16Q50 -2 94 16" fill="none" stroke="#f6c1d6" stroke-width="7"/>'),'Королевская с балдахином',520,25,50,68,'bed'),
+F('bed11',bed('#2f2f3a','#d9d9e6','#fff','#5a5a8a'),'Кровать «Графит»',240,24,50,70,'bed'),
+F('bed12',A.basket,'Лежанка питомца',90,9,70,80,'bed'),
+F('nst1',nst('#a8754a','#c9965f',0),'Тумбочка',80,11,22,72,'storage'),
+F('nst2',nst('#f1e6d6','#fff',1),'Белая тумбочка с лампой',110,11,78,72,'storage'),
+F('nst3',nst('#3a3a48','#4d4d60',1),'Тёмная тумбочка с лампой',110,11,78,72,'storage'),
+F('dresser',A.dresser,'Комод',140,18,30,70,'storage'),
+F('ward',A.ward,'Шкаф',200,15,12,62,'storage'),
+F('bookc',A.books,'Книжный шкаф',150,14,86,62,'storage'),
+F('desk',A.desk,'Рабочий стол',170,17,64,70,'storage'),
+F('tvs',A.tvs,'ТВ-тумба',120,20,50,72,'storage'),
+F('flamp',A.fl,'Торшер',90,8,10,64,'light'),
+F('tlamp',A.tl,'Настольная лампа',60,6,60,64,'light'),
+F('armch',A.arm,'Кресло',130,15,25,72,'furn'),
+F('pouf',A.pouf,'Пуф',60,9,60,80,'furn'),
+F('mirr',A.mir,'Зеркало',100,9,40,40,'wall',1),
+F('clock',A.clk,'Часы',70,7,60,34,'wall',1),
+F('frames',A.fr,'Рамки с фото',80,12,30,36,'wall',1)];
+FUR.push(...L.filter(f=>!FUR.some(x=>x[0]===f[0])));
+{const nm=Object.fromEntries(CATS);nm.storage='Тумбы и шкафы';nm.light='Свет';CATS.length=0;['all','bed','storage','furn','light','deco','wall','kitchen','outdoor','season'].forEach(k=>nm[k]&&CATS.push([k,nm[k]]))}
+/* свободное место для новой мебели */
+window.lrSpot=f=>{const wall=f[8]==='wall',its=lr.items.map(i=>({i,g:FUR.find(z=>z[0]===i.item)})).filter(o=>o.g&&(o.g[8]==='wall')===wall),w=f[4]*.9,xs=[f[5],25,75,50,15,85,35,65],ys=wall?[f[6],f[6]+12,f[6]-10]:[f[6],f[6]-14,f[6]+10,f[6]-27];
+ for(const y of ys)for(const x0 of xs){const x=Math.max(w/2+2,Math.min(98-w/2,x0));if(!its.some(o=>Math.abs(o.i.x-x)<(w+o.g[4]*.9)/2&&Math.abs(o.i.y-y)<(wall?6:9)))return[Math.round(x),Math.max(26,Math.min(92,Math.round(y)))]}return[f[5],f[6]]};
+/* обои и полы */
+const T=[['mint','Мятные обои',110,'#bfe8d8','#8fcdb5','#c9a77a','#8d6b43','repeating-linear-gradient(90deg,rgba(255,255,255,.3) 0 6px,transparent 6px 24px)','repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 30px)'],
+['lavender','Лаванда',120,'#cdbdf0','#a58ae0','#6b5a7a','#40334f','radial-gradient(rgba(255,255,255,.35) 2px,transparent 2.5px) 0 0/26px 26px','none'],
+['brick','Кирпич',140,'#a8503a','#7d3626','#5a4636','#33281f','repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 2px,transparent 2px 22px),repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 2px,transparent 2px 48px)','repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 40px)'],
+['marble','Мрамор',200,'#eceaf0','#cfcbd8','#d9d6de','#a9a5b5','linear-gradient(115deg,transparent 40%,rgba(120,110,150,.18) 41% 42%,transparent 43%)','repeating-linear-gradient(90deg,rgba(0,0,0,.12) 0 1px,transparent 1px 60px),repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 60px)'],
+['peach','Персик',110,'#ffd5b5','#ffb98a','#b9855a','#7c5334','none','repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 2px,transparent 2px 26px)'],
+['cloud','Небо и облака',160,'#9fd3ff','#d6ecff','#8ecf7a','#4f9c4a','radial-gradient(ellipse at 30% 40%,rgba(255,255,255,.7) 0 8%,transparent 9%),radial-gradient(ellipse at 70% 25%,rgba(255,255,255,.6) 0 7%,transparent 8%)','none'],
+['graphite','Графит и дуб',150,'#3b3f4a','#252831','#b88a55','#8a6234','none','repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 36px)'],
+['panels','Деревянные панели',130,'#b98b5a','#9a6c3f','#5b4130','#33241a','repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 26px)','repeating-linear-gradient(90deg,rgba(0,0,0,.28) 0 2px,transparent 2px 44px)'],
+['bubble','Бабблгам',130,'#ffc2e0','#ff9ccd','#b2e3ff','#7cc3f0','radial-gradient(#fff 4px,transparent 4.5px) 0 0/40px 40px','none'],
+['chess','Шахматный пол',170,'#e8e0f5','#d1c6ea','#f3f0f8','#2a2438','none','repeating-conic-gradient(rgba(0,0,0,.35) 0 25%,transparent 0 50%) 0 0/60px 60px'],
+['sakura2','Сакура',180,'#ffe0ea','#ffbcd1','#c9a07a','#8a6240','radial-gradient(#ff8fb4 3px,transparent 3.5px) 0 0/44px 44px,radial-gradient(#fff 2px,transparent 2.5px) 22px 22px/44px 44px','none'],
+['midnight','Полночь',150,'#0b1030','#1a2260','#262a52','#10132b','radial-gradient(#fff 1px,transparent 1.5px) 0 0/30px 30px','none'],
+['sand','Песок и терракота',120,'#f0dcb8','#e0c18e','#c26b45','#8e4426','none','repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 50px)']];
+THEMES.push(...T.filter(t=>!THEMES.some(x=>x[0]===t[0])));
+/* дома (скин домика в саду), 5000+ */
+const HOUSES=[['h0','Домик',0,'#f1e1c6','#c0503f','#ffffff'],['h1','Уютный коттедж',5000,'#f6e7c8','#b4513d','#ffffff'],['h2','Красный кирпич',6500,'#b5543f','#4a3a38','#f1e4d3'],['h3','Морской домик',8000,'#bfe3f2','#2f6f9a','#ffffff'],['h4','Мятный дом',9500,'#bfead6','#3f8f73','#fff7e8'],['h5','Розовая сказка',11000,'#f9c6da','#c2417a','#ffffff'],['h6','Бревенчатый',13000,'#a9794a','#5d3b22','#f0d9b5'],['h7','Лавандовый особняк',17000,'#d8c8f2','#6b4aa6','#ffffff'],['h8','Золотой дворец',25000,'#f6df8f','#b8860b','#fffdf0']];
+const hsel=()=>{try{return localStorage.getItem('sel_house')||'h0'}catch{return'h0'}},hh=()=>HOUSES.find(x=>x[0]===hsel())||HOUSES[0];
+const hico=x=>`<svg viewBox="0 0 48 40" width="54" height="45"><path d="M24 3L3 20h42z" fill="${x[4]}"/><rect x="7" y="20" width="34" height="18" fill="${x[3]}"/><rect x="20" y="26" width="9" height="12" rx="4" fill="#7a4a28"/><rect x="10" y="24" width="7" height="7" fill="#cfe9ff" stroke="${x[5]}" stroke-width="1.5"/></svg>`;
+window.houseVars=()=>{const h=hh();return `--hc1:${h[3]};--hc2:${h[4]};--hc3:${h[5]}`};
+window.lrHouse=async id=>{const h=HOUSES.find(x=>x[0]===id);if(!h)return;if(h[2]>0&&!own('house:'+id)){await buy('house:'+id,h[2],()=>{});if(!own('house:'+id))return}try{localStorage.setItem('sel_house',id)}catch{}toast('Дом в саду: '+h[1]+' 🏠');lrDraw();try{drawShop()}catch{}};
+window.HSHOP=()=>'<p class="ff" style="grid-column:1/-1;margin:14px 0 2px">🏠 Дома для сада</p>'+HOUSES.filter(x=>x[2]>0).map(x=>`<button onclick="lrHouse('${x[0]}')">${hico(x)}<b class="sm" style="color:var(--text-primary)">${x[1]}</b><span class="xs">${hsel()===x[0]?'выбрано ✓':own('house:'+x[0])?'выбрать':x[2]+' 🪙'}</span></button>`).join('');
+{const c0=lrCtl;lrCtl=function(){c0.apply(this,arguments);const g=$('lrTh');if(g)g.insertAdjacentHTML('beforeend','<p class="ff" style="grid-column:1/-1;margin:8px 0 0">🏠 Дом в саду</p>'+HOUSES.filter(x=>x[2]===0||own('house:'+x[0])).map(x=>`<button class="lrt ${hsel()===x[0]?'on':''}" onclick="lrHouse('${x[0]}')"><span style="display:block">${hico(x)}</span><b>${x[1]}</b></button>`).join(''))}}
+}catch(e){console.error('room-v2',e)}})();
+</script>
 </body></html>
