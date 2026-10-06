@@ -182,6 +182,7 @@ input[type=datetime-local]{color-scheme:dark}
   <button class="gear" onclick="towerSet('rating')" aria-label="Рейтинг"><i class="fa-solid fa-ranking-star"></i></button>
   <button class="gear" onclick="pfOpen('tower')" aria-label="Настройки"><i class="fa-solid fa-gear"></i></button>
  </div>
+ <div id="twBalP" style="position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 72px);z-index:6;pointer-events:none;display:flex;gap:6px;align-items:center;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.15);font-size:13px;color:#fff;backdrop-filter:blur(8px)"><i class="fa-solid fa-coins" style="color:#FFC24A"></i><b id="twBal">0</b></div>
  <button class="pill on" id="twCash" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onclick="event.stopPropagation();twCash()" style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:8;touch-action:manipulation;pointer-events:auto;white-space:nowrap;box-shadow:0 0 18px rgba(var(--pr),.5)"></button>
 </section>
 
@@ -562,7 +563,7 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 /* выезжающие панели */
 .lrsheet{display:none;padding:8px 12px 12px;border-radius:22px;background:rgba(18,19,43,.96);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(230,210,255,.16);box-shadow:0 24px 60px rgba(0,0,0,.45);animation:lrup .22s ease-out}
 .lrhud:not([data-s=""]) .lrsheet{display:block}
-.lrhud:not([data-s=""]) .lrstrip,.lrhud:not([data-s=""]) .lrtools{display:none!important}
+.lrhud:not([data-s=""]) .lrstrip{display:none!important}
 .lrgrab{display:flex;justify-content:center;padding:2px 0 8px}.lrgrab span{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.18)}
 .lrpane{display:none;max-height:34dvh;overflow-y:auto;overscroll-behavior:contain}
 .lrhud[data-s="fur"] #lrPaneFur,.lrhud[data-s="pets"] #lrPanePets{display:block}
@@ -656,6 +657,9 @@ window.rmDoor=e=>{if(e&&e.type==='click'&&e.detail>0&&e.target&&e.target.closest
 window.rmPick=k=>{rmClose();if(k!==lr.k)rmGo(k)};
 document.addEventListener('pointerdown',e=>{const m=$('lrDoorMenu');if(m&&m.classList.contains('on')&&!e.target.closest('#lrDoorMenu,#lrDoor'))rmClose()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){rmClose();if(hud.open){hud.open=null;hudSync()}}});
+
+/* дверь видна и в мини-комнате на главном экране */
+{const h3=lrHome;lrHome=function(){h3.apply(this,arguments);try{const m=document.querySelector('#lrCard .lr.mini');if(m&&!m.querySelector('.lrdoor'))m.insertAdjacentHTML('beforeend','<div class="lrdoor" aria-hidden="true" style="pointer-events:none"><span class="dr"><i class="kn"></i></span></div>')}catch(e){console.error('door',e)}}}
 {const d0=lrDraw;lrDraw=function(){d0.apply(this,arguments);if(cur!=='loveroom')return;const st=$('lrStage');if(!st)return;st.insertAdjacentHTML('beforeend',rmDoorHtml());const m=$('lrDoorMenu');if(m&&m.classList.contains('on'))$('lrDoor').classList.add('open')}}
 
 /* ===== Нижняя панель (HUD): «Мебель» / «Питомцы» ===== */
@@ -1044,7 +1048,7 @@ function applyTheme(){const t=TH[thm];$('tower').style.background=`linear-gradie
 function twSize(){const cv=$('cv'),st=$('stack'),w=Math.max(200,st.clientWidth),h=Math.max(300,st.clientHeight),d=Math.min(window.devicePixelRatio||1,3);
  TW.top=$('twTop').offsetHeight;cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.style.height=h+'px';TW.W=w;TW.H=h;TW.cx=cv.getContext('2d');TW.cx.setTransform(d,0,0,d,0,0);TW.K=Math.max(3,Math.floor((h-GR-HV-TW.top-24)/BH)-1)}
 function twReset(){TW.blocks=[{x:(TW.W-SW)/2,w:SW}];TW.score=0;TW.combo=0;TW.cam=0;TW.deb=[];TW.pops=[];TW.state='swing';TW.mv={w:SW,cx:TW.W/2,fall:0,vy:0};twHud()}
-function twHud(){$('hgt').textContent=TW.blocks.length;$('scr').textContent=TW.score;$('rec').textContent=S.game.blocks;{const b=$('twCash');if(b)b.innerHTML='<i class="fa-solid fa-coins"></i> Забрать монеты и завершить · +'+twCoins();b.disabled=TW.state!=='swing';b.style.opacity=TW.state==='fall'?'.35':'1';b.style.visibility=(TW.state==='miss'||TW.state==='over')?'hidden':'visible'}}
+function twHud(){try{$('twBal').textContent=cn()}catch{}$('hgt').textContent=TW.blocks.length;$('scr').textContent=TW.score;$('rec').textContent=S.game.blocks;{const b=$('twCash');if(b)b.innerHTML='<i class="fa-solid fa-coins"></i> Забрать монеты и завершить · +'+twCoins();b.disabled=TW.state!=='swing';b.style.opacity=TW.state==='fall'?'.35':'1';b.style.visibility=(TW.state==='miss'||TW.state==='over')?'hidden':'visible'}}
 function twSave(){const n=TW.blocks.length,g=S.game;twMine(n,TW.score);if(n<=g.blocks&&TW.score<=g.score)return;
  const old=g.blocks,u={blocks:Math.max(n,g.blocks),level:Math.max(n,g.blocks),score:Math.max(TW.score,g.score)};Object.assign(g,u);twHud();
  const nw=[...PETS.filter(x=>x[3]>old&&x[3]<=u.blocks).map(x=>x[1]+' '+x[2]),...DECO.filter(x=>x[7]>old&&x[7]<=u.blocks).map(x=>'оформление «'+x[1]+'»')];if(nw.length)toast('Новая награда: '+nw.join(', '));
@@ -1324,7 +1328,83 @@ async function waterTree(){const {error}=await sb.rpc('couple_tree_water',{p_roo
 /* Quiz */
 const QUIZ=[['Идеальный вечер для двоих?',['Фильм и плед','Прогулка','Ужин в ресторане','Игры дома']],['Любимое время суток?',['Утро','День','Вечер','Ночь']],['Где бы хотелось в отпуск?',['Море','Горы','Большой город','Деревня']],['Что выбрать на завтрак?',['Блины','Яичница','Хлопья и йогурт','Только кофе']],['Какой подарок приятнее?',['Сделанный руками','Впечатление','Что-то из вишлиста','Сюрприз']],['Любимое время года?',['Весна','Лето','Осень','Зима']],['Как лучше мириться?',['Обнимашки','Разговор','Извинения и сладкое','Дать остыть']],['Что выберешь на ужин?',['Пицца','Суши','Паста','Домашняя еда']],['Идеальный выходной?',['Спать до обеда','Активный отдых','Гости','Тишина вдвоём']],['Какое животное тебе ближе?',['Кот','Собака','Лиса','Панда']],['Любимый жанр фильмов?',['Комедия','Мелодрама','Триллер','Фэнтези']],['Как признаёшься в любви чаще?',['Словами','Объятиями','Заботой','Подарками']],['Какой напиток лучше вечером?',['Чай','Какао','Кофе','Вино или сок']],['Куда бы поехали на выходные?',['В другой город','На дачу или природу','В спа','Остались бы дома']],['Что важнее в паре?',['Доверие','Юмор','Забота','Страсть']],['Любимая музыка для двоих?',['Спокойная','Танцевальная','Ретро','Что-то новое']],['Как встречаем утро?',['Кофе в постель','Объятия подольше','Быстро вскочить и в путь','Молчим и потягиваемся']],['Какой у нас идеальный питомец?',['Кот','Собака','Хомяк','Никакого']],['Главный сюрприз для тебя?',['Романтический ужин','Путешествие','Записка с признанием','Вечер без телефонов']],['Что чаще всего нас смешит?',['Мемы','Наши шутки','Смешные видео','Разные истории']]];
 let qr=null;const QMAX=6;
-function qToday(r){const h=[...String(S.room)].reduce((a,c)=>a+c.charCodeAt(0),0);return QUIZ[(Math.floor(Date.parse(dayKey())/864e5)*7+h+r)%QUIZ.length]}
+const QX=`Что хочется на ужин сегодня?|Пасту|Мясо|Салат|Заказать доставку
+Как любишь проводить воскресенье?|В кровати|На прогулке|В кино|За готовкой
+Лучший способ поднять настроение?|Музыка|Сладкое|Объятия|Прогулка
+Какая погода лучше всего?|Солнечная|Дождливая|Снежная|Пасмурная и уютная
+Что выберешь для свидания?|Пикник|Кино|Кафе|Аттракционы
+Кем бы ты был(а) в другой жизни?|Путешественником|Артистом|Учёным|Спортсменом
+Какую суперсилу хочется?|Летать|Читать мысли|Останавливать время|Быть невидимым
+Что самое вкусное?|Шоколад|Мороженое|Пицца|Сыр
+Любимый способ отдыха?|Сериалы|Книги|Игры|Сон
+Что сделаешь с неожиданной премией?|Отложу|Поеду в путешествие|Куплю подарки|Куплю себе вкусное
+Идеальное утро выходного?|Долго спать|Завтрак вдвоём|Спорт|Прогулка с кофе
+Что чаще забываешь дома?|Телефон|Ключи|Зарядку|Зонт
+Какой цвет ближе?|Розовый|Синий|Зелёный|Чёрный
+Какой десерт выберешь?|Чизкейк|Мороженое|Торт|Фрукты
+Где лучше встречать Новый год?|Дома|У друзей|В другой стране|На природе
+Какой праздник любишь больше?|Новый год|День рождения|Годовщину|Лето без праздников
+Что приятнее получить?|Цветы|Книгу|Украшение|Тёплые слова
+Какой стиль одежды ближе?|Спортивный|Классика|Уютный домашний|Яркий
+Как относишься к ранним подъёмам?|Люблю|Терплю|Только по делу|Ненавижу
+Что важнее в доме?|Уют|Чистота|Техника|Красота
+Какой транспорт любишь?|Поезд|Самолёт|Машину|Велосипед
+Что берёшь в поездку первым?|Наушники|Зарядку|Косметичку|Книгу
+Что делаешь в дождь?|Гуляю под ним|Смотрю кино|Пью чай у окна|Сплю
+Когда лучше всего свидание?|Весной|Летом|Осенью|Зимой
+Как проводим вечер пятницы?|В ресторане|Дома с фильмом|С друзьями|Ложимся рано
+Любимый вкус мороженого?|Пломбир|Шоколад|Клубника|Фисташка
+Какая музыка поднимает настроение?|Поп|Рок|Джаз|Классика
+Любимое место в доме?|Кровать|Кухня|Диван|Балкон
+Что смешнее?|Мемы|Комедии|Наши шутки|Видео с животными
+Что любишь больше?|Горы|Море|Лес|Город
+Чем занимаем долгий вечер?|Настолки|Сериал|Разговоры|Готовка
+Что бы изменил(а) в быту?|Больше порядка|Больше уюта|Больше свободного времени|Ничего
+Какой завтрак подойдёт?|Омлет|Каша|Бутерброды|Блинчики
+Что любишь делать вдвоём?|Готовить|Гулять|Смотреть кино|Путешествовать
+Что побеждает?|Ум|Юмор|Доброта|Упорство
+Какая вечеринка лучше?|Тихая|Шумная|Дома|На улице
+Любимая еда из детства?|Блинчики|Макароны|Пельмени|Суп
+Что ценишь в друзьях?|Верность|Юмор|Честность|Поддержку
+Когда лучше думается?|Утром|Вечером|Ночью|На прогулке
+Какое хобби интересно?|Рисование|Музыка|Спорт|Кулинария
+Лучший формат отпуска?|Пляж|Экскурсии|Активный отдых|Ничегонеделание
+Что вдохновляет?|Природа|Музыка|Люди|Книги
+Как пьёшь чай?|С сахаром|Без сахара|С молоком|С лимоном
+Что ценишь в любви больше всего?|Искренность|Верность|Внимание|Заботу в мелочах
+Куда хочется поехать?|Париж|Токио|Рим|Нью-Йорк
+Что берём на пикник?|Бутерброды|Фрукты|Шашлык|Сладкое
+Что делает день идеальным?|Вкусная еда|Время вдвоём|Спокойствие|Приключение
+Как лучше тратить деньги?|Копить|На впечатления|На полезное|На подарки
+Какой кофе любишь?|Капучино|Латте|Эспрессо|Не пью
+Какую книгу возьмёшь?|Роман|Детектив|Фантастику|Не читаю
+Какой мультфильм ближе?|Добрый|Смешной|Приключенческий|Грустный
+Идеальный день рождения?|Тихо с близкими|Шумно с друзьями|Путешествие|Сюрприз
+Что скучнее всего делать?|Уборку|Готовку|Стирку|Ходить по магазинам
+Что делаем в первый снег?|Лепим снеговика|Пьём какао|Гуляем|Смотрим из окна
+Что берёшь в кино?|Попкорн|Чипсы|Конфеты|Ничего
+Что тебя успокаивает?|Музыка|Тишина|Объятия|Прогулка
+Любимая обувь?|Кроссовки|Ботинки|Тапочки|Босиком
+Любишь сюрпризы?|Очень|Иногда|Только хорошие|Не очень
+Чем занят в метро?|Слушаю музыку|Читаю|Смотрю в окно|Листаю телефон
+Любимое животное в зоопарке?|Слон|Пингвин|Обезьяна|Жираф
+Что приготовим вместе?|Пиццу|Печенье|Суши|Борщ
+Что самое уютное?|Плед|Свечи|Гирлянды|Чай
+Как относишься к жаре?|Люблю|Терплю|Прячусь|Ненавижу
+Как любишь вставать?|По будильнику|Само|Под музыку|Не вставать
+Что дарит радость?|Подарки|Успех|Отдых|Время с любимыми
+Чему хочется научиться?|Музыке|Новому языку|Рисованию|Танцам
+Как выбираем фильм?|По жанру|По актёрам|По отзывам|Наугад
+Что слушаешь в дороге?|Музыку|Подкасты|Тишину|Аудиокниги
+Что с утра важнее?|Кофе|Зарядка|Душ|Завтрак
+Какая прогулка лучше?|По парку|По набережной|По старому городу|По лесу
+Что подарить на годовщину?|Ужин|Путешествие|Письмо|Украшение
+Что чаще вызывает улыбку?|Милые сообщения|Шутки|Подарки|Объятия
+Когда лучше говорить по душам?|Утром|Днём|Вечером|Глубокой ночью
+Что у нас получается лучше?|Паста|Блины|Салат|Пицца`.split("\n").map(l=>{const a=l.split("|");return [a[0],a.slice(1)]}),QALL=QUIZ.concat(QX),QCUT=20732;
+/* до QCUT вопросы дня считаются по-старому (история не меняется), дальше — перемешанный круг без повторов, пока не пройдут все вопросы */
+const qPerm=(()=>{const c={};return(seed,cy)=>{const k=seed+'|'+cy;if(c[k])return c[k];let z=(seed*2654435761+cy*40503)>>>0;const rnd=()=>{z=(z+0x6D2B79F5)>>>0;let t=z;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296},a=QALL.map((_,i)=>i);for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return c[k]=a}})();
+function qToday(r){const h=[...String(S.room)].reduce((a,c)=>a+c.charCodeAt(0),0),d=Math.floor(Date.parse(dayKey())/864e5);if(d<QCUT)return QUIZ[(d*7+h+r)%QUIZ.length];const n=(d-QCUT)*QMAX+r,N=QALL.length;return QALL[qPerm(h,Math.floor(n/N))[n%N]]}
 function qCur(){const d=dayKey();let r=0;while(r<QMAX-1&&S.quiz.some(x=>x.day===d&&(x.round||0)===r&&x.user_id===S.uid))r++;return r}
 async function qAns(i){const r=qr===null?qCur():qr,{error}=await sb.from('couple_quiz').insert({room_id:S.room,day:dayKey(),round:r,answer:i});
  if(error)return toast(error.code==='23505'?'Ты уже ответил(а) на этот вопрос':error.message);toast('Ответ сохранён');xLoad()}
@@ -1423,7 +1503,7 @@ function shHeadHTML(){const bk=(act,t,ttl)=>`<div class="row" style="margin-bott
 function shExtraHTML(){if(shTab==='swap'||shTab==='tree')return'';
  return (shTab==='deco'?`<button class="card row mt" style="width:100%;text-align:left;padding:12px" onclick="go('settings')"><span class="ico"><i class="fa-solid fa-palette"></i></span><div class="sp"><b class="ff" style="font-size:14px">Бесплатные темы</b><p class="xs">Открываются за этажи Башни · выбор в «Настройках»</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`:'')
  +`<button class="pill" style="display:flex;margin:16px auto 0" onclick="shTabSet('swap')">🪙 → 🌳 Обмен монет на рост дерева</button>`}
-function drawCoins(){const c=$('coinCard');if(!c)return;c.innerHTML=`<span class="ico"><i class="fa-solid fa-coins" style="color:#FFC24A"></i></span><div class="sp"><b class="ff" style="font-size:17px">${cn()} 🪙</b><p class="xs">Общий кошелёк · 🔥 серия ${stk()} дн.</p></div><span class="pill on">Магазин</span>`;
+function drawCoins(){try{$('twBal').textContent=cn()}catch{}const c=$('coinCard');if(!c)return;c.innerHTML=`<span class="ico"><i class="fa-solid fa-coins" style="color:#FFC24A"></i></span><div class="sp"><b class="ff" style="font-size:17px">${cn()} 🪙</b><p class="xs">Общий кошелёк · 🔥 серия ${stk()} дн.</p></div><span class="pill on">Магазин</span>`;
  const n=$('noteCard'),l=(S.notes||[])[0];if(n)n.innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp" style="min-width:0"><b class="ff" style="font-size:15px">За что я тебя люблю</b><p class="xs" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc((l.author_name||'')+': '+l.body):'Напиши первую записку 💌'}</p></div><i class="fa-solid fa-chevron-right sm"></i>`}
 function drawShop(){if(cur!=='shop')return;$('shCoins').textContent=cn()+' 🪙';
  $('shTabs').innerHTML=SHT.filter(t=>SHM.includes(t[0])).map(t=>`<button class="${(shTab==='tree'?'game':shTab)===t[0]?'on':''}" style="white-space:nowrap;flex:1;padding:0 8px;font-size:13px" onclick="shTabSet('${t[0]}')">${t[1]}</button>`).join('');
@@ -2611,11 +2691,21 @@ new MutationObserver(()=>{if(!q)q=requestAnimationFrame(fix)}).observe(document.
 @keyframes dnFloat{to{transform:translateY(-70px);opacity:0}}
 @keyframes dnCrumb{to{transform:translate(var(--cx),38px) rotate(200deg);opacity:0}}
 #dining .back{display:grid;place-items:center;width:40px;height:40px;border-radius:999px;background:rgba(0,0,0,.35)}
+.dn-plate,.dn-food{position:absolute;top:58%;width:27%;max-width:112px;transform:translate(-50%,-50%)}
+.dn-plate{transition:transform .2s,filter .2s}.dn-plate svg{display:block;overflow:visible}
+.dn-plate.ready{animation:dnGlow 1s ease-in-out infinite}
+.dn-plate.hot{animation:none;transform:translate(-50%,-50%) scale(1.2);filter:drop-shadow(0 0 8px #fff) drop-shadow(0 0 16px #ff7ab8)}
+.dn-plate.nudge{animation:dnGlow .5s ease-in-out 3}
+.dn-food{height:0}.dn-fw{position:absolute;left:50%;bottom:-3px;width:56px;margin-left:-28px;animation:dnDrop .55s ease-out}
+.dn-fs{transform-origin:50% 100%;transition:transform .5s;filter:drop-shadow(0 3px 2px rgba(60,20,40,.35))}
+.dn-ghost{position:fixed;left:0;top:0;width:68px;height:68px;z-index:9999;pointer-events:none;display:grid;place-items:center;filter:drop-shadow(0 10px 6px rgba(0,0,0,.35))}
+#dnShelf [data-f]{touch-action:pan-x;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#dnShelf [data-f] svg{pointer-events:none}
+@keyframes dnGlow{50%{filter:drop-shadow(0 0 10px #ffd1e6) brightness(1.08)}}
 </style>
 <script>
 (()=>{try{
 const FD0=[['apple','🍎','Яблочко',3,15,2],['carrot','🥕','Морковка',4,15,1],['berry','🍓','Клубничка',8,12,6],['cookie','🍪','Печенька',10,20,8],['soup','🍲','Супчик',18,50,4],['pizza','🍕','Пицца',20,45,8],['sushi','🍣','Суши',25,40,10],['cake','🍰','Тортик',30,35,20]];
-const dn={cat:FD0.map(a=>({id:a[0],emoji:a[1],name:a[2],price:a[3],satiety:a[4],mood:a[5]})),inv:{},sel:null,ui:{},food:null,busy:0,t:0,sig:'',shop:false,open:true,ch:null};
+const dn={cat:FD0.map(a=>({id:a[0],emoji:a[1],name:a[2],price:a[3],satiety:a[4],mood:a[5]})),inv:{},sel:null,ui:{},food:null,busy:{},t:0,sig:'',shop:false,open:true,ch:null};
 /* скорость в час: [сытость, энергия, настроение]; минус = восстановление. Те же числа в SQL (_pet_settle) */
 const RT={idle:[10,4,3],sleeping:[3,-15,1],walking:[12,8,-10]};
 const cl=v=>Math.max(0,Math.min(100,v));
@@ -2649,12 +2739,12 @@ $('app').insertAdjacentHTML('beforeend',`<section class="screen !p-0 !overflow-h
   <div class="relative flex-1 select-none">
    <div id="dnPanel" class="absolute inset-x-3 top-0 z-40 grid gap-1.5"></div>
    <div class="absolute left-1/2 top-[64%] h-[14%] w-[96%] -translate-x-1/2 rounded-[50%] bg-rose-900/40 blur-[2px]"></div>
-   <div id="dnPets"></div>
+   <div id="dnPets"></div><div id="dnPlates" class="pointer-events-none absolute inset-0" style="z-index:25"></div>
    <div class="absolute left-1/2 top-[50%] z-20 h-[17%] w-[88%] -translate-x-1/2 rounded-[50%] bg-gradient-to-b from-[#f0c28b] to-[#c98f56] shadow-[0_6px_0_#a8703f]"></div>
    <div class="absolute left-1/2 top-[56%] z-20 h-[24%] w-[74%] -translate-x-1/2 rounded-b-[2.5rem] bg-pink-400 bg-[linear-gradient(90deg,rgba(255,255,255,.2)_50%,transparent_50%),linear-gradient(rgba(255,255,255,.2)_50%,transparent_50%)] bg-[length:26px_26px] shadow-lg"></div>
-   <div class="absolute left-1/2 top-[57%] z-30 h-[7%] w-28 -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-white/90 shadow-inner"></div>
-   <div id="dnFood" class="absolute left-1/2 top-[55%] z-30 -translate-x-1/2 -translate-y-1/2"></div>
-   <div id="dnFx" class="pointer-events-none absolute left-1/2 top-[55%] z-40"></div>
+   
+   <div id="dnFood" class="pointer-events-none absolute inset-0" style="z-index:30"></div>
+   
    <div id="dnNames" class="absolute inset-0 z-30"></div>
    <div id="dnFloat" class="pointer-events-none absolute inset-0 z-50"></div>
   </div>
@@ -2670,6 +2760,21 @@ $('app').insertAdjacentHTML('beforeend',`<section class="screen !p-0 !overflow-h
    <div id="dnShopList" class="grid gap-2"></div></div></div>
 </section>`);
 
+/* ---------- иконки еды (SVG) и тарелки ---------- */
+const G=(a,b,x2,y2)=>`<defs><linearGradient id="a@" x1="0" y1="0" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
+const FS={
+apple:'<defs><radialGradient id="a@" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#ff857a"/><stop offset=".55" stop-color="#e53935"/><stop offset="1" stop-color="#a81c26"/></radialGradient></defs><path d="M32 19C27 14 14 15 13 28c-1 12 7 28 14 28 3 0 3.5-1.5 5-1.5s2 1.5 5 1.5c7 0 15-16 14-28C50 15 37 14 32 19z" fill="url(#a@)"/><path d="M32 19c0-5 1-9 4-12" stroke="#6b4423" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M35 13c3-6 11-6 14-4-1 6-8 9-14 4z" fill="#58c45a"/><path d="M36 12c4-2 7-2.5 10-3" stroke="#3b9a40" stroke-width="1.2" fill="none"/><ellipse cx="21.5" cy="29" rx="3.6" ry="8" transform="rotate(15 21.5 29)" fill="#fff" opacity=".35"/>',
+carrot:G('#ffb04a','#ef6a1c',1,0)+'<g transform="rotate(35 32 32) translate(3.2 3.2) scale(.9)"><path d="M32 14c-6-3-9-8-8-12 5 1 8 5 8 12zM32 14c0-6 1-11 4-13 2 4 1 9-4 13zM32 14c5-3 10-4 14-3-2 5-8 7-14 3z" fill="#47b956"/><path d="M23.5 17c0-5 17-5 17 0 0 14-4 30-8.5 42C27.5 47 23.5 31 23.5 17z" fill="url(#a@)"/><path d="M26 25h6m1 8h5m-11 6h5m-1 8h3" stroke="#d2540f" stroke-width="1.6" stroke-linecap="round"/><path d="M27 19c-1 8 0 15 2 21" stroke="#fff" opacity=".35" stroke-width="2" fill="none" stroke-linecap="round"/></g>',
+berry:'<defs><radialGradient id="a@" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#ff6b78"/><stop offset=".6" stop-color="#e3273f"/><stop offset="1" stop-color="#a8142c"/></radialGradient></defs><path d="M32 58C16 48 8 36 10 26c2-8 12-10 22-6 10-4 20-2 22 6 2 10-6 22-22 32z" fill="url(#a@)"/><g fill="#ffe9a6"><ellipse cx="19" cy="29" rx="1.2" ry="1.9"/><ellipse cx="29" cy="31" rx="1.2" ry="1.9"/><ellipse cx="40" cy="29" rx="1.2" ry="1.9"/><ellipse cx="48" cy="31" rx="1.2" ry="1.9"/><ellipse cx="24" cy="39" rx="1.2" ry="1.9"/><ellipse cx="34" cy="39" rx="1.2" ry="1.9"/><ellipse cx="44" cy="39" rx="1.2" ry="1.9"/><ellipse cx="29" cy="48" rx="1.2" ry="1.9"/><ellipse cx="37" cy="48" rx="1.2" ry="1.9"/></g><path d="M32 22c-6-1-12-3-14-9 5-1 10 1 14 5 4-4 9-6 14-5-2 6-8 8-14 9z" fill="#3fb34d"/><rect x="30.5" y="7" width="3" height="10" rx="1.5" fill="#2f9640"/><ellipse cx="19.5" cy="31" rx="3" ry="6" transform="rotate(20 19.5 31)" fill="#fff" opacity=".3"/>',
+cookie:'<defs><radialGradient id="a@" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#f3c883"/><stop offset="1" stop-color="#c88638"/></radialGradient><mask id="m@"><rect width="64" height="64" fill="#fff"/><circle cx="55" cy="14" r="8" fill="#000"/><circle cx="48" cy="7" r="6" fill="#000"/><circle cx="58" cy="25" r="5" fill="#000"/></mask></defs><g mask="url(#m@)"><circle cx="32" cy="34" r="26" fill="#b57530"/><circle cx="32" cy="31" r="26" fill="url(#a@)"/><circle cx="32" cy="31" r="22" fill="none" stroke="#fff" opacity=".18" stroke-width="2"/></g><g fill="#5a3320"><ellipse cx="22" cy="24" rx="4.5" ry="3.5" transform="rotate(-20 22 24)"/><ellipse cx="38" cy="37" rx="4.8" ry="3.6" transform="rotate(25 38 37)"/><ellipse cx="24" cy="42" rx="3.8" ry="3"/><ellipse cx="34" cy="20" rx="3.2" ry="2.6"/><ellipse cx="45" cy="28" rx="3" ry="2.4"/><ellipse cx="13" cy="34" rx="2.8" ry="2.2"/></g>',
+soup:G('#ff9fbd','#dd4f7c',0,1)+'<path d="M24 22c-3-4 3-6 0-11M32 20c-3-4 3-6 0-11M40 22c-3-4 3-6 0-11" stroke="#c9b6d6" stroke-width="2.2" stroke-linecap="round" fill="none"/><rect x="21" y="53" width="22" height="5" rx="2.5" fill="#c2406b"/><path d="M7 30h50c0 15-10 25-25 25S7 45 7 30z" fill="url(#a@)"/><path d="M10 39h44" stroke="#fff" opacity=".45" stroke-width="2.5" stroke-dasharray="1 5" stroke-linecap="round"/><ellipse cx="32" cy="30" rx="25" ry="7" fill="#fff0dc"/><ellipse cx="32" cy="30.5" rx="21.5" ry="5.2" fill="#f5a53b"/><circle cx="24" cy="30" r="2.1" fill="#e8742a"/><circle cx="33" cy="32" r="1.8" fill="#e8742a"/><ellipse cx="40" cy="30" rx="2.5" ry="1.2" fill="#5fc468"/><ellipse cx="28" cy="32" rx="2" ry="1" fill="#5fc468"/>',
+pizza:G('#ffd966','#f4b13a',0,1)+'<path d="M7 20C20 8 44 8 57 20L32 59z" fill="url(#a@)" stroke="#e29a2c" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 18C20 4 44 4 59 18l-3 7C42 14 22 14 8 25z" fill="#dc9444"/><path d="M11 17C22 9 42 9 53 17" stroke="#f3c071" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/><g fill="#d93a3a"><circle cx="24" cy="31" r="5.5"/><circle cx="40" cy="30" r="5.5"/><circle cx="32" cy="44" r="4.8"/></g><g fill="#f26a6a"><circle cx="22.5" cy="29.5" r="1.2"/><circle cx="38.5" cy="28.5" r="1.2"/><circle cx="31" cy="43" r="1"/></g><path d="M33 22l3 2-3 2zM16 37l3 1-2 2zM46 38l3-1-1 3z" fill="#4fb85a"/>',
+sushi:G('#ff9d73','#ff6a4d',0,1)+'<rect x="8" y="33" width="48" height="20" rx="10" fill="#e3dbcf"/><rect x="8" y="31" width="48" height="19" rx="9.5" fill="#fffdf8"/><g fill="#e3dbcf"><ellipse cx="18" cy="44" rx="2.5" ry="1.1"/><ellipse cx="30" cy="46" rx="2.5" ry="1.1"/><ellipse cx="44" cy="45" rx="2.5" ry="1.1"/><ellipse cx="37" cy="40" rx="2.5" ry="1.1"/></g><path d="M5 35C6 21 18 17 32 17s26 4 27 18C44 41 20 41 5 35z" fill="url(#a@)"/><path d="M15 25c4 3 6 7 7 11M26 21c4 4 6 9 6 15M38 21c3 4 4 9 4 14M49 25c2 3 3 6 3 9" stroke="#fff" opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="28.5" y="16" width="9" height="36" rx="2" fill="#1f3a2c"/>',
+cake:'<rect x="10" y="41" width="44" height="14" rx="4" fill="#c9825a"/><rect x="9" y="36" width="46" height="6.5" rx="3.2" fill="#fff6ee"/><rect x="10" y="24" width="44" height="13" rx="3" fill="#f7a6bf"/><path d="M8 25c0-6 4-9 10-9h28c6 0 10 3 10 9 0 4-3 5-5 5s-3-1-5-1-3 4-5 4-3-4-6-4-4 4-6 4-3-3-5-3-3 1-5 1-5-1-5-6z" fill="#fff6ee"/><path d="M32 6c-4 0-8 3-8 7 0 4 4 6 8 6s8-2 8-6c0-4-4-7-8-7z" fill="#e5334a"/><path d="M29 7c2-3 6-3 8 0-3 1-5 1-8 0z" fill="#3fb34d"/><g fill="#ffe9a6"><ellipse cx="29" cy="12" rx=".8" ry="1.2"/><ellipse cx="34" cy="11" rx=".8" ry="1.2"/><ellipse cx="32" cy="15" rx=".8" ry="1.2"/></g><path d="M14 46h36" stroke="#fff" opacity=".25" stroke-width="2" stroke-linecap="round"/>'};
+let fu=0;const fIcon=(f,px)=>{const t=FS[f.id];if(!t)return `<span style="font-size:${Math.round(px*.85)}px;line-height:1">${f.emoji}</span>`;fu++;return `<svg viewBox="0 0 64 64" width="${px}" height="${px}" aria-hidden="true">${t.replaceAll('@',fu)}</svg>`};
+const PC=[['#f58db4','#fde3ee'],['#5fc9a6','#def6ee'],['#6fb0ee','#e0effd']];
+const plateHtml=(id,x,i)=>{const c=PC[i%3];return `<div class="dn-plate" data-pl="${id}" style="left:${x}%"><svg viewBox="0 0 120 52" width="100%"><ellipse cx="60" cy="44" rx="54" ry="7" fill="rgba(60,20,40,.3)"/><ellipse cx="60" cy="31" rx="56" ry="19" fill="#d8c7b8"/><ellipse cx="60" cy="27" rx="56" ry="19" fill="#fffaf5"/><ellipse cx="60" cy="27" rx="49" ry="16" fill="none" stroke="${c[0]}" stroke-width="2.2" stroke-dasharray="1 5" stroke-linecap="round"/><ellipse cx="60" cy="28" rx="38" ry="12" fill="${c[1]}" stroke="#e8d9ca" stroke-width="1.5"/><ellipse cx="60" cy="29" rx="30" ry="9" fill="#fff" opacity=".55"/></svg></div>`};
+
 /* ---------- отрисовка ---------- */
 function petHtml(x,left){const p=x.p,id=p[0],r=pt2.rows[id]||{},sg=typeof stg==='function'?stg(r.xp||0):[0,0,.85],px=Math.round(54+38*sg[2]),m=x.m,lv=x.lv;
  const an=m==='eating'?'animate-[dnChew_.45s_ease-in-out_infinite]':m==='excited'||m==='happy'?'animate-[dnHop_.6s_ease-in-out_3]':m==='full'?'animate-[dnShake_.4s_ease-in-out_2]':lv==2?'animate-[dnGrowl_.8s_ease-in-out_infinite] saturate-50 brightness-90':lv==1?'animate-[dnDroop_2.6s_ease-in-out_infinite] saturate-75':'animate-[dnIdle_3.2s_ease-in-out_infinite]';
@@ -2678,24 +2783,25 @@ function petHtml(x,left){const p=x.p,id=p[0],r=pt2.rows[id]||{},sg=typeof stg===
  return `<button data-pet="${id}" onclick="dnPick('${id}')" class="absolute top-[58%] z-10 -translate-x-1/2 -translate-y-full transition-all duration-500 ${m==='eating'||m==='excited'?'mt-3':''}" style="left:${left}%">
   <div class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 ${t?'':'hidden'}"><div class="${lv&&!m?'animate-bounce':''}"><div class="relative whitespace-nowrap rounded-2xl bg-white px-3 py-1.5 text-[11px] font-bold text-[#5b2a4a] shadow-lg">${t}<i class="absolute left-1/2 top-full -mt-1.5 h-3 w-3 -translate-x-1/2 rotate-45 bg-white"></i></div></div></div>
   <div class="relative ${an}">${art}${lv&&!m?'<span class="absolute -right-2 top-1 text-lg animate-pulse">💧</span>':''}</div></button>`}
-function dnRender(force){if(cur!=='dining')return;const now=Date.now(),L=pets().map(p=>{const s=live(p[0]);return {p,s,lv:lvl(s.sat),m:actUi(p[0])}}),at=L.filter(x=>x.s.st==='idle'),away=L.filter(x=>x.s.st!=='idle');
+function dnRender(force){if(cur!=='dining'||dn.drag)return;const now=Date.now(),L=pets().map(p=>{const s=live(p[0]);return {p,s,lv:lvl(s.sat),m:actUi(p[0])}}),at=L.filter(x=>x.s.st==='idle'),away=L.filter(x=>x.s.st!=='idle');
  if(!at.find(x=>x.p[0]===dn.sel))dn.sel=(at.slice().sort((a,b)=>a.s.sat-b.s.sat)[0]||{p:[null]}).p[0];
  const sig=JSON.stringify([L.map(x=>[x.p[0],x.s.st,x.lv,x.m]),dn.sel,dn.inv,dn.shop,dn.open,dn.food,cn()]);
  if(!force&&sig===dn.sig)return dnBars(L);dn.sig=sig;
  $('dnCoins').textContent='🪙 '+cn();
  const X=at.length==1?[50]:at.length==2?[30,70]:[18,50,82];
  $('dnPets').innerHTML=at.map((x,i)=>petHtml(x,X[i])).join('');
- $('dnNames').innerHTML=at.map((x,i)=>`<button onclick="dnPick('${x.p[0]}')" class="absolute top-[70%] -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-bold shadow transition-all ${x.p[0]===dn.sel?'scale-110 bg-pink-600 text-white':'bg-white/85 text-[#5b2a4a]'}" style="left:${X[i]}%">${esc(x.p[2])}<i class="mt-0.5 block h-1 w-full overflow-hidden rounded bg-black/15"><b data-c="${x.p[0]}" class="block h-full rounded bg-emerald-400 transition-all duration-700"></b></i></button>`).join('');
+ $('dnPlates').innerHTML=at.map((x,i)=>plateHtml(x.p[0],X[i],i)).join('');
+ $('dnNames').innerHTML=at.map((x,i)=>`<button onclick="dnPick('${x.p[0]}')" class="absolute top-[73%] -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-bold shadow transition-all ${x.p[0]===dn.sel?'scale-110 bg-pink-600 text-white':'bg-white/85 text-[#5b2a4a]'}" style="left:${X[i]}%">${esc(x.p[2])}<i class="mt-0.5 block h-1 w-full overflow-hidden rounded bg-black/15"><b data-c="${x.p[0]}" class="block h-full rounded bg-emerald-400 transition-all duration-700"></b></i></button>`).join('');
  const sx=L.find(x=>x.p[0]===dn.sel);
  $('dnPanel').innerHTML=(sx?`<div class="flex items-center gap-3 rounded-2xl bg-black/40 px-3 py-2 backdrop-blur"><div class="min-w-0 flex-1"><b class="block truncate text-sm">${esc(sx.p[2])}</b><span class="text-[10px] opacity-75">${sx.lv?'Хочет кушать':'Всё хорошо'}</span></div>${[['sat','🍖','bg-amber-400'],['en','⚡','bg-sky-400'],['mo','💗','bg-pink-400']].map(b=>`<div class="w-16"><div class="text-[10px]">${b[1]} <span data-t="${b[0]}"></span></div><div class="h-1.5 rounded-full bg-white/20"><i data-b="${b[0]}" class="block h-full rounded-full ${b[2]} transition-all duration-700"></i></div></div>`).join('')}</div>`:'<div class="rounded-2xl bg-black/40 px-3 py-2 text-xs">Сейчас все питомцы заняты 💤</div>')
   +(away.length?`<div class="flex flex-wrap gap-1.5">${away.map(x=>`<span class="rounded-full bg-black/40 px-3 py-1 text-[11px]">${esc(x.p[2])} ${x.s.st==='sleeping'?'спит 💤':'гуляет 🌳'}</span>`).join('')}</div>`:'');
  const sh=$('dnShelf'),sc=sh.scrollLeft,have=dn.cat.filter(f=>dn.inv[f.id]>0);
- sh.innerHTML=have.map(f=>`<button onclick="dnServe('${f.id}')" class="relative flex h-[92px] w-[74px] shrink-0 flex-col items-center justify-center rounded-2xl bg-white/90 shadow-md transition active:scale-90 ${dn.food===f.id?'ring-4 ring-pink-400':''}"><span class="text-4xl">${f.emoji}</span><span class="text-[10px] font-bold text-slate-600">${esc(f.name)}</span><b class="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-pink-500 px-1 text-[11px] text-white">${dn.inv[f.id]}</b></button>`).join('')
+ sh.innerHTML=have.map(f=>`<button data-f="${f.id}" onclick="dnHint()" class="relative flex h-[92px] w-[74px] shrink-0 flex-col items-center justify-center rounded-2xl bg-white/90 shadow-md transition active:scale-90"><span class="grid h-[46px] place-items-center">${fIcon(f,46)}</span><span class="text-[10px] font-bold text-slate-600">${esc(f.name)}</span><b class="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-pink-500 px-1 text-[11px] text-white">${dn.inv[f.id]}</b></button>`).join('')
   +`<button onclick="dnShop(1)" class="flex h-[92px] w-[74px] shrink-0 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-400/60 text-[11px] font-bold text-slate-500 active:scale-90"><span class="text-2xl">＋</span>${have.length?'Ещё':'Пусто — в магазин'}</button>`;
  sh.scrollLeft=sc;
  $('dnFridge').classList.toggle('translate-y-[calc(100%-62px)]',!dn.open);
  const ss=$('dnShopSheet');ss.classList.toggle('hidden',!dn.shop);ss.classList.toggle('flex',dn.shop);
- $('dnShopList').innerHTML=dn.cat.map(f=>`<div class="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm"><span class="text-3xl">${f.emoji}</span><div class="min-w-0 flex-1"><b class="block text-sm">${esc(f.name)}</b><span class="text-[11px] text-slate-500">🍖 +${f.satiety} · 💗 +${f.mood} · есть: ${dn.inv[f.id]||0}</span></div><button onclick="dnBuy('${f.id}')" class="rounded-full px-3 py-2 text-xs font-bold text-white active:scale-95 ${cn()>=f.price?'bg-pink-500':'bg-slate-400'}">${f.price} 🪙</button></div>`).join('');
+ $('dnShopList').innerHTML=dn.cat.map(f=>`<div class="flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm"><span class="shrink-0">${fIcon(f,40)}</span><div class="min-w-0 flex-1"><b class="block text-sm">${esc(f.name)}</b><span class="text-[11px] text-slate-500">🍖 +${f.satiety} · 💗 +${f.mood} · есть: ${dn.inv[f.id]||0}</span></div><button onclick="dnBuy('${f.id}')" class="rounded-full px-3 py-2 text-xs font-bold text-white active:scale-95 ${cn()>=f.price?'bg-pink-500':'bg-slate-400'}">${f.price} 🪙</button></div>`).join('');
  dnBars(L)}
 function dnBars(L){L.forEach(x=>{const c=document.querySelector('[data-c="'+x.p[0]+'"]');if(c){c.style.width=x.s.sat+'%';c.className='block h-full rounded transition-all duration-700 '+(x.lv==2?'bg-red-500':x.lv==1?'bg-amber-400':'bg-emerald-400')}});
  const s=L.find(x=>x.p[0]===dn.sel);if(!s)return;[['sat',s.s.sat],['en',s.s.en],['mo',s.s.mo]].forEach(([k,v])=>{const b=document.querySelector('[data-b="'+k+'"]'),t=document.querySelector('[data-t="'+k+'"]');if(b)b.style.width=v+'%';if(t)t.textContent=Math.round(v)})}
@@ -2708,19 +2814,31 @@ const errMsg=e=>{const m=e.message||'';return m==='poor'?'Не хватает м
 window.dnBuy=async fid=>{const f=dn.cat.find(x=>x.id===fid);if(!f)return;if(cn()<f.price)return toast('Не хватает монет 🪙');
  const {data,error}=await sb.rpc('couple_food_buy',{p_room:S.room,p_food:fid,p_qty:1});if(error)return toast(errMsg(error));
  S.wal.coins=data.coins;dn.inv[fid]=data.qty;try{drawX()}catch{}toast('В холодильнике: '+f.emoji);dnRender(1)};
-const crumbs=()=>{$('dnFx').innerHTML=Array.from({length:5},()=>`<i class="absolute text-xs" style="--cx:${Math.round((Math.random()-.5)*80)}px;animation:dnCrumb .8s ease-out forwards">✦</i>`).join('')};
+const crumbs=b=>{const w=document.createElement('div');w.style.cssText='position:absolute;left:50%;top:-14px';w.innerHTML=Array.from({length:5},()=>`<i class="absolute text-xs" style="--cx:${Math.round((Math.random()-.5)*70)}px;animation:dnCrumb .8s ease-out forwards">✦</i>`).join('');b.appendChild(w);setTimeout(()=>w.remove(),900)};
 function floatTxt(id,t){const e=document.querySelector('[data-pet="'+id+'"]'),l=$('dnFloat');if(!e||!l)return;const d=document.createElement('div');d.className='absolute top-[34%] -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-[#5b2a4a]';d.style.left=e.style.left;d.style.animation='dnFloat 1.7s ease-out forwards';d.textContent=t;l.appendChild(d);setTimeout(()=>d.remove(),1800)}
-window.dnServe=async fid=>{if(dn.busy)return;const f=dn.cat.find(x=>x.id===fid);if(!f||!(dn.inv[fid]>0))return;
- const ps=pets().filter(p=>live(p[0]).st==='idle');if(!ps.length)return toast('Питомцы сейчас заняты 💤');
- const p=ps.find(x=>x[0]===dn.sel)||ps.slice().sort((a,b)=>live(a[0]).sat-live(b[0]).sat)[0],id=p[0];dn.sel=id;
+let dnJD=0;window.dnHint=()=>{if(Date.now()-dnJD<500)return;toast('Перетащи еду на тарелку питомца 🍽️');document.querySelectorAll('.dn-plate').forEach(e=>{e.classList.remove('nudge');void e.offsetWidth;e.classList.add('nudge')})};
+window.dnServe=async(fid,id)=>{if(!id||dn.busy[id])return;const f=dn.cat.find(x=>x.id===fid);if(!f||!(dn.inv[fid]>0))return;
+ if(!pets().some(x=>x[0]===id)||live(id).st!=='idle')return toast('Питомец сейчас занят 💤');dn.sel=id;
  if(live(id).sat>=95){setUi(id,'full',2200);return dnRender(1)}
- dn.busy=1;dn.food=fid;dn.inv[fid]--;setUi(id,'excited',1000);
- $('dnFood').innerHTML=`<span id="dnFi" class="block text-5xl drop-shadow transition-transform duration-500 animate-[dnDrop_.55s_ease-out]">${f.emoji}</span>`;dnRender(1);
+ dn.busy[id]=1;dn.inv[fid]--;setUi(id,'excited',1000);
+ const pl=document.querySelector('.dn-plate[data-pl="'+id+'"]'),box=document.createElement('div');box.className='dn-food';box.style.left=pl?pl.style.left:'50%';box.innerHTML=`<div class="dn-fw"><div class="dn-fs">${fIcon(f,56)}</div></div>`;$('dnFood').appendChild(box);dnRender(1);
  const {data,error}=await sb.rpc('couple_pet_feed',{p_room:S.room,p_pet:id,p_food:fid});
- if(error){dn.inv[fid]++;dn.busy=0;dn.food=null;$('dnFood').innerHTML='';dn.ui[id]=null;if(error.message==='full')setUi(id,'full',2200);else toast(errMsg(error));return dnRender(1)}
+ if(error){dn.inv[fid]++;delete dn.busy[id];box.remove();dn.ui[id]=null;if(error.message==='full')setUi(id,'full',2200);else toast(errMsg(error));return dnRender(1)}
  pt2.rows[id]=Object.assign(pt2.rows[id]||{pet:id},data.pet);dn.inv[fid]=data.qty;
- setTimeout(()=>{setUi(id,'eating',2800);[.68,.36,0].forEach((k,i)=>setTimeout(()=>{const e=$('dnFi');if(e)e.style.transform='scale('+k+')';crumbs()},500+i*900))},1000);
- setTimeout(()=>{$('dnFood').innerHTML='';dn.busy=0;dn.food=null;setUi(id,'happy',2200);floatTxt(id,'+'+f.satiety+' 🍖  +'+f.mood+' 💗');dnRender(1)},3900)};
+ setTimeout(()=>{setUi(id,'eating',2800);[.7,.4,0].forEach((k,i)=>setTimeout(()=>{const e=box.querySelector('.dn-fs');if(e)e.style.transform='scale('+k+')';crumbs(box)},500+i*900))},1000);
+ setTimeout(()=>{box.remove();delete dn.busy[id];setUi(id,'happy',2200);floatTxt(id,'+'+f.satiety+' 🍖  +'+f.mood+' 💗');dnRender(1)},3900)};
+
+/* перетаскивание еды из холодильника на тарелку */
+let dg=null;const plates=()=>document.querySelectorAll('.dn-plate');
+const hit=(x,y)=>{let b=null,bd=1e9;plates().forEach(e=>{const r=e.getBoundingClientRect(),d=Math.hypot(x-(r.left+r.width/2),(y-(r.top+r.height/2))*.7);if(d<bd){bd=d;b=e}});return bd<90?b:null};
+const dgMove=(x,y)=>{dg.g.style.transform=`translate(${x-34}px,${y-100}px)`;const h=hit(x,y-66);plates().forEach(e=>e.classList.toggle('hot',e===h));dg.h=h};
+function dgStart(x,y){const f=dn.cat.find(a=>a.id===dg.f);if(!f)return;dg.on=1;dn.drag=1;clearTimeout(dg.tm);const g=document.createElement('div');g.className='dn-ghost';g.innerHTML=fIcon(f,64);document.body.appendChild(g);dg.g=g;dg.c.style.opacity='.35';plates().forEach(p=>p.classList.add('ready'));try{navigator.vibrate&&navigator.vibrate(10)}catch{}dgMove(x,y)}
+function dgEnd(ok){if(!dg)return;const d=dg;dg=null;clearTimeout(d.tm);if(!d.on)return;dn.drag=0;dnJD=Date.now();d.g.remove();d.c.style.opacity='';plates().forEach(p=>p.classList.remove('hot','ready'));if(ok&&d.h)dnServe(d.f,d.h.dataset.pl);else dnRender(1)}
+document.addEventListener('pointerdown',e=>{const c=e.target.closest&&e.target.closest('#dnShelf [data-f]');if(!c||dg)return;dg={c,f:c.dataset.f,x:e.clientX,y:e.clientY,id:e.pointerId,on:0,m:e.pointerType==='mouse',tm:0};if(!dg.m)dg.tm=setTimeout(()=>{if(dg&&!dg.on)dgStart(dg.x,dg.y)},230)});
+document.addEventListener('pointermove',e=>{if(!dg||e.pointerId!==dg.id)return;if(!dg.on){const dx=e.clientX-dg.x,dy=e.clientY-dg.y;if(dg.m?Math.hypot(dx,dy)>6:(dy<-10&&-dy>Math.abs(dx)*.8))dgStart(e.clientX,e.clientY);else if(!dg.m&&Math.hypot(dx,dy)>12)clearTimeout(dg.tm);if(!dg.on)return}dgMove(e.clientX,e.clientY)});
+document.addEventListener('pointerup',e=>{if(dg&&e.pointerId===dg.id)dgEnd(1)});
+document.addEventListener('pointercancel',e=>{if(dg&&e.pointerId===dg.id)dgEnd(0)});
+document.addEventListener('touchmove',e=>{if(dg&&dg.on)e.preventDefault()},{passive:false});
 
 /* ---------- загрузка, вход/выход, меню ---------- */
 async function dnLoad(){if(!S.room)return;
