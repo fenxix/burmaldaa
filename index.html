@@ -3833,10 +3833,10 @@ const thump=(at,k=1)=>{tone(190,{at,to:80,d:.16,v:.3*k});tone(95,{at,to:48,d:.2,
 const semi=n=>Math.pow(2,n/12);
 
 const SND={
- tick:()=>tone(1500,{to:1100,d:.04,v:.2,w:'triangle'}),
- press:()=>{tone(700,{to:520,d:.06,v:.09});tone(1050,{at:.015,d:.05,v:.035})},
- back:()=>tone(560,{to:340,d:.08,v:.08}),
- deny:()=>tone(170,{to:140,d:.1,v:.06,w:'square'}),
+ tick:()=>{tone(440,{to:520,d:.09,v:.11,a:.012});tone(880,{d:.06,v:.025,a:.012})},
+ press:()=>{tone(392,{d:.12,v:.12,a:.012});tone(587,{at:.03,d:.12,v:.07,a:.012})},
+ back:()=>tone(440,{to:330,d:.11,v:.11,a:.012}),
+ deny:()=>tone(220,{to:180,d:.12,v:.1,a:.012}),
  nav:()=>nz({d:.14,f:700,to:2800,q:.6,v:.25}),
  ok:()=>{tone(784,{d:.12,v:.07});tone(1175,{at:.07,d:.2,v:.07})},
  err:()=>{tone(233,{to:175,d:.16,v:.1,w:'triangle'});tone(196,{at:.1,to:147,d:.2,v:.09,w:'triangle'})},
