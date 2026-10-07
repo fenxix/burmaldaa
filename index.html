@@ -409,7 +409,7 @@ F('rose','🌹','Розы',70,10,44,76,'season'),F('choc','🍫','Шоколад
 F('umb','⛱️','Зонтик',80,16,22,66,'season'),F('melon','🍉','Арбуз',50,10,52,82,'season'),F('palm','🌴','Пальма',100,22,90,56,'season'));
 CATS.push(['kitchen','Кухня'],['outdoor','Сад'],['season','Сезон']);
 
-document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.lrtod{position:absolute;inset:0;pointer-events:none;z-index:95}.sealv{position:absolute;inset:0;z-index:6;display:grid;place-content:center;justify-items:center;gap:4px;background:linear-gradient(135deg,#7c2d52,#3b1d5c);cursor:pointer;color:#fff}`}));
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.lrtod{position:absolute;inset:0;pointer-events:none;z-index:95}.sealv{position:absolute;inset:0;z-index:6;display:grid;place-content:center;justify-items:center;gap:4px;background:linear-gradient(135deg,#7c2d52,#3b1d5c);cursor:pointer;color:#fff}.sealv b{color:#fff}.sealb{position:absolute;right:52px;top:12px;z-index:5;font-size:11px;line-height:1;padding:5px 9px;border-radius:999px;background:rgba(124,45,82,.88);color:#fff;pointer-events:none;box-shadow:0 0 10px rgba(255,95,168,.35)}.wish.wk{position:relative}.wish .sealb{right:10px;top:8px}.cdp .sealb{right:8px;top:auto;bottom:6px}`}));
 
 /* --- несколько комнат: строки одной таблицы с префиксом «комната~предмет» --- */
 {const f0=sb.from.bind(sb);
@@ -501,10 +501,10 @@ const cdUI=()=>{
  if(tb==='c')pn=`<div class="cdsg">${COL.map((c,i)=>`<button class="cdsw ${d.c===i?'on':''}" aria-label="Цвет ${i+1}" style="background:linear-gradient(135deg,${c[0]},${c[1]})" onclick="cdSet('c',${i})"></button>`).join('')}</div>`;
  else if(tb==='p')pn=`<div class="cdr">${chp(PAT,'p',d.p||'none')}</div>`;
  else if(tb==='f')pn=`<div class="cdr">${chp(FONTS,'f',d.f)}</div>`;
- else if(tb==='b')pn=`<p class="xs">Рамка</p><div class="cdr">${chp(BRD,'b',d.b)}</div><p class="xs">Наклон</p><div class="cdr">${[[0,'Ровно'],[2,'Вправо'],[-2,'Влево']].map(a=>`<button class="cdch ${(+d.t||0)===a[0]?'on':''}" onclick="cdSet('t',${a[0]})">${a[1]}</button>`).join('')}<button class="cdch ${d.seal?'on':''}" onclick="cdSet('seal',${d.seal?0:1})">💌 Запечатать</button></div>`;
+ else if(tb==='b')pn=`<p class="xs">Рамка</p><div class="cdr">${chp(BRD,'b',d.b)}</div><p class="xs">Наклон</p><div class="cdr">${[[0,'Ровно'],[2,'Вправо'],[-2,'Влево']].map(a=>`<button class="cdch ${(+d.t||0)===a[0]?'on':''}" onclick="cdSet('t',${a[0]})">${a[1]}</button>`).join('')}<button class="cdch ${d.seal?'on':''}" aria-pressed="${d.seal?'true':'false'}" onclick="cdSet('seal',${d.seal?0:1})">${d.seal?'💌 Запечатано ✓':'💌 Запечатать'}</button></div><p class="xs" style="line-height:1.4">${d.seal?'Партнёр увидит конверт и откроет его тапом. Не забудь нажать «Сохранить».':'Спрячь карточку под конвертом — партнёр откроет её тапом.'}</p>`;
  else{const GG=[['free','Базовые',FREE],...PACKS.map(p=>[p[0],p[1],p[3]])],g=GG.find(x=>x[0]===cd.pk)||GG[0],pk=PACKS.find(p=>p[0]===g[0]),lock=pk&&!own('stk:'+pk[0]),wide=g[2].some(e=>STK[e]&&!STK[e].startsWith('<svg'));
  pn=`<div class="cdr"><span class="xs">Стикер</span><button class="cdch sq" aria-label="Меньше" onclick="cdSt('-')">−</button><button class="cdch sq" aria-label="Больше" onclick="cdSt('+')">+</button><button class="cdch sq" aria-label="Повернуть" onclick="cdSt('r')">⟳</button><button class="cdch sq" aria-label="Удалить" onclick="cdSt('x')">✕</button></div><div class="cdpk">${GG.map(x=>`<button class="cdch ${g[0]===x[0]?'on':''}" onclick="cdPk('${x[0]}')">${PACKS.some(p=>p[0]===x[0])&&!own('stk:'+x[0])?'🔒 ':''}${x[1]}</button>`).join('')}</div>${lock?`<button class="btn" onclick="buy('stk:${pk[0]}',${pk[2]},cdDraw)">Открыть «${pk[1]}» · ${pk[2]} 🪙</button>`:`<div class="cdsg2 ${wide?'wd':''}">${g[2].map(e=>`<button class="cdsb" onclick="cdAdd('${e}')">${stkH(e,STK[e]&&STK[e].startsWith('<svg')?34:/\p{L}/u.test(e)?14:24)}</button>`).join('')}</div>`}<p class="xs" style="text-align:center">тап — наклеить, потом перетащи по карточке</p>`}
- $('cdc').innerHTML=`<div class="cdp" id="cdPrev" style="${cdStyle(d)}"><p style="font-style:italic;position:relative;line-height:1.45">${esc(cd.txt)}</p>${d.s.map((s,i)=>`<span class="cds mv" data-i="${i}" style="left:${+s[1]}%;top:${+s[2]}%;font-size:${+s[3]}px">${stkH(s[0])}</span>`).join('')}</div><div class="cdt">${T.map(t=>`<button class="${tb===t[0]?'on':''}" onclick="cdTab('${t[0]}')"><span>${t[1]}</span>${t[2]}${t[0]==='s'&&d.s.length?' · '+d.s.length:''}</button>`).join('')}</div><div class="cdx">${pn}</div><div class="cdf"><button class="cdb" onclick="cdSet('s',[])">Очистить</button><button class="btn" onclick="cdSave()">Сохранить</button><button class="cdb" aria-label="Закрыть" onclick="$('cdm').classList.remove('on')">✕</button></div>`};
+ $('cdc').innerHTML=`<div class="cdp" id="cdPrev" style="${cdStyle(d)}"><p style="font-style:italic;position:relative;line-height:1.45">${esc(cd.txt)}</p>${d.seal?'<span class="sealb">💌 запечатано</span>':''}${d.s.map((s,i)=>`<span class="cds mv" data-i="${i}" style="left:${+s[1]}%;top:${+s[2]}%;font-size:${+s[3]}px">${stkH(s[0])}</span>`).join('')}</div><div class="cdt">${T.map(t=>`<button class="${tb===t[0]?'on':''}" onclick="cdTab('${t[0]}')"><span>${t[1]}</span>${t[2]}${t[0]==='s'&&d.s.length?' · '+d.s.length:''}</button>`).join('')}</div><div class="cdx">${pn}</div><div class="cdf"><button class="cdb" onclick="cdSet('s',[])">Очистить</button><button class="btn" onclick="cdSave()">Сохранить</button><button class="cdb" aria-label="Закрыть" onclick="$('cdm').classList.remove('on')">✕</button></div>`};
 {const dr0=window.cdDraw;window.cdDraw=function(){const o_=$('cdc').querySelector('.cdst'),sc_=o_?o_.scrollTop:0;dr0.apply(this,arguments);if(!cd)return;const d=cd.d,row=$('cdc').querySelector('.btn2');
  const ch=(a,k,v)=>a.map(x=>`<button class="${(v||'')===x[0]?'on':''}" onclick="cdSet('${k}','${x[0]}')">${x[1]}</button>`).join('');
  cdUI();{const n_=$('cdc').querySelector('.cdst');if(n_)n_.scrollTop=sc_}
@@ -514,10 +514,11 @@ document.addEventListener('pointerdown',e=>{const el=cd&&e.target.closest&&e.tar
 /* --- записки: реакции, закрепление, запечатанные --- */
 const RX=['❤️','😍','🥹','😂'];
 const pinId=()=>{try{return localStorage.getItem('pinNote')||''}catch{return''}};
-const pinHome=()=>{const n=$('noteCard'),id=pinId(),l=id&&(S.notes||[]).find(x=>String(x.id)===id);if(!n||!l)return;const p=n.querySelector('p');if(p)p.textContent='📌 '+(l.author_name||'')+': '+l.body};
+const pinHome=()=>{const n=$('noteCard'),id=pinId(),l=id&&(S.notes||[]).find(x=>String(x.id)===id);if(!n||!l)return;const p=n.querySelector('p');if(p)p.textContent='📌 '+(l.author_name||'')+': '+(l.deco&&l.deco.seal&&l.author!==S.uid&&!(S.opened||{})[l.id]?'💌 запечатанная записка':l.body)};
 window.pinNote=id=>{try{pinId()===String(id)?localStorage.removeItem('pinNote'):localStorage.setItem('pinNote',String(id))}catch{}drawNotes();pinHome();toast(pinId()?'Записка закреплена на главной 📌':'Откреплено')};
 const cf=el=>{const r=el.getBoundingClientRect();for(let i=0;i<16;i++){const s=document.createElement('span');s.textContent=['💗','✨','🎉','💌','🌸'][i%5];s.style.cssText=`position:fixed;left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;font-size:${14+Math.random()*14}px;pointer-events:none;z-index:999;transition:transform .9s ease-out,opacity .9s`;document.body.appendChild(s);requestAnimationFrame(()=>{s.style.transform=`translate(${(Math.random()-.5)*260}px,${(Math.random()-.8)*200}px) rotate(${Math.random()*360}deg)`;s.style.opacity=0});setTimeout(()=>s.remove(),1000)}};
-window.nrOpen=(id,el)=>{(S.opened=S.opened||{})[id]=1;cf(el);el.remove()};
+try{S.opened=Object.assign({},JSON.parse(localStorage.getItem('bm_opened')||'{}'),S.opened||{})}catch{S.opened=S.opened||{}}
+window.nrOpen=(id,el)=>{(S.opened=S.opened||{})[id]=1;try{localStorage.setItem('bm_opened',JSON.stringify(S.opened))}catch{}cf(el);el.remove()};
 const nrLoad=async()=>{if(!S.room)return;const {data,error}=await sb.from('couple_note_reacts').select('note_id,user_id,emoji').eq('room_id',S.room);if(error)return;const m={};(data||[]).forEach(r=>(m[r.note_id]=m[r.note_id]||[]).push(r));S.nr=m;if(cur==='notes')drawNotes()};
 window.nrTap=async(id,e)=>{const m=((S.nr||{})[id]||[]).find(r=>r.user_id===S.uid),q=sb.from('couple_note_reacts');
  const {error}=m&&m.emoji===e?await q.delete().eq('note_id',id).eq('user_id',S.uid):await q.upsert({note_id:id,room_id:S.room,user_id:S.uid,emoji:e},{onConflict:'note_id,user_id'});
@@ -527,7 +528,14 @@ window.nrTap=async(id,e)=>{const m=((S.nr||{})[id]||[]).find(r=>r.user_id===S.ui
   el.querySelectorAll('.cds').forEach((x,j)=>{const s=(d.s||[])[j];if(s&&s[4])x.style.transform=`translate(-50%,-50%) rotate(${s[4]}deg)`});
   const R=(S.nr||{})[n.id]||[],mine=R.find(r=>r.user_id===S.uid);
   el.insertAdjacentHTML('beforeend',`<div class="row" style="gap:6px;margin-top:8px;position:relative;flex-wrap:wrap">${RX.map(e=>{const c=R.filter(r=>r.emoji===e).length;return `<button class="pill ${mine&&mine.emoji===e?'on':''}" onclick="nrTap('${esc(n.id)}','${e}')">${e}${c?' '+c:''}</button>`}).join('')}<button class="pill" onclick="pinNote('${esc(n.id)}')" aria-label="Закрепить">${pinId()===String(n.id)?'📌':'📍'}</button></div>`);
-  if(d.seal&&n.author!==S.uid&&!(S.opened||{})[n.id])el.insertAdjacentHTML('beforeend',`<div class="sealv" onclick="nrOpen('${esc(n.id)}',this)"><span style="font-size:42px">💌</span><b class="sm">Тап — открыть</b></div>`)})}}
+  if(d.seal){if(n.author===S.uid)el.insertAdjacentHTML('beforeend','<span class="sealb">💌 запечатано</span>');else if(!(S.opened||{})[n.id])el.insertAdjacentHTML('beforeend',`<div class="sealv" onclick="nrOpen('${esc(n.id)}',this)"><span style="font-size:42px">💌</span><b class="sm">Тап — открыть</b></div>`)}})}}
+/* вишлист: печать работает и на хотелках (раньше — только на записках) */
+{const w0=wishHtml;wishHtml=function(w,mine){const h=w0.apply(this,arguments),d=(w&&w.deco)||{};if(!d.seal||typeof h!=='string')return h;
+ if(mine)return h.replace(/<\/div>\s*$/,'<span class="sealb">💌 запечатано</span></div>');
+ if((S.opened||{})['w'+w.id])return h;
+ return h.replace(/<\/div>\s*$/,`<div class="sealv" onclick="nrOpen('w${esc(String(w.id))}',this)"><span style="font-size:42px">💌</span><b class="sm">Тап — открыть</b></div></div>`)}}
+/* сообщение при включении/снятии печати */
+{const cs0=window.cdSet;window.cdSet=function(k,v){const r=cs0.apply(this,arguments);if(k==='seal')toast(v?'Запечатано 💌 Партнёр откроет тапом':'Печать снята');return r}}
 {const x0=xLoad;xLoad=async function(){const r=await x0.apply(this,arguments);nrLoad();return r}}
 let nrRoom=null;
 {const r1=render;render=function(){r1.apply(this,arguments);if(S.room&&S.me&&nrRoom!==S.room){nrRoom=S.room;if(window.nrCh)sb.removeChannel(window.nrCh);window.nrCh=sb.channel('nr'+S.room).on('postgres_changes',{event:'*',schema:'public',table:'couple_note_reacts',filter:'room_id=eq.'+S.room},()=>nrLoad()).subscribe();nrLoad()}pinHome()}}
@@ -1596,7 +1604,7 @@ function shExtraHTML(){if(shTab==='swap'||shTab==='tree')return'';
  return (shTab==='deco'?`<button class="card row mt" style="width:100%;text-align:left;padding:12px" onclick="go('settings')"><span class="ico"><i class="fa-solid fa-palette"></i></span><div class="sp"><b class="ff" style="font-size:14px">Бесплатные темы</b><p class="xs">Открываются за этажи Башни · выбор в «Настройках»</p></div><i class="fa-solid fa-chevron-right sm"></i></button>`:'')
  +`<button class="pill" style="display:flex;margin:16px auto 0" onclick="shTabSet('swap')">🪙 → 🌳 Обмен монет на рост дерева</button>`}
 function drawCoins(){try{$('twBal').textContent=cn()}catch{}const c=$('coinCard');if(!c)return;c.innerHTML=`<span class="ico"><i class="fa-solid fa-coins" style="color:#FFC24A"></i></span><div class="sp"><b class="ff" style="font-size:17px">${cn()} 🪙</b><p class="xs">Общий кошелёк · 🔥 серия ${stk()} дн.</p></div><span class="pill on">Магазин</span>`;
- const n=$('noteCard'),l=(S.notes||[])[0];if(n)n.innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp" style="min-width:0"><b class="ff" style="font-size:15px">За что я тебя люблю</b><p class="xs" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc((l.author_name||'')+': '+l.body):'Напиши первую записку 💌'}</p></div><i class="fa-solid fa-chevron-right sm"></i>`}
+ const n=$('noteCard'),l=(S.notes||[])[0];if(n)n.innerHTML=`<span class="ico"><i class="fa-solid fa-heart"></i></span><div class="sp" style="min-width:0"><b class="ff" style="font-size:15px">За что я тебя люблю</b><p class="xs" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l?esc((l.author_name||'')+': '+(l.deco&&l.deco.seal&&l.author!==S.uid&&!(S.opened||{})[l.id]?'💌 запечатанная записка':l.body)):'Напиши первую записку 💌'}</p></div><i class="fa-solid fa-chevron-right sm"></i>`}
 function drawShop(){if(cur!=='shop')return;$('shCoins').textContent=cn()+' 🪙';
  $('shTabs').innerHTML=SHT.filter(t=>SHM.includes(t[0])).map(t=>`<button class="${(shTab==='tree'?'game':shTab)===t[0]?'on':''}" style="white-space:nowrap;flex:1;padding:0 8px;font-size:13px" onclick="shTabSet('${t[0]}')">${t[1]}</button>`).join('');
  const it=(k,on,ico,nm,pr,act)=>`<button class="${on?'on':''}" onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${on?'выбрано ✓':own(k)?'выбрать':pr+' 🪙'}</span></button>`,
@@ -1627,10 +1635,10 @@ twHud();
 
 /* ===== Сердечко, задачи, рейтинг Meowdoku, комната ===== */
 S.tasks=[];let hCd=0;
-function sendHeart(){if(!S.pt||Date.now()<hCd)return;hCd=Date.now()+3000;heartFx(null);if(window.ch2)window.ch2.send({type:'broadcast',event:'heart',payload:{from:S.uid,name:S.me.name}})}
+function sendHeart(){if(!S.pt||Date.now()<hCd)return;hCd=Date.now()+3000;try{navigator.vibrate&&navigator.vibrate([45,70,45,70,160])}catch{}heartFx(null);if(window.ch2)window.ch2.send({type:'broadcast',event:'heart',payload:{from:S.uid,name:S.me.name}})}
 function heartFx(from){const o=document.createElement('div');o.className='hfx';let h='<i class="fa-solid fa-heart hbig"></i>';const C=['var(--pink)','var(--pink-light)','#FF6B9D','#FFB8D6','var(--purple)'];
  for(let i=0;i<46;i++)h+=`<i class="fa-solid fa-heart hf" style="left:${Math.random()*100}%;font-size:${16+Math.random()*34}px;animation-duration:${2.4+Math.random()*2}s;animation-delay:${Math.random()*1.2}s;--dx:${Math.random()*90-45}px;color:${C[i%5]}"></i>`;
- if(from)h+=`<p class="hfrom">${esc(from)} шлёт тебе любовь 💗</p>`;o.innerHTML=h;document.body.appendChild(o);try{navigator.vibrate&&navigator.vibrate([30,60,30,60,60])}catch{}setTimeout(()=>o.remove(),5400)}
+ if(from)h+=`<p class="hfrom">${esc(from)} шлёт тебе любовь 💗</p>`;o.innerHTML=h;document.body.appendChild(o);try{navigator.vibrate&&from&&navigator.vibrate([30,60,30,60,60])}catch{}setTimeout(()=>o.remove(),5400)}
 function roomHTML(){return `<h3 id="roomHead" class="ff" style="font-size:20px;margin-bottom:10px">Комната ${esc(S.code)}</h3>`+(S.memHTML||'')+`<button class="btn2" style="width:100%;margin-top:8px" onclick="closeSet()">Закрыть</button>`}
 function roomModal(){$('setc').innerHTML=roomHTML();$('set').classList.add('on')}
 function drawTasks(){const T=S.tasks||[],open=T.filter(t=>!t.done).length,c=$('taskCard');
@@ -3790,6 +3798,132 @@ window.wcSend=async id=>{const i=document.getElementById('wci-'+id),v=(i?i.value
  S.wcd[id]='';await wcLoad();const n=document.getElementById('wci-'+id);if(n)n.focus()};
 window.wcDel=async id=>{const {error}=await sb.from(T).delete().eq('id',id);if(error)return toast(error.message);wcLoad()};
 let rm=null;const r1=render;render=function(){const x=r1.apply(this,arguments);try{if(S.room&&S.me&&rm!==S.room){rm=S.room;if(window.wcCh)sb.removeChannel(window.wcCh);window.wcCh=sb.channel('wc'+S.room).on('postgres_changes',{event:'*',schema:'public',table:T,filter:'room_id=eq.'+S.room},()=>wcLoad()).subscribe();wcLoad()}}catch(e){console.error('wish-comments',e)}return x};
+})();
+</script>
+<script id="burmalda-sfx">
+/* ===== Burmalda: звуки и вибрация (WebAudio, без внешних файлов — работает офлайн в PWA) ===== */
+(()=>{
+const LSg=k=>{try{return localStorage.getItem(k)}catch{return null}},LSs=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
+let sndOn=LSg('bm_snd')!=='0',vibOn=LSg('bm_vib')!=='0',vol=Math.min(100,Math.max(0,+(LSg('bm_vol')||60)));
+let ctx=null,out=null,nbuf=null,lastPtr=0;const last={};
+
+/* ---- вибрация: единая точка, уважает переключатель в настройках ---- */
+const nv=navigator.vibrate?navigator.vibrate.bind(navigator):null;
+if(nv)try{navigator.vibrate=p=>vibOn?nv(p):false}catch{}
+
+/* ---- движок ---- */
+const unlock=()=>{
+ if(!ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+  try{ctx=new C()}catch{return null}
+  out=ctx.createGain();out.gain.value=vol/100*3;
+  const cp=ctx.createDynamicsCompressor();cp.threshold.value=-16;cp.ratio.value=5;cp.attack.value=.002;cp.release.value=.12;
+  out.connect(cp);cp.connect(ctx.destination)}
+ if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+ return ctx};
+const ready=()=>sndOn&&ctx&&ctx.state==='running'&&!document.hidden;
+const env=(g,t,a,d,pk)=>{g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(pk,.0002),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)};
+const tone=(f,o={})=>{const t=ctx.currentTime+(o.at||0),d=o.d||.12,os=ctx.createOscillator(),g=ctx.createGain();
+ os.type=o.w||'sine';os.frequency.setValueAtTime(f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+d);
+ env(g,t,o.a||.006,d,o.v||.15);os.connect(g);g.connect(out);os.start(t);os.stop(t+d+.06)};
+const nz=(o={})=>{if(!nbuf){nbuf=ctx.createBuffer(1,ctx.sampleRate>>1,ctx.sampleRate);const a=nbuf.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}
+ const t=ctx.currentTime+(o.at||0),d=o.d||.08,s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
+ s.buffer=nbuf;f.type=o.ft||'bandpass';f.frequency.setValueAtTime(o.f||2000,t);if(o.to)f.frequency.exponentialRampToValueAtTime(o.to,t+d);f.Q.value=o.q||1;
+ env(g,t,o.a||.004,d,o.v||.1);s.connect(f);f.connect(g);g.connect(out);s.start(t);s.stop(t+d+.06)};
+const thump=(at,k=1)=>{tone(190,{at,to:80,d:.16,v:.3*k});tone(95,{at,to:48,d:.2,v:.22*k})};
+const semi=n=>Math.pow(2,n/12);
+
+const SND={
+ tick:()=>tone(1500,{to:1100,d:.04,v:.2,w:'triangle'}),
+ press:()=>{tone(700,{to:520,d:.06,v:.09});tone(1050,{at:.015,d:.05,v:.035})},
+ back:()=>tone(560,{to:340,d:.08,v:.08}),
+ deny:()=>tone(170,{to:140,d:.1,v:.06,w:'square'}),
+ nav:()=>nz({d:.14,f:700,to:2800,q:.6,v:.25}),
+ ok:()=>{tone(784,{d:.12,v:.07});tone(1175,{at:.07,d:.2,v:.07})},
+ err:()=>{tone(233,{to:175,d:.16,v:.1,w:'triangle'});tone(196,{at:.1,to:147,d:.2,v:.09,w:'triangle'})},
+ heartSend:()=>{thump(0);thump(.17,.85);[988,1319,1568].forEach((f,i)=>tone(f,{at:.34+i*.09,d:.3,v:.06}))},
+ heartRecv:()=>{thump(0);thump(.17,.85);[784,988,1319,1760].forEach((f,i)=>tone(f,{at:.34+i*.09,d:.36,v:.07}))},
+ stamp:()=>{tone(200,{to:60,d:.14,v:.28});nz({d:.05,f:1400,q:.5,v:.25})},
+ open:()=>{nz({d:.2,f:900,to:3200,q:.6,v:.3});[659,880,1319].forEach((f,i)=>tone(f,{at:.08+i*.07,d:.22,v:.07}))},
+ react:()=>tone(880,{to:1320,d:.07,v:.08}),
+ send:()=>{tone(600,{to:1250,d:.09,v:.06});nz({at:.02,d:.1,f:1500,to:4000,q:.6,v:.15})},
+ msg:()=>{tone(1046,{d:.09,v:.07});tone(1568,{at:.07,d:.15,v:.06})},
+ ping:()=>{tone(880,{d:.1,v:.08});tone(1320,{at:.1,d:.22,v:.08})},
+ coin:()=>{tone(988,{d:.07,v:.06,w:'square'});tone(1319,{at:.07,d:.3,v:.06,w:'square'})},
+ win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,{at:i*.09,d:.28,v:.08})),
+ lose:()=>[392,330,262].forEach((f,i)=>tone(f,{at:i*.14,d:.3,v:.09,w:'triangle'})),
+ hit:()=>{nz({d:.26,f:500,to:120,ft:'lowpass',q:.7,v:.26});tone(140,{to:50,d:.22,v:.28})},
+ miss:()=>nz({d:.3,f:1800,to:500,q:.7,v:.3}),
+ land:()=>tone(220,{to:110,d:.08,v:.13}),
+ perfect:c=>[0,4,7,12].forEach((n,i)=>tone(523*semi(n+Math.min(c||0,7)),{at:i*.06,d:.22,v:.07})),
+ mew:()=>{const b=700+Math.random()*180;tone(b,{to:b*1.35,d:.09,v:.06,w:'triangle'});tone(b*1.35,{at:.09,to:b*.85,d:.16,v:.06,w:'triangle'})}
+};
+const play=(n,a)=>{try{if(!ready())return;const t=performance.now();if(last[n]&&t-last[n]<35)return;last[n]=t;SND[n]&&SND[n](a)}catch(e){}};
+const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch{}};
+window.BSFX={play,vib,unlock,get on(){return sndOn},get vibOn(){return vibOn}};
+
+/* ---- разблокировка аудио первым жестом (iOS/Chrome) ---- */
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,unlock,{capture:true,passive:true}));
+
+/* ---- звук любого нажатия по интерфейсу ---- */
+document.addEventListener('pointerdown',e=>{
+ lastPtr=Date.now();
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ const el=e.target&&e.target.closest?e.target.closest('button,a,[onclick],summary,select,label,.pill,.btn,.btn2,#mdB *,.bd'):null;
+ if(!el||el.closest('#cdPrev')||el.closest('.sealv')||el.classList.contains('hbtn'))return;
+ if(el.disabled||el.getAttribute('aria-disabled')==='true')return play('deny');
+ if(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&/text|search|email|password|number|date/.test(el.type)))return;
+ const lb=(el.getAttribute('aria-label')||'');
+ if(el.classList.contains('back')||/Закрыть|Назад/.test(lb))return play('back');
+ if(el.classList.contains('btn')||el.classList.contains('btn2'))return play('press');
+ play('tick')
+},true);
+
+/* ---- обёртки над функциями приложения ---- */
+const wrap=(name,fn)=>{try{const o=window[name];if(typeof o!=='function')return;window[name]=function(){let r;try{fn.apply(this,arguments)}catch{}return o.apply(this,arguments)}}catch(e){console.warn('sfx wrap',name,e)}};
+
+/* уведомления */
+wrap('toast',t=>{play(/не хватает|ошиб|нельзя|не удалось|выполни|нет[\s!.,]|пусто|напиши|выбери|максимум|не в сети|ещё нет|пока нет|error/i.test(String(t))?'err':'ok')});
+/* переходы между экранами — только если их вызвал сам пользователь */
+wrap('go',s=>{if(Date.now()-lastPtr<700&&typeof cur!=='undefined'&&cur!==s)play('nav')});
+wrap('backTo',()=>{if(Date.now()-lastPtr<700)play('back')});
+/* сердечки: отправка + вибрация «сердцебиение», получение — своя мелодия */
+wrap('heartFx',from=>{play(from?'heartRecv':'heartSend')});
+/* записки и карточки */
+wrap('nrOpen',()=>{play('open');vib([20,40,20])});
+wrap('nrTap',(id,e)=>{play('react');if(/[❤💗😍🥹]/.test(String(e)))vib(15)});
+wrap('cdSet',(k,v)=>{if(k==='seal'&&v)play('stamp')});
+wrap('pinNote',()=>play('react'));
+wrap('chatSend',()=>play('send'));
+wrap('sendWish',()=>play('send'));
+/* покупки */
+try{const o=window.buy;if(typeof o==='function')window.buy=function(k,p,cb){return o.call(this,k,p,function(){play('coin');return cb&&cb.apply(this,arguments)})}}catch{}
+/* партнёр в сети: сообщения, «жду в морском бое», дуэль */
+wrap('bRecv',(ev,p)=>{if(!p||(typeof S!=='undefined'&&p.from===S.uid))return;if(ev==='chat')play('msg');else if(ev==='pwait'||(ev==='mdduel'&&p.k==='inv'))play('ping')});
+/* игры */
+wrap('bBurst',(c,h)=>play(h?'hit':'miss'));
+wrap('mdWin',()=>play('win'));
+wrap('mdLose',()=>play('lose'));
+wrap('mdStart',()=>play('press'));
+try{const o=window.twLand;if(typeof o==='function')window.twLand=function(){let pf=false,cb=0;try{const r=TW.mv&&TW.mv.res;pf=!!(r&&r.perfect);cb=r?r.cb:0}catch{}const x=o.apply(this,arguments);play(pf?'perfect':'land',cb);return x}}catch{}
+wrap('lrPetTap',()=>play('mew'));
+
+/* ---- настройки: карточка «Звук и вибрация» ---- */
+const mk=()=>{
+ const st=document.getElementById('settings'),body=document.getElementById('seBody');if(!st||!body||document.getElementById('sfxCard'))return;
+ const c=document.createElement('div');c.className='card mt';c.id='sfxCard';c.style.cssText='display:grid;gap:12px;margin-top:12px';
+ c.innerHTML=`<div class="row" style="justify-content:space-between;gap:12px"><div style="min-width:0"><b style="font-weight:600">Звуки</b><p class="xs">Нажатия, уведомления, игры, сердечки</p></div><button class="pill" id="sfxS" aria-pressed="true"></button></div>
+<input type="range" id="sfxVol" min="0" max="100" step="5" aria-label="Громкость" style="width:100%;accent-color:var(--pink)">
+<div class="row" style="justify-content:space-between;gap:12px"><div style="min-width:0"><b style="font-weight:600">Вибрация</b><p class="xs">Сердечки, записки, игры (Android)</p></div><button class="pill" id="sfxV" aria-pressed="true"></button></div>`;
+ st.insertBefore(c,body);
+ const S_=document.getElementById('sfxS'),V_=document.getElementById('sfxV'),R_=document.getElementById('sfxVol');
+ const paint=()=>{S_.textContent=sndOn?'Вкл':'Выкл';S_.classList.toggle('on',sndOn);S_.setAttribute('aria-pressed',sndOn);
+  V_.textContent=vibOn?'Вкл':'Выкл';V_.classList.toggle('on',vibOn);V_.setAttribute('aria-pressed',vibOn);R_.value=vol;R_.disabled=!sndOn;R_.style.opacity=sndOn?1:.4};
+ S_.onclick=()=>{sndOn=!sndOn;LSs('bm_snd',sndOn?'1':'0');paint();if(sndOn){unlock();setTimeout(()=>play('ok'),30)}};
+ V_.onclick=()=>{vibOn=!vibOn;LSs('bm_vib',vibOn?'1':'0');paint();if(vibOn)vib([30,50,30])};
+ R_.oninput=()=>{vol=+R_.value;LSs('bm_vol',vol);if(out)out.gain.value=vol/100*3};
+ R_.onchange=()=>{unlock();play('tick');play('ok')};
+ paint()};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mk);else mk();
 })();
 </script>
 </body></html>
