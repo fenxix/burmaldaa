@@ -2394,7 +2394,7 @@ window.F=F;window.FUR=FUR;window.CATS=CATS;window.THEMES=THEMES;
 {const d0=drawShop;drawShop=function(){d0.apply(this,arguments);if(cur!=='shop'||!['home','room','stk'].includes(shTab))return;
  const it=(k,ico,nm,pr,act)=>`<button onclick="${act}">${ico}<b class="sm" style="color:var(--text-primary)">${nm}</b><span class="xs">${pr===0?'бесплатно':own(k)?'куплено ✓':pr+' 🪙'}</span></button>`;let h='';
  if(shTab==='home'){$('shHead').innerHTML=`<div class="tabs" style="margin-bottom:10px;overflow-x:auto">${CATS.map(c=>`<button class="${shHC===c[0]?'on':''}" style="white-space:nowrap;padding:0 10px;font-size:13px" onclick="lrCat('${c[0]}')">${c[1]}</button>`).join('')}</div>`;
-  h=FUR.filter(f=>shHC==='all'||f[8]===shHC).map(f=>it('fur:'+f[0],`<span class="lrv">${f[1]}</span>`,f[2],f[3],`buy('fur:${f[0]}',${f[3]},()=>lrBought('${f[0]}'))`)).join('')}
+  h=FUR.filter(f=>f[0]!=='gvbed'&&(shHC==='all'||f[8]===shHC)).map(f=>it('fur:'+f[0],`<span class="lrv">${f[1]}</span>`,f[2],f[3],`buy('fur:${f[0]}',${f[3]},()=>lrBought('${f[0]}'))`)).join('')}
  if(shTab==='room')h=THEMES.filter(t=>!/^g:/.test(t[0])).map(t=>it('room:'+t[0],`<span class="sw" style="background:linear-gradient(135deg,${t[3]} 50%,${t[5]} 50%)"></span>`,t[1],t[2],`lrTheme('${t[0]}').then(ok=>ok&&go('loveroom'))`)).join('')+(window.HSHOP?HSHOP():'');
  if(shTab==='stk')h=PACKS.map(p=>it('stk:'+p[0],`<span class="lrv">${p[3].slice(0,3).map(x=>stkH(x,22)).join('')}</span>`,p[1],p[2],`buy('stk:${p[0]}',${p[2]},()=>toast('Набор открыт — наклеивай на записки 💌'))`)).join('');
  $('shList').innerHTML=h}}
@@ -2410,9 +2410,10 @@ const cdStk=d=>((d&&d.s)||[]).map(s=>`<span class="cds" style="left:${+s[1]}%;to
   if(n.deco){el.style.cssText+=cdStyle(n.deco);el.insertAdjacentHTML('beforeend',cdStk(n.deco))}
   el.style.position='relative';el.style.overflow='hidden';
   if(n.author===S.uid)el.insertAdjacentHTML('beforeend',`<button class="pill cde" onclick="cdOpen('couple_notes','${esc(n.id)}')" aria-label="Оформить">🎨</button>`)})}}
-wishHtml=function(w,mine){const u=safeUrl(w.url),d=!!w.done,dc=w.deco||{},id=esc(String(w.id)),n=((S.wc||{})[w.id]||[]).length,op=!!(S.wcOpen||{})[w.id];
+const wishHtmlV2=function(w,mine){const u=safeUrl(w.url),d=!!w.done,dc=w.deco||{},id=esc(String(w.id)),n=((S.wc||{})[w.id]||[]).length,op=!!(S.wcOpen||{})[w.id];
  return `<div class="wish wk ${d?'done':''}" style="${cdStyle(dc)}"><div class="wka"><span class="ico" style="${d?'':'opacity:.6'}"><i class="fa-solid ${d?'fa-check':'fa-gift'}"></i></span><div class="sp"><b style="font-weight:600">${esc(w.title)}</b><p class="sm">${w.price?esc(w.price):''} ${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-link"></i> ссылка</a>`:''}</p></div>${cdStk(dc)}</div>
 <div class="wkb">${mine?`<button class="pill" onclick="cdOpen('couple_wishes','${id}')" aria-label="Оформить">🎨</button>`:''}<button class="pill ${op?'on':''}" onclick="wcTog('${id}')" aria-label="Комментарии">💬${n?' '+n:''}</button><button class="pill ${d?'':'on'}" onclick="togWish('${id}',${d})"><i class="fa-solid ${d?'fa-rotate-left':'fa-check'}"></i> ${d?'Вернуть':'Выполнено'}</button>${mine?`<button class="wkdel" onclick="delWish('${id}')" aria-label="Удалить"><i class="fa-regular fa-trash-can"></i></button>`:''}</div>${op&&window.wcComm?window.wcComm(w):''}</div>`};
+wishHtml=function(w,mine){try{return wishHtmlV2(w,mine)}catch(e){console.error('wishHtml',e);return `<div class="wish"><div class="sp"><b>${esc(String(w.title||''))}</b></div></div>`}};
 
 let cd=null;
 window.cdOpen=(t,id)=>{const r=(t==='couple_notes'?S.notes:S.wishes).find(x=>String(x.id)===id);if(!r)return;
@@ -3788,7 +3789,7 @@ window.wcSend=async id=>{const i=document.getElementById('wci-'+id),v=(i?i.value
  if(error)return toast(/relation|does not exist|schema cache/.test(error.message)?'Выполни SQL-миграцию wish_comments.sql':error.message);
  S.wcd[id]='';await wcLoad();const n=document.getElementById('wci-'+id);if(n)n.focus()};
 window.wcDel=async id=>{const {error}=await sb.from(T).delete().eq('id',id);if(error)return toast(error.message);wcLoad()};
-let rm=null;const r1=render;render=function(){const x=r1.apply(this,arguments);if(S.room&&S.me&&rm!==S.room){rm=S.room;if(window.wcCh)sb.removeChannel(window.wcCh);window.wcCh=sb.channel('wc'+S.room).on('postgres_changes',{event:'*',schema:'public',table:T,filter:'room_id=eq.'+S.room},()=>wcLoad()).subscribe();wcLoad()}return x};
+let rm=null;const r1=render;render=function(){const x=r1.apply(this,arguments);try{if(S.room&&S.me&&rm!==S.room){rm=S.room;if(window.wcCh)sb.removeChannel(window.wcCh);window.wcCh=sb.channel('wc'+S.room).on('postgres_changes',{event:'*',schema:'public',table:T,filter:'room_id=eq.'+S.room},()=>wcLoad()).subscribe();wcLoad()}}catch(e){console.error('wish-comments',e)}return x};
 })();
 </script>
 </body></html>
