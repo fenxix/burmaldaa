@@ -921,6 +921,41 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 .lrp2 .pb,.lrp2 .pb.tx{position:absolute;right:auto;width:auto;height:auto;border:0;border-radius:14px;display:block;background:#fff;color:#2a1d33;font-weight:700;font-size:5.2cqw;line-height:1.15;padding:.3em .7em;left:50%;top:-4%;transform:translate(calc(-50% + var(--bx,0cqw)),-100%);white-space:nowrap;z-index:9;box-shadow:0 2px 8px #0006;animation:none}
 .lrp2{z-index:30}.lrp2 .pb:empty{display:none}.lrp2 .pb.tx{font-size:4.6cqw}
 .lrp2.slp .pb{animation:ptz2 2.4s infinite}@keyframes ptz2{50%{transform:translate(calc(-50% + var(--bx,0cqw)),-120%);opacity:.6}}`}));
+
+/* v14: ещё звери в SVG */
+{const ec=(c,i)=>Ci(30,32,10,c)+Ci(70,32,10,c)+(i?Ci(30,32,5,i)+Ci(70,32,5,i):''),ep=c=>Pa('M28 38l3-24 16 14zM72 38l-3-24-16 14z',c),
+an=o=>SH+(o.t||'')+El(50,74,o.bw||25,19,o.b)+(o.bl?El(50,79,15,11,o.bl):'')+(o.ear||'')+Ci(50,48,o.hr||22,o.h||o.b)+(o.x||'')+El(50,57,o.mw||12,o.mh||8.5,o.m||'#f3e3cf')+E(46,10)+(o.n===0?'':Ci(50,55,3,o.nc||D));
+Object.assign(PA,{
+bear:an({b:'#b9805a',m:'#e8c9a0',ear:ec('#b9805a','#e8c9a0')}),
+monkey:an({b:'#a8683d',m:'#f0d2b0',t:Tl('M72 82q26 0 18-30','#a8683d',7),ear:ec('#a8683d','#f0d2b0'),x:El(50,46,17,13,'#f0d2b0')}),
+otter:an({b:'#8a6a4a',bl:'#e6d3b8',m:'#e6d3b8',t:Tl('M72 82q20 2 18-14','#8a6a4a',9),ear:ec('#8a6a4a')}),
+hippo:an({b:'#a9a3c9',m:'#d6c3da',mw:17,mh:11,ear:ec('#a9a3c9','#d6c3da'),x:'',n:0}),
+pig:an({b:'#ffb3c7',m:'#ff8fae',mw:10,mh:7,ear:Pa('M28 38l-6-20 18 8zM72 38l6-20-18 8z','#ff9ab8'),t:Tl('M74 80q10 0 8-8','#ff9ab8',4),n:0}),
+cow:an({b:'#f7f3ee',m:'#ffb3c7',mw:13,mh:9,ear:El(22,40,10,5,'#f7f3ee')+El(78,40,10,5,'#f7f3ee')+Pa('M36 30l-4-12M64 30l4-12','','#e8d9a8',4),x:El(36,38,7,6,D)+El(66,52,5,7,D),n:0}),
+sheep:an({b:'#f4f0f6',h:'#f1e3d3',bw:27,m:'#e6d4c2',ear:El(24,48,9,5,'#8a7a8f')+El(76,48,9,5,'#8a7a8f')+Ci(28,60,12,'#fff')+Ci(72,60,12,'#fff'),x:Ci(36,30,10,'#fff')+Ci(50,26,11,'#fff')+Ci(64,30,10,'#fff')}),
+llama:an({b:'#e8d8bf',m:'#c9a97f',hr:20,ear:Pa('M36 34l-4-22 12 16zM64 34l4-22-12 16z','#e8d8bf'),x:Ci(50,28,10,'#e8d8bf')}),
+deer:an({b:'#c98b5a',m:'#f3dfc4',ear:Pa('M38 30L32 8M32 8l-9 5M32 8l3-8M62 30l6-22M68 8l9 5M68 8l-3-8','','#8a5a3a',3.5)+El(24,40,9,5,'#c98b5a')+El(76,40,9,5,'#c98b5a'),x:Ci(36,34,2,'#fff9')+Ci(64,36,2,'#fff9')}),
+wolf:an({b:'#8b93a3',m:'#d9dde6',t:Tl('M72 80q24-4 18-30','#8b93a3',10),ear:ep('#6b7383')}),
+tiger:an({b:'#f0922e',m:'#fff3e0',t:Tl('M72 80q22-2 18-24','#f0922e',9),ear:ec('#f0922e','#fff3e0'),x:Pa('M36 30l4 8M64 30l-4 8M29 46l8 2M71 46l-8 2M50 27v7','','#3b2a1a',3)}),
+giraffe:an({b:'#f3c969',m:'#f7e0b0',ear:El(25,38,9,4,'#f3c969')+El(75,38,9,4,'#f3c969')+Pa('M42 30v-14M58 30v-14','','#c98b5a',3)+Ci(42,15,3.5,'#8a5a3a')+Ci(58,15,3.5,'#8a5a3a'),x:Ci(36,38,4.5,'#c98b5a')+Ci(63,40,5,'#c98b5a')+Ci(50,32,3.5,'#c98b5a')}),
+elephant:an({b:'#a9b4c6',m:'#a9b4c6',n:0,ear:Ci(23,50,16,'#a9b4c6')+Ci(77,50,16,'#a9b4c6')+Ci(23,50,9,'#e8b5c4')+Ci(77,50,9,'#e8b5c4'),x:Pa('M50 54q2 24-10 32','','#a9b4c6',9)}),
+dino:an({b:'#6fcf8a',m:'#c8f0a8',t:Tl('M72 82q26 0 20-30','#6fcf8a',10),ear:Pa('M26 52l-8-12h12zM38 30l-4-14 10 6zM62 30l4-14-10 6zM74 52l8-12H70z','#3fa65a')}),
+trex:an({b:'#8ab35a',m:'#c6d98a',mw:15,mh:9,t:Tl('M72 82q26 0 22-26','#8ab35a',11),ear:Pa('M30 34l-2-14 10 8zM70 34l2-14-10 8z','#5e8a38'),x:El(30,76,4,3,'#8ab35a')}),
+mouse:an({b:'#c9c4d4',m:'#f3e3e8',nc:'#ff8fae',t:Tl('M72 84q22 4 16-18','#ffb3c7',4),ear:Ci(26,34,13,'#c9c4d4')+Ci(74,34,13,'#c9c4d4')+Ci(26,34,7,'#ffb3c7')+Ci(74,34,7,'#ffb3c7')}),
+zebra:an({b:'#f4f4f8',m:'#cfcfd8',ear:ec('#f4f4f8','#2b2b3a'),x:Pa('M36 31l4 8M64 31l-4 8M29 46l9 2M71 46l-9 2','','#2b2b3a',3.5)+Pa('M42 24q8-8 16 0','','#2b2b3a',5)}),
+goat:an({b:'#e8e2d6',m:'#f3ece0',ear:Pa('M38 30q-10-12-2-22M62 30q10-12 2-22','','#a8886a',4)+El(24,42,9,4,'#e8e2d6')+El(76,42,9,4,'#e8e2d6'),x:Pa('M50 64q-5 8 0 14q5-6 0-14','#cfc6b4')}),
+camel:an({b:'#d9a866',m:'#f0d9b0',t:El(72,60,15,14,'#d9a866'),ear:ec('#d9a866')}),
+chick:SH+Pa('M24 70q-8 8-2 14M76 70q8 8 2 14','','#ffc233',6)+El(50,68,27,24,'#ffd23f')+Pa('M46 24q4-10 8 0','','#ffc233',3)+Pa('M44 52h12l-6 8z','#ff9a3d')+E(44,9)+Pa('M40 93v-4M60 93v-4','','#ff9a3d',3),
+snail:SH+El(46,86,38,8,'#c9d98a')+Ci(80,60,9,'#c9d98a')+Pa('M80 52l-2-10M84 54l4-8','','#c9d98a',2.5)+Ci(78,40,2.5,D)+Ci(88,45,2.5,D)+Ci(82,62,2,D)+Ci(44,58,26,'#d9774f')+Pa('M44 58m-14 0a14 14 0 1 1 14 14a8 8 0 1 1 0-8','','#fff',3),
+crab:SH+Pa('M16 80l12-8M16 90l14-4M84 80l-12-8M84 90l-14-4','','#e0453a',4)+Pa('M24 62q-8-6-6-16M76 62q8-6 6-16','','#e0453a',6)+Ci(18,44,10,'#e0453a')+Ci(82,44,10,'#e0453a')+El(50,72,28,17,'#e0453a')+Pa('M42 56v-10M58 56v-10','','#e0453a',3)+Ci(42,44,5,'#fff')+Ci(58,44,5,'#fff')+Ci(42,44,2.5,D)+Ci(58,44,2.5,D)+Pa('M43 74q7 5 14 0','','#7a1a1a',2.5),
+butterfly:SH+ART.bfly,
+parrot:SH+Pa('M60 84q6 8 16 6','','#2f9d8f',6)+El(50,70,24,24,'#4fbf6b')+El(72,70,8,16,'#2f9d8f')+Ci(50,40,20,'#ff5a4a')+Pa('M42 44q8-4 16 0q-4 12-8 12q-4 0-8-12z','#ffd23f')+Ci(41,36,3.5,'#fff')+Ci(59,36,3.5,'#fff')+Ci(41,36,1.8,D)+Ci(59,36,1.8,D),
+swan:SH+El(50,78,28,14,'#fff')+Pa('M62 72Q82 66 74 44Q66 24 48 32','','#fff',10)+Ci(46,32,9,'#fff')+Pa('M38 32l-10 4 10 4z','#ff9a3d')+Ci(45,30,2,D)+Pa('M30 76q16-10 34 0','','#dfe8f5',3),
+dolphin:SH+Pa('M10 70Q20 30 62 36Q86 38 92 18Q94 52 66 64Q40 84 10 70Z','#6fb0ee')+Pa('M16 70Q40 78 64 62Q40 72 16 70Z','#d7ecff')+Pa('M44 38l6-16 10 14z','#4a90d9')+Ci(30,56,2.5,D)+Pa('M10 70l-6 4','','#6fb0ee',5),
+ladybug:SH+El(50,66,32,26,'#e0304f')+Pa('M50 42v50','',D,3)+Ci(36,60,5,D)+Ci(64,60,5,D)+Ci(40,80,4,D)+Ci(60,80,4,D)+Ci(50,38,15,D)+Ci(44,36,3.5,'#fff')+Ci(56,36,3.5,'#fff')+Pa('M44 26l-6-10M56 26l6-10','',D,2.5),
+shark:SH+Pa('M6 66Q30 30 70 42Q88 46 94 60Q70 52 60 72Q30 86 6 66Z','#7d93ad')+Pa('M10 68Q34 80 60 72Q40 70 10 68Z','#dfe8f2')+Pa('M44 40l6-20 12 16z','#6a809b')+Pa('M86 54l10-14-2 24z','#6a809b')+Ci(28,56,2.5,D)+Pa('M16 66q8 6 16 2','','#fff',2)
+});}
+
 }
 
 /* --- тап по кровати в комнате: выбрать, чья она --- */
@@ -3064,7 +3099,40 @@ soup:G('#ff9fbd','#dd4f7c',0,1)+'<path d="M24 22c-3-4 3-6 0-11M32 20c-3-4 3-6 0-
 pizza:G('#ffd966','#f4b13a',0,1)+'<path d="M7 20C20 8 44 8 57 20L32 59z" fill="url(#a@)" stroke="#e29a2c" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 18C20 4 44 4 59 18l-3 7C42 14 22 14 8 25z" fill="#dc9444"/><path d="M11 17C22 9 42 9 53 17" stroke="#f3c071" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/><g fill="#d93a3a"><circle cx="24" cy="31" r="5.5"/><circle cx="40" cy="30" r="5.5"/><circle cx="32" cy="44" r="4.8"/></g><g fill="#f26a6a"><circle cx="22.5" cy="29.5" r="1.2"/><circle cx="38.5" cy="28.5" r="1.2"/><circle cx="31" cy="43" r="1"/></g><path d="M33 22l3 2-3 2zM16 37l3 1-2 2zM46 38l3-1-1 3z" fill="#4fb85a"/>',
 sushi:G('#ff9d73','#ff6a4d',0,1)+'<rect x="8" y="33" width="48" height="20" rx="10" fill="#e3dbcf"/><rect x="8" y="31" width="48" height="19" rx="9.5" fill="#fffdf8"/><g fill="#e3dbcf"><ellipse cx="18" cy="44" rx="2.5" ry="1.1"/><ellipse cx="30" cy="46" rx="2.5" ry="1.1"/><ellipse cx="44" cy="45" rx="2.5" ry="1.1"/><ellipse cx="37" cy="40" rx="2.5" ry="1.1"/></g><path d="M5 35C6 21 18 17 32 17s26 4 27 18C44 41 20 41 5 35z" fill="url(#a@)"/><path d="M15 25c4 3 6 7 7 11M26 21c4 4 6 9 6 15M38 21c3 4 4 9 4 14M49 25c2 3 3 6 3 9" stroke="#fff" opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="28.5" y="16" width="9" height="36" rx="2" fill="#1f3a2c"/>',
 cake:'<rect x="10" y="41" width="44" height="14" rx="4" fill="#c9825a"/><rect x="9" y="36" width="46" height="6.5" rx="3.2" fill="#fff6ee"/><rect x="10" y="24" width="44" height="13" rx="3" fill="#f7a6bf"/><path d="M8 25c0-6 4-9 10-9h28c6 0 10 3 10 9 0 4-3 5-5 5s-3-1-5-1-3 4-5 4-3-4-6-4-4 4-6 4-3-3-5-3-3 1-5 1-5-1-5-6z" fill="#fff6ee"/><path d="M32 6c-4 0-8 3-8 7 0 4 4 6 8 6s8-2 8-6c0-4-4-7-8-7z" fill="#e5334a"/><path d="M29 7c2-3 6-3 8 0-3 1-5 1-8 0z" fill="#3fb34d"/><g fill="#ffe9a6"><ellipse cx="29" cy="12" rx=".8" ry="1.2"/><ellipse cx="34" cy="11" rx=".8" ry="1.2"/><ellipse cx="32" cy="15" rx=".8" ry="1.2"/></g><path d="M14 46h36" stroke="#fff" opacity=".25" stroke-width="2" stroke-linecap="round"/>'};
-let fu=0;const fIcon=(f,px)=>{const t=FS[f.id];if(!t)return `<span style="font-size:${Math.round(px*.85)}px;line-height:1">${f.emoji}</span>`;fu++;return `<svg viewBox="0 0 64 64" width="${px}" height="${px}" aria-hidden="true">${t.replaceAll('@',fu)}</svg>`};
+
+/* v14: остальные иконки еды (SVG) */
+{const P=(d,f,s,w)=>`<path d="${d}" fill="${f||'none'}"${s?` stroke="${s}" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round"`:''}/>`,C=(x,y,r,f)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`,Lp=(x,y,a,b,f,r)=>`<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" fill="${f}"${r?` transform="rotate(${r} ${x} ${y})"`:''}/>`,Rc=(x,y,w,h,f,r)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r||0}" fill="${f}"/>`;
+Object.assign(FS,{
+banana:P('M10 20c0 22 14 38 40 33 4-1 4-5 0-5-16 0-27-8-27-28z','#ffd84a','#d9a21c')+P('M10 20l-1-7 6-1 1 8z','#8a5a2a')+P('M18 26c2 12 10 20 22 22','','#fff8',2.5),
+pear:P('M32 20c-9 0-11 9-15 17-5 11 3 21 15 21s20-10 15-21c-4-8-6-17-15-17z','#b9da4b','#8fb12c')+P('M32 20v-8','','#7a5230',3)+P('M33 15c5-5 12-4 14-1-5 4-10 4-14 1z','#4fbf6b')+P('M22 38c-2 6 0 10 3 12','','#fff8',3),
+melon:P('M5 24h54a27 27 0 0 1-54 0z','#ff5a6a')+P('M5 24a27 27 0 0 0 54 0','','#3fa65a',5)+P('M8 27a24 24 0 0 0 48 0','','#e8f7c8',2)+Lp(22,34,1.6,2.8,'#2b1d1d',-20)+Lp(32,38,1.6,2.8,'#2b1d1d')+Lp(42,34,1.6,2.8,'#2b1d1d',20)+Lp(28,29,1.4,2.4,'#2b1d1d')+Lp(38,29,1.4,2.4,'#2b1d1d'),
+grapes:P('M32 6v10','','#7a5230',3)+P('M33 12c6-6 14-4 16 0-6 4-12 4-16 0z','#4fbf6b')+[[22,26],[34,26],[46,26],[28,37],[40,37],[34,48]].map(([x,y])=>C(x,y,7.5,'#8e5bd8')+C(x-2.5,y-2.5,2,'#fff7')).join(''),
+peach:C(32,36,22,'#ffb27a')+P('M32 16c-4 14-4 30 0 42','','#f08a5a',2)+Lp(42,44,8,10,'#ff8f7a',20)+C(24,30,5,'#ffd7b0')+P('M32 15c2-6 8-8 14-6-2 6-8 8-14 6z','#4fbf6b')+P('M32 15v-4','','#7a5230',3),
+corn:'<g transform="rotate(35 32 32)">'+Lp(32,30,11,24,'#ffd84a')+P('M25 14v32M32 8v40M39 14v32M22 22h20M21 32h22M22 42h20','','#e0a81c',1.5)+P('M32 58c-12-4-14-18-10-28 4 8 10 12 10 28zM32 58c12-4 14-18 10-28-4 8-10 12-10 28z','#5fc85a')+'</g>',
+bread:P('M8 30c0-12 10-16 24-16s24 4 24 16c0 3-2 4-4 4v18c0 3-2 5-5 5H17c-3 0-5-2-5-5V34c-2 0-4-1-4-4z','#e0a45a','#b9782e')+P('M22 24l6 8M32 22l6 8M42 24l6 8','','#fff6',3),
+cheese:P('M6 38l30-22 22 8z','#ffe27a','#d99a1c')+P('M6 38l52-14v20L6 54z','#ffc233','#d99a1c')+C(18,46,3,'#e0a81c')+C(34,41,3.5,'#e0a81c')+C(48,35,2.5,'#e0a81c'),
+egg:P('M10 34c-4-12 8-22 18-20 10-4 26 2 26 16 4 10-6 22-18 20-8 6-26 2-26-16z','#fff','#e6e0d8')+C(32,34,10,'#ffc233')+C(29,31,3,'#fff9'),
+rice:P('M32 8c6 0 10 6 22 36 2 6-2 12-8 12H18c-6 0-10-6-8-12C22 14 26 8 32 8z','#fff','#dfd8cc')+P('M15 42h34l3 10c1 3-1 5-4 5H17c-3 0-5-2-4-5z','#1f3a2c')+C(30,28,1.6,'#e0d8cc')+C(36,34,1.6,'#e0d8cc'),
+donut:'<path fill-rule="evenodd" d="M32 7a25 25 0 1 0 .1 0zM32 25a7 7 0 1 1-.1 0z" fill="#e0a45a"/><path fill-rule="evenodd" d="M32 9a23 23 0 0 0 0 46 23 23 0 0 0 0-46zM32 25a7 7 0 1 1-.1 0z" fill="#ff9ec0"/>'+P('M20 22l4-2M42 17l4 3M14 36l4 2M46 40l-4 3M30 50l2 4M36 13l3-2','','#fff',2.5)+P('M18 30l3 1M44 28l3-1M24 46l2-2','','#6ad2ff',2.5),
+choco:P('M12 12h40a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z','#7a4a2a')+P('M8 32h48M22 12v40M36 12v40','','#5a3419',2)+P('M14 17h6M40 17h6','','#b07a50',3),
+fish:P('M50 32l10-11v22z','#4a90d9')+Lp(30,32,22,13,'#6fb0ee')+Lp(28,38,14,5,'#cfe8ff')+P('M26 20q6-8 14-3','#4a90d9')+C(18,29,3.5,'#fff')+C(17.5,29,1.8,'#222'),
+fries:Rc(16,10,5,24,'#ffd23f',1.5)+Rc(24,6,5,28,'#ffc233',1.5)+Rc(32,9,5,25,'#ffd23f',1.5)+Rc(40,12,5,22,'#ffc233',1.5)+P('M10 28l4 26h36l4-26z','#e0453a')+C(32,40,5,'#ffd23f'),
+icecream:P('M20 34h24L32 60z','#e0a45a','#b9782e',1.5)+P('M26 38l6 14M34 38l-4 14','','#b9782e',1.2)+C(32,30,13,'#ff9ec0')+C(32,19,10,'#fff4d6')+C(32,9,3.5,'#e0304f'),
+honey:P('M18 22h28v34a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z','#ffb52e','#d98a10')+Rc(16,14,32,10,'#e0a45a',3)+Rc(24,34,16,12,'#fff4d6',2)+P('M28 38h8M28 42h6','','#e0a81c',2)+P('M22 28v8','','#fff8',3),
+chicken:P('M26 42l-10 10','','#fff3dc',5)+C(13,55,4.5,'#fff3dc')+C(20,58,4.5,'#fff3dc')+P('M44 10c8 2 12 12 6 22-4 6-12 10-20 12l-6-6c4-8 4-14 8-20 3-5 8-9 12-8z','#c9742e','#8a4a1a')+P('M38 16c4 2 6 6 6 10','','#fff7',2.5),
+dumpling:P('M6 42c0-16 12-24 26-24s26 8 26 24c0 6-4 8-8 8H14c-4 0-8-2-8-8z','#fff3dc','#e6c9a0')+P('M16 26l2 8M24 22l1 10M32 20v10M40 22l-1 10M48 26l-2 8','','#e6c9a0',2),
+taco:P('M6 36h52c0 16-12 26-26 26S6 52 6 36z','#ffc94a','#d99a1c')+P('M8 36c4-12 8-6 12-14 4 8 8 2 12 12 4-10 8-4 12-12 4 8 8 6 12 14z','#5fc85a')+C(24,32,3.5,'#e0453a')+C(40,30,3.5,'#e0453a')+P('M12 46h40','','#fff7',2),
+cupcake:P('M14 32h36l-4 24H18z','#ff8fb0','#d96a90')+P('M22 32l2 24M32 32v24M42 32l-2 24','','#fff5',2)+P('M12 32c-2-8 6-10 8-16 4-8 20-8 24 0 2 6 10 8 8 16z','#ffc2dc','#e08fb0')+C(32,10,4,'#e0304f'),
+boba:C(26,52,3,'#3b2418')+P('M38 16L44 2','','#ff6fa8',4)+P('M18 28h28l-3 30H21z','#d9a672')+C(26,52,3,'#3b2418')+C(34,54,3,'#3b2418')+C(41,51,3,'#3b2418')+C(30,46,3,'#3b2418')+P('M16 22h32l-4 38H20z','','#fff',2)+Rc(14,16,36,6,'#fff',3),
+burger:P('M8 28c0-12 10-18 24-18s24 6 24 18z','#e0a45a')+Lp(22,20,1.6,.9,'#fff')+Lp(32,16,1.6,.9,'#fff')+Lp(42,20,1.6,.9,'#fff')+P('M6 32c4 4 8-2 12 2s8-2 12 2 8-2 12 2 8-2 12 0v3H6z','#5fc85a')+Rc(8,36,48,8,'#6b3f26',4)+Rc(8,46,48,10,'#e0a45a',5),
+ramen:P('M44 6l12 24M50 4l12 24','','#c98b5a',2)+P('M6 32h52c0 16-10 26-26 26S6 48 6 32z','#e8553f','#b73a28')+P('M10 32c4-10 8 0 12-8s8 6 12-2 8 4 12-4 6 4 8 0','','#ffe08a',3.5)+Lp(24,30,6,5,'#fff')+C(24,30,2.5,'#ffc233')+C(42,28,5,'#fff')+C(42,28,2,'#ff8fb0'),
+pie:P('M6 38h52l-6 18H12z','#d9a672','#b9782e')+P('M8 40c0-14 10-22 24-22s24 8 24 22z','#f0c07a','#b9782e')+P('M16 24l18 16M28 20l20 20M44 26L26 40M52 34L38 40','','#c98b3a',2),
+steak:P('M10 30c0-14 14-20 28-18 14 2 18 12 14 24-4 14-22 18-34 10-6-4-8-10-8-16z','#d9534f','#8a2a2a')+P('M10 30c0-14 14-20 28-18','','#ffe0c0',3)+P('M20 30c6-4 10 0 14-4M26 42c6 2 10-2 14 0','','#ffb3a8',2.5)+C(44,26,6,'#fff3dc')+C(44,26,2.5,'#c9b690'),
+lobster:P('M28 20Q24 8 16 4M36 20Q40 8 48 4','','#c92e2a',2)+P('M24 30L16 20M40 30l8-10','','#e0453a',4)+C(14,16,9,'#e0453a')+C(50,16,9,'#e0453a')+P('M8 12l6 4-2-8zM56 12l-6 4 2-8z','#c92e2a')+P('M22 38l-8 4M22 44l-8 6M42 38l8 4M42 44l8 6','','#c92e2a',2.5)+Lp(32,36,12,18,'#e0453a')+Rc(24,50,16,5,'#c92e2a',2.5)+P('M24 57h16l4 6H20z','#e0453a')+C(28,24,2,'#222')+C(36,24,2,'#222'),
+bento:Rc(6,14,52,38,'#3b2a2a',5)+Rc(10,20,22,28,'#fff',4)+Rc(10,38,22,10,'#1f3a2c',3)+C(45,28,7,'#ff7a5a')+Rc(38,38,14,10,'#ffd23f',3)+Rc(6,10,52,6,'#e0453a',3)
+});}
+
+let fu=0;const fIcon=(f,px)=>{const t=FS[f.id];if(!t)return `<svg viewBox="0 0 64 64" width="${px}" height="${px}" aria-hidden="true">${FS.bento}</svg>`;fu++;return `<svg viewBox="0 0 64 64" width="${px}" height="${px}" aria-hidden="true">${t.replaceAll('@',fu)}</svg>`};
 const PC=[['#f58db4','#fde3ee'],['#5fc9a6','#def6ee'],['#6fb0ee','#e0effd']];
 const plateHtml=(id,x,i)=>{const c=PC[i%3];return `<div class="dn-plate" data-pl="${id}" style="left:${x}%"><svg viewBox="0 0 120 52" width="100%"><ellipse cx="60" cy="44" rx="54" ry="7" fill="rgba(60,20,40,.3)"/><ellipse cx="60" cy="31" rx="56" ry="19" fill="#d8c7b8"/><ellipse cx="60" cy="27" rx="56" ry="19" fill="#fffaf5"/><ellipse cx="60" cy="27" rx="49" ry="16" fill="none" stroke="${c[0]}" stroke-width="2.2" stroke-dasharray="1 5" stroke-linecap="round"/><ellipse cx="60" cy="28" rx="38" ry="12" fill="${c[1]}" stroke="#e8d9ca" stroke-width="1.5"/><ellipse cx="60" cy="29" rx="30" ry="9" fill="#fff" opacity=".55"/></svg></div>`};
 
@@ -3106,7 +3174,7 @@ window.dnShop=v=>{dn.shop=!!v;dnRender(1)};
 const errMsg=e=>{const m=e.message||'';return m==='poor'?'Не хватает монет 🪙':m==='no_food'?'В холодильнике нет такой еды':m==='busy'?'Питомец сейчас занят 💤':/function|schema cache|does not exist|column|relation/.test(m)?'Выполни SQL-миграцию (pets_migration.sql)':m}
 window.dnBuy=async fid=>{const f=dn.cat.find(x=>x.id===fid);if(!f)return;if(cn()<f.price)return toast('Не хватает монет 🪙');
  const {data,error}=await sb.rpc('couple_food_buy',{p_room:S.room,p_food:fid,p_qty:1});if(error)return toast(f.local?'Эта еда ещё не добавлена в базу: выполни food_pack.sql 🍽️':errMsg(error));
- S.wal.coins=data.coins;dn.inv[fid]=data.qty;try{drawX()}catch{}toast('В холодильнике: '+f.emoji);dnRender(1)};
+ S.wal.coins=data.coins;dn.inv[fid]=data.qty;try{drawX()}catch{}toast('В холодильнике: '+f.name);dnRender(1)};
 const crumbs=b=>{const w=document.createElement('div');w.style.cssText='position:absolute;left:50%;top:-14px';w.innerHTML=Array.from({length:5},()=>`<i class="absolute text-xs" style="--cx:${Math.round((Math.random()-.5)*70)}px;animation:dnCrumb .8s ease-out forwards">✦</i>`).join('');b.appendChild(w);setTimeout(()=>w.remove(),900)};
 function floatTxt(id,t){const e=document.querySelector('[data-pet="'+id+'"]'),l=$('dnFloat');if(!e||!l)return;const d=document.createElement('div');d.className='absolute top-[34%] -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-[#5b2a4a]';d.style.left=e.style.left;d.style.animation='dnFloat 1.7s ease-out forwards';d.textContent=t;l.appendChild(d);setTimeout(()=>d.remove(),1800)}
 let dnJD=0;window.dnHint=()=>{if(Date.now()-dnJD<500)return;toast('Перетащи еду на тарелку питомца 🍽️');document.querySelectorAll('.dn-plate').forEach(e=>{e.classList.remove('nudge');void e.offsetWidth;e.classList.add('nudge')})};
@@ -4024,6 +4092,45 @@ html[data-cmod=gold] .card{border-color:rgba(255,205,80,.7);box-shadow:0 0 0 2px
 html[data-cmod=gold] .card::before{content:"❖";position:absolute;left:8px;top:-11px;color:#ffd54a;font-size:16px;text-shadow:0 0 8px #ffd54a;pointer-events:none}
 html[data-cmod=gold] .card::after{content:"❖";position:absolute;right:8px;bottom:-11px;color:#ffd54a;font-size:16px;text-shadow:0 0 8px #ffd54a;pointer-events:none}`);
 try{if(typeof drawShop==='function'&&typeof cur!=='undefined'&&cur==='shop')drawShop()}catch{}
+})();
+</script>
+<script id="v14">
+(()=>{
+const F='#2b1d33',o=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r||4.5}" fill="${F}"/>`,w=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`,
+ar=d=>`<path d="${d}" fill="none" stroke="${F}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`,
+bl=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r||6}" fill="#ff5f87" opacity=".55"/>`,
+hr=(x,y,k,c)=>`<path transform="translate(${x} ${y}) scale(${k||1})" d="M0 7C-11 0-9-9-4.5-9 -2-9 0-7 0-5.5 0-7 2-9 4.5-9 9-9 11 0 0 7z" fill="${c||'#e0304f'}"/>`,
+td='<path d="M41 75q9 7 18 0q-9-5-18 0" fill="#ff6f91"/>',
+FACE={
+love:hr(36,47,1.3)+hr(64,47,1.3)+ar('M34 66q16 14 32 0'),
+joy:ar('M29 49q7-10 14 0')+ar('M57 49q7-10 14 0')+`<path d="M32 62q18 24 36 0z" fill="${F}"/>`+td,
+tender:ar('M29 47q7 8 14 0')+ar('M57 47q7 8 14 0')+bl(24,60)+bl(76,60)+ar('M41 66q9 7 18 0'),
+play:ar('M29 49q7 7 14 0')+o(64,48,5)+ar('M32 62q18 12 36 0')+'<path d="M52 68v8q0 7 7 5v-12" fill="#ff6f91"/>',
+energy:o(36,48,5.5)+o(64,48,5.5)+w(34,46,1.8)+w(62,46,1.8)+`<path d="M34 62q16 22 32 0z" fill="${F}"/>`+'<path d="M56 0L40 20h11l-5 15 17-21H52z" fill="#ffe14a" stroke="#e0a81c" stroke-width="1.5" stroke-linejoin="round"/>',
+proud:ar('M29 49q7-9 14 0')+ar('M57 49q7-9 14 0')+ar('M36 65q14 10 28-2')+'<path d="M86 6l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#ffe14a"/>',
+thanks:ar('M29 47q7 8 14 0')+ar('M57 47q7 8 14 0')+bl(24,60)+bl(76,60)+ar('M38 65q12 10 24 0')+hr(86,12,1.1,'#ff4f9a'),
+surprised:w(36,49,8.5)+w(64,49,8.5)+o(36,49,4)+o(64,49,4)+ar('M28 33q8-6 16 0')+ar('M56 33q8-6 16 0')+`<ellipse cx="50" cy="73" rx="6" ry="8" fill="${F}"/>`,
+shy:o(33,51,4)+o(61,51,4)+bl(25,61,8)+bl(75,61,8)+ar('M42 71q4-4 8 0q4 4 8 0'),
+calm:ar('M29 49h14')+ar('M57 49h14')+ar('M40 66q10 6 20 0'),
+tired:ar('M29 49h14')+ar('M57 49h14')+ar('M31 57q5 3 10 0M59 57q5 3 10 0')+`<ellipse cx="50" cy="71" rx="5" ry="6" fill="${F}"/>`+'<path d="M72 12h12l-12 14h12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
+bored:o(36,51,4)+o(64,51,4)+ar('M28 45h16')+ar('M56 45h16')+ar('M40 69h20'),
+sad:o(36,51,4.5)+o(64,51,4.5)+ar('M27 43L44 37')+ar('M73 43L56 37')+ar('M38 71q12-10 24 0')+'<path d="M28 58q-5 8 0 11q5-3 0-11z" fill="#6ec6ff"/>',
+anxious:w(36,49,7)+w(64,49,7)+o(37,50,3)+o(63,50,3)+ar('M27 41L44 35')+ar('M73 41L56 35')+ar('M36 69q4-5 7 0t7 0t7 0')+'<path d="M84 22q-6 9 0 13q6-4 0-13z" fill="#6ec6ff"/>',
+angry:o(37,51,4.5)+o(63,51,4.5)+ar('M27 37L44 45')+ar('M73 37L56 45')+ar('M38 73q12-9 24 0')
+};
+window.emoFace=(k,px)=>{const c=(window.EM&&EM[k]||EM.love)[2],sz=px?px+'px':'1em';return `<svg class="ef" viewBox="0 0 100 100" style="width:${sz};height:${sz};display:block;flex:none;overflow:visible" aria-hidden="true"><circle cx="50" cy="54" r="42" fill="${c}"/><circle cx="50" cy="54" r="41" fill="none" stroke="#0003" stroke-width="3"/><path d="M24 36q8-12 22-14" fill="none" stroke="#fff6" stroke-width="4" stroke-linecap="round"/>${FACE[k]||FACE.love}</svg>`};
+Object.keys(REACT).forEach(k=>{REACT[k][0]=emoFace(k)});
+window.emoBurst=function(k){if(!REACT[k])return;for(let i=0;i<12;i++){const e=document.createElement('span');e.className='ebu';e.innerHTML=emoFace(k,30);e.style.left=(10+Math.random()*80)+'%';e.style.setProperty('--dx',(Math.random()*80-40)+'px');e.style.setProperty('--rot',(Math.random()*60-30)+'deg');e.style.animationDelay=(Math.random()*.5)+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),2300)}};
+const swap=(el,k,px)=>{if(!el)return;const h=document.createElement('span');h.innerHTML=emoFace(k,px);el.replaceWith(h.firstChild)};
+const emoVec=()=>{try{
+ document.querySelectorAll('#emos .emo').forEach(b=>{const m=(b.getAttribute('onclick')||'').match(/pickEmo\('(\w+)'/);if(m&&!b.querySelector('svg.ef'))swap(b.querySelector('i'),m[1],32)});
+ const pk=S.pt&&EM[S.pt.emotion]?S.pt.emotion:'love';
+ swap(document.querySelector('#emoCard .pill.on>i:first-child'),pk,22);
+ swap(document.querySelector('#nowCard .ico i'),pk,38)}catch(e){console.warn('emoVec',e)}};
+if(typeof render==='function'){const r0=render;render=function(){const x=r0.apply(this,arguments);emoVec();return x}}
+/* новые зверята */
+[['mouse','🐭','Мышонок',100,'c'],['goat','🐐','Козлёнок',150,'c'],['ladybug','🐞','Божья коровка',120,'c'],['zebra','🦓','Зебрёнок',380,'r'],['camel','🐪','Верблюжонок',400,'r'],['shark','🦈','Акулёнок',700,'e']].forEach(([id,e,n,p,t])=>{if(PETS2.some(x=>x[0]===id))return;PETS2.push([id,e,n,0,p]);(window.RAR=window.RAR||{})['pet:'+id]=t;(window.PRC=window.PRC||{})['pet:'+id]=p});
+try{emoVec()}catch{}
 })();
 </script>
 </body></html>

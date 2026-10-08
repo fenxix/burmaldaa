@@ -1,4 +1,4 @@
-const V='burmalda-v17';
+const V='burmalda-v18';
 const CORE=['./','index.html','manifest.webmanifest'];
 const EXTRA=['icon-192.png','icon-512.png','maskable-512.png','favicon.png','apple-touch-icon.png',
  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js',
