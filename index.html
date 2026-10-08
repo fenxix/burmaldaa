@@ -1894,7 +1894,7 @@ html[data-cmod=crown] .card::after{content:"✦";position:absolute;right:16px;to
 NS(`html[data-cmod] .card{position:relative;overflow:visible}
 html[data-cmod] .modal .card::before,html[data-cmod] .modal .card::after{display:none}
 ${cmCss()}`);
-const CM=[['cat','Кошачьи ушки и лапки',900,'🐱'],['devil','Дьявольские рожки и хвост',900,'😈'],['bunny','Зайкины ушки',900,'🐰'],['bear','Ушки мишки',900,'🐻'],['angel','Нимб и крылышки',1000,'😇'],['flowers','Цветочный венок',900,'🌸'],['crown','Золотая корона',1200,'👑']];
+const CM=[['cat','Кошачьи ушки и лапки',900,'🐱'],['devil','Дьявольские рожки и хвост',900,'😈'],['bunny','Зайкины ушки',900,'🐰'],['bear','Ушки мишки',900,'🐻'],['angel','Нимб и крылышки',1000,'😇'],['flowers','Цветочный венок',900,'🌸'],['crown','Золотая корона',1200,'👑'],['tape','Скотч-наклейки',700,'📌'],['stars','Звёздная пыль',800,'✨'],['hearts','Сердечки',850,'💗'],['ribbon','Бантик',900,'🎀'],['frost','Иней',900,'❄️'],['vines','Плющ',900,'🌿'],['cloud','Облачко',900,'☁️'],['ghost','Привидение',900,'👻'],['neonframe','Неоновая рамка',1000,'🟣'],['gold','Золотая рамка',1100,'🏅']];
 const cmSel=()=>{try{return localStorage.getItem('sel_cmod')||''}catch{return''}};
 function cmodApply(){let k=cmSel();const w=S.wal;if(k&&w&&Array.isArray(w.owned)&&!own('cmod:'+k))k='';const r=document.documentElement;k&&CM.some(m=>m[0]===k)?r.setAttribute('data-cmod',k):r.removeAttribute('data-cmod')}
 window.cmodSet=k=>{try{localStorage.setItem('sel_cmod',k||'')}catch{}cmodApply();drawShop()};
@@ -2237,7 +2237,7 @@ const THEMES=[['cozy','Уют',0,'#1d1a38','#3a2147','#2a1d33','#171028','none',
 ['loft','Лофт',150,'#3b3f4a','#2a2d36','#6b4a2b','#3f2a16','repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 16px)','repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 2px,transparent 2px 26px)'],
 ['neon','Неон-клуб',200,'#12002b','#2b0a4a','#1a0933','#0a0318','linear-gradient(rgba(255,60,172,.25) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,rgba(0,212,255,.2) 1px,transparent 1px) 0 0/24px 24px','none']];
 const PP=[[30,80],[68,82],[48,66],[84,68]];
-const COL=[['#FF4F9A','#9B5DE5'],['#38BDF8','#6366F1'],['#FFB347','#FF6FB5'],['#34D399','#0EA5A4'],['#C084FC','#3B82F6'],['#FFC24A','#FF8A3D']];
+const COL=[['#FF4F9A','#9B5DE5'],['#38BDF8','#6366F1'],['#FFB347','#FF6FB5'],['#34D399','#0EA5A4'],['#C084FC','#3B82F6'],['#FFC24A','#FF8A3D'],['#F87171','#FB923C'],['#2DD4BF','#38BDF8'],['#F472B6','#FBBF24'],['#A3E635','#22C55E'],['#818CF8','#F472B6'],['#E5E7EB','#9CA3AF']];
 const PAT=[['none','Плоский'],['grad','Градиент'],['dots','Точки'],['hrt','Сердечки']];
 
 /* ---------- кавай-стикеры (свои SVG, не чужие персонажи) ---------- */
@@ -2858,7 +2858,7 @@ const petArtBase=window.petArt,petSpecies={raccoon:'cat',lion:'bear',whale:'seal
 window.petArt=function(el,p){const id=p&&p[0],base=petSpecies[id];if(!base)return petArtBase(el,p);petArtBase(el,{0:base,1:p[1]});const svg=el.querySelector('svg');if(!svg)return;svg.style.filter=id==='raccoon'?'saturate(.55) brightness(.75)':id==='lion'?'saturate(1.3) sepia(.25)':'saturate(.72) hue-rotate(160deg)';const extra=id==='raccoon'?'<path d="M29 45q21-18 42 0v18q-21 16-42 0z" fill="#55443d" opacity=".85"/><circle cx="41" cy="52" r="2.5" fill="#d8ffd5"/><circle cx="59" cy="52" r="2.5" fill="#d8ffd5"/>':id==='lion'?'<circle cx="50" cy="48" r="34" fill="none" stroke="#c97d3c" stroke-width="9" opacity=".82"/>':'<path d="M23 54q27-27 54 0" fill="none" stroke="#d9f8ff" stroke-width="4" opacity=".8"/><circle cx="31" cy="50" r="3" fill="#fff"/><circle cx="69" cy="50" r="3" fill="#fff"/>';if(svg.dataset.species!==id){svg.insertAdjacentHTML('beforeend',extra);svg.dataset.species=id}el.dataset.a=id};
 const emojiGlyph={'🎨':'palette','🪙':'coins','🌍':'water','🏰':'church','🚢':'water','🔒':'lock','✨':'sparkle','🌟':'star','⭐':'star','🎉':'star','💗':'heart','❤️':'heart','💖':'heart','🔥':'fire','🐾':'paw','🌱':'seedling','🏗️':'mountain','🏛️':'church','🌆':'chart-simple','💡':'sparkle','⚡':'bolt','❄️':'snowflake','🌹':'spa','🍬':'cookie-bite','🧱':'church','🎯':'ranking-star','📳':'bolt','🛍️':'bag-shopping','🛋️':'spa','💌':'envelope-open-text','📅':'calendar','📝':'note-sticky','✅':'circle-check','🧸':'paw','🐱':'cat','🐶':'paw','🐰':'paw','🦊':'paw','🐼':'paw','🦄':'sparkle','🐉':'fire','🦉':'paw','🐧':'paw','🐨':'paw','🐙':'water','🦚':'sparkle','🐸':'paw','🐢':'paw','🦔':'paw','🐹':'paw','🦥':'paw','🦆':'paw','🐿️':'paw','🦭':'water','🦩':'spa','🐝':'spa','🦝':'paw','🦁':'paw','🐳':'water'};
 Object.assign(emojiGlyph,{'😋':'face-smile','🥺':'face-frown','💤':'hourglass-half','🥱':'face-tired','😮':'face-surprise','😴':'face-tired','🍖':'bone','🦴':'bone','🎵':'gamepad','🚀':'bolt','🪐':'sparkle','☄️':'comets','🛸':'gamepad','💘':'heart','💜':'heart','🌙':'sparkle','🍓':'spa','🌸':'spa','🎀':'ribbon','👑':'crown','🏆':'trophy','🎁':'gift','💧':'droplet','🌈':'sparkle','🧱':'church','🏗️':'mountain','🛏️':'spa','🛌':'spa','🛁':'spa','📺':'chart-simple','🎮':'gamepad','🪑':'spa','🎸':'gamepad','🔭':'sparkle','🎨':'palette','🧺':'spa','🍎':'spa','🫖':'mug-hot','🍞':'cookie-bite','🍳':'mug-hot','🥘':'mug-hot','🥣':'mug-hot','🍵':'mug-hot','🖼️':'palette','🌅':'star','🪴':'spa','🕯️':'sparkle','🌍':'water','🎈':'sparkle','🪞':'sparkle','🕰️':'hourglass-half','🪟':'sparkle','🛋️':'spa','🚪':'door-open','💗':'heart','💞':'heart','💌':'envelope-open-text','📮':'envelope-open-text','✅':'circle-check','🔏':'lock','🏷️':'note-sticky','⭐':'star','🌟':'star','🛰️':'sparkle','🤖':'microchip','⚓':'water','🍰':'cookie-bite','🌌':'sparkle','🦋':'spa','🎊':'star','🫧':'water','💡':'sparkle','🌷':'spa','📚':'note-sticky','🕰':'hourglass-half','💏':'heart','🥰':'face-grin-hearts','😊':'face-smile','💋':'heart','🐟':'fish'});
-function emojiTextNode(n){if(!n||n.nodeType!==3||!n.data)return;const p=n.parentElement;if(!p)return;const skip='script,style,textarea,input,select,option,#chList,#ntList,#wl,#caps,#noteCard,#tkList,#evList,.cm,.wish,.cdp,.lrp2 .pb,.em,.pet,.lrv,[contenteditable="true"]';if(p.closest(skip))return;const rx=/\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*/gu;let m,last=0,frag=null;while((m=rx.exec(n.data))){if(!frag)frag=document.createDocumentFragment();if(m.index>last)frag.append(document.createTextNode(n.data.slice(last,m.index)));const icon=document.createElement('span');icon.className='vector-inline';icon.dataset.e=m[0];icon.setAttribute('aria-hidden','true');icon.innerHTML=(window.miscArt&&window.miscArt(m[0]))||iconSvg(emojiGlyph[m[0]]||'sparkle');frag.append(icon);last=rx.lastIndex}if(!frag)return;if(last<n.data.length)frag.append(document.createTextNode(n.data.slice(last)));n.replaceWith(frag)}
+function emojiTextNode(n){if(!n||n.nodeType!==3||!n.data)return;const p=n.parentElement;if(!p)return;const skip='script,style,textarea,input,select,option,#chList,#ntList,#wl,#caps,#noteCard,#tkList,#evList,.cm,.wish,.cdp,.lrp2 .pb,.em,.pet,.lrv,[contenteditable="true"]';if(p.closest(skip))return;const rx=/\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*/gu;let m,last=0,frag=null;while((m=rx.exec(n.data))){if(!frag)frag=document.createDocumentFragment();if(m.index>last)frag.append(document.createTextNode(n.data.slice(last,m.index)));if(window.__KEEP&&window.__KEEP.has(m[0])){frag.append(document.createTextNode(m[0]));last=rx.lastIndex;continue}const icon=document.createElement('span');icon.className='vector-inline';icon.dataset.e=m[0];icon.setAttribute('aria-hidden','true');icon.innerHTML=(window.miscArt&&window.miscArt(m[0]))||iconSvg(emojiGlyph[m[0]]||'sparkle');frag.append(icon);last=rx.lastIndex}if(!frag)return;if(last<n.data.length)frag.append(document.createTextNode(n.data.slice(last)));n.replaceWith(frag)}
 function scanEmojiText(root){if(root.nodeType===3){emojiTextNode(root);return}if(root.nodeType!==1&&root.nodeType!==9)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const a=[];while(w.nextNode())a.push(w.currentNode);a.forEach(emojiTextNode)}
 scanEmojiText(document.getElementById('app'));
 new MutationObserver(ms=>ms.forEach(m=>{if(m.type==='characterData')emojiTextNode(m.target);else m.addedNodes.forEach(scanEmojiText)})).observe(document.getElementById('app'),{subtree:true,childList:true,characterData:true});const worldMini={castle:'<path d="M15 82V42l12-10 12 10v40m-25 0h72M36 82V57h25v25m6-29V27h17v35" fill="none" stroke="#f4d7a4" stroke-width="5"/><path d="M62 27v-9l8 5 8-5v9" fill="#f4d7a4"/>',city:'<path d="M10 86V48h18v38m6 0V25h23v61m7 0V40h26v46" fill="none" stroke="#a7eaff" stroke-width="5"/><path d="M40 37h5m8 0h-5m-8 10h5m8 0h-5m16 3h5m8 0h-5m-8 11h5m8 0h-5" stroke="#ffe3a8" stroke-width="3"/>',candy:'<path d="M20 77h60l-8-40H28z" fill="#ffb3cf" stroke="#ffe7f0" stroke-width="4"/><path d="M28 38q22-25 44 0" fill="#fff0dc" stroke="#ffd6e5" stroke-width="4"/><circle cx="50" cy="28" r="6" fill="#ff87b6"/>',cyber:'<path d="M14 80V42h17v38m6 0V22h25v58m8 0V38h19v42" fill="none" stroke="#63eaff" stroke-width="4"/><path d="M44 37h6m-6 12h6m-6 12h6M75 51h5m-5 10h5" stroke="#ff6cb7" stroke-width="4"/>',cosmo:'<circle cx="50" cy="50" r="20" fill="#bb92ff"/><ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#d8c3ff" stroke-width="4" transform="rotate(-22 50 50)"/><circle cx="78" cy="35" r="5" fill="#ffe7ae"/>'};
@@ -2997,7 +2997,7 @@ new MutationObserver(()=>{if(!q)q=requestAnimationFrame(fix)}).observe(document.
 </style>
 <script>
 (()=>{try{
-const FD0=[['apple','🍎','Яблочко',3,15,2],['carrot','🥕','Морковка',4,15,1],['berry','🍓','Клубничка',8,12,6],['cookie','🍪','Печенька',10,20,8],['soup','🍲','Супчик',18,50,4],['pizza','🍕','Пицца',20,45,8],['sushi','🍣','Суши',25,40,10],['cake','🍰','Тортик',30,35,20]];
+const FD0=[['apple','🍎','Яблочко',3,15,2],['carrot','🥕','Морковка',4,15,1],['berry','🍓','Клубничка',8,12,6],['cookie','🍪','Печенька',10,20,8],['soup','🍲','Супчик',18,50,4],['pizza','🍕','Пицца',20,45,8],['sushi','🍣','Суши',25,40,10],['cake','🍰','Тортик',30,35,20],['banana','🍌','Банан',4,18,3],['pear','🍐','Груша',4,16,2],['melon','🍉','Арбузик',6,20,4],['grapes','🍇','Виноград',7,14,5],['peach','🍑','Персик',7,16,5],['corn','🌽','Кукуруза',6,22,2],['bread','🍞','Хлебушек',8,28,1],['cheese','🧀','Сырок',9,22,3],['egg','🍳','Яичница',12,32,3],['rice','🍙','Онигири',12,30,6],['donut','🍩','Пончик',12,18,14],['choco','🍫','Шоколадка',12,14,12],['fish','🐟','Рыбка',14,30,4],['fries','🍟','Картошка фри',14,24,8],['icecream','🍦','Мороженое',14,12,18],['honey','🍯','Мёд',15,26,10],['chicken','🍗','Курочка',16,42,6],['dumpling','🥟','Пельмешки',16,44,6],['taco','🌮','Тако',18,40,8],['cupcake','🧁','Капкейк',18,20,16],['boba','🧋','Бабл-ти',20,16,20],['burger','🍔','Бургер',22,48,9],['ramen','🍜','Рамен',22,55,8],['pie','🥧','Пирог',24,50,12],['steak','🥩','Стейк',35,70,10],['lobster','🦞','Лобстер',40,60,18],['bento','🍱','Бенто',45,75,15]];
 const dn={cat:FD0.map(a=>({id:a[0],emoji:a[1],name:a[2],price:a[3],satiety:a[4],mood:a[5]})),inv:{},sel:null,ui:{},food:null,busy:{},t:0,sig:'',shop:false,open:true,ch:null};
 /* скорость в час: [сытость, энергия, настроение]; минус = восстановление. Те же числа в SQL (_pet_settle) */
 const RT={idle:[10,4,3],sleeping:[3,-15,1],walking:[12,8,-10]};
@@ -3105,7 +3105,7 @@ window.dnToggle=()=>{dn.open=!dn.open;dnRender(1)};
 window.dnShop=v=>{dn.shop=!!v;dnRender(1)};
 const errMsg=e=>{const m=e.message||'';return m==='poor'?'Не хватает монет 🪙':m==='no_food'?'В холодильнике нет такой еды':m==='busy'?'Питомец сейчас занят 💤':/function|schema cache|does not exist|column|relation/.test(m)?'Выполни SQL-миграцию (pets_migration.sql)':m}
 window.dnBuy=async fid=>{const f=dn.cat.find(x=>x.id===fid);if(!f)return;if(cn()<f.price)return toast('Не хватает монет 🪙');
- const {data,error}=await sb.rpc('couple_food_buy',{p_room:S.room,p_food:fid,p_qty:1});if(error)return toast(errMsg(error));
+ const {data,error}=await sb.rpc('couple_food_buy',{p_room:S.room,p_food:fid,p_qty:1});if(error)return toast(f.local?'Эта еда ещё не добавлена в базу: выполни food_pack.sql 🍽️':errMsg(error));
  S.wal.coins=data.coins;dn.inv[fid]=data.qty;try{drawX()}catch{}toast('В холодильнике: '+f.emoji);dnRender(1)};
 const crumbs=b=>{const w=document.createElement('div');w.style.cssText='position:absolute;left:50%;top:-14px';w.innerHTML=Array.from({length:5},()=>`<i class="absolute text-xs" style="--cx:${Math.round((Math.random()-.5)*70)}px;animation:dnCrumb .8s ease-out forwards">✦</i>`).join('');b.appendChild(w);setTimeout(()=>w.remove(),900)};
 function floatTxt(id,t){const e=document.querySelector('[data-pet="'+id+'"]'),l=$('dnFloat');if(!e||!l)return;const d=document.createElement('div');d.className='absolute top-[34%] -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-[#5b2a4a]';d.style.left=e.style.left;d.style.animation='dnFloat 1.7s ease-out forwards';d.textContent=t;l.appendChild(d);setTimeout(()=>d.remove(),1800)}
@@ -3136,7 +3136,7 @@ document.addEventListener('touchmove',e=>{if(dg&&dg.on)e.preventDefault()},{pass
 /* ---------- загрузка, вход/выход, меню ---------- */
 async function dnLoad(){if(!S.room)return;
  const [c,i]=await Promise.all([sb.from('couple_food_catalog').select('*').order('price'),sb.from('couple_food_inventory').select('food,qty').eq('room_id',S.room)]);
- if(!c.error&&c.data&&c.data.length)dn.cat=c.data;
+ if(!c.error&&c.data&&c.data.length){const hv=new Set(c.data.map(x=>x.id));dn.cat=c.data.concat(FD0.filter(a=>!hv.has(a[0])).map(a=>({id:a[0],emoji:a[1],name:a[2],price:a[3],satiety:a[4],mood:a[5],local:1}))).sort((x,y)=>x.price-y.price)}
  if(!i.error){dn.inv={};(i.data||[]).forEach(r=>dn.inv[r.food]=r.qty)}else toast(errMsg(i.error));
  dnRender(1)}
 function dnEnter(){dnLoad();try{petsLoad()}catch{}clearInterval(dn.t);dn.t=setInterval(()=>dnRender(),1000);
@@ -3924,6 +3924,106 @@ const mk=()=>{
  R_.onchange=()=>{unlock();play('tick');play('ok')};
  paint()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mk);else mk();
+})();
+</script>
+<script id="v13">
+(()=>{
+const safe=(n,f)=>{try{f()}catch(e){console.warn('v13:'+n,e)}};
+const KEEP=window.__KEEP=window.__KEEP||new Set();
+const keep=s=>(String(s).match(/\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?/gu)||[]).forEach(e=>{KEEP.add(e);KEEP.add(e.replace(/[\uFE0E\uFE0F]/g,''))});
+const r10=v=>Math.round(v/10)*10,has=(a,id)=>a.some(x=>x[0]===id);
+const mark=(k,t,p)=>{(window.RAR=window.RAR||{})[k]=t;(window.PRC=window.PRC||{})[k]=p};
+const css=t=>document.head.appendChild(Object.assign(document.createElement('style'),{textContent:t}));
+keep('🍌🍐🍉🍇🍑🌽🍞🧀🍳🍙🍩🍫🐟🍟🍦🍯🍗🥟🌮🧁🧋🍔🍜🥧🥩🦞🍱');
+
+/* ---------- Питомцы ---------- */
+safe('pets',()=>[
+['chick','🐥','Цыплёнок',100,'c'],['snail','🐌','Улитка',100,'c'],['crab','🦀','Крабик',120,'c'],['sheep','🐑','Овечка',130,'c'],['cow','🐮','Бурёнка',140,'c'],['pig','🐷','Поросёнок',140,'c'],
+['butterfly','🦋','Бабочка',320,'r'],['parrot','🦜','Попугай',340,'r'],['llama','🦙','Лама',360,'r'],['bear','🐻','Мишка',380,'r'],['otter','🦦','Выдра',380,'r'],['hippo','🦛','Бегемотик',400,'r'],['monkey','🐵','Обезьянка',420,'r'],['deer','🦌','Оленёнок',440,'r'],
+['swan','🦢','Лебедь',620,'e'],['elephant','🐘','Слонёнок',660,'e'],['giraffe','🦒','Жирафик',680,'e'],['wolf','🐺','Волчонок',700,'e'],['dolphin','🐬','Дельфинчик',740,'e'],['tiger','🐯','Тигрёнок',780,'e'],
+['dino','🦕','Динозаврик',1200,'l'],['trex','🦖','Рексик',1400,'l']
+].forEach(([id,e,n,p,t])=>{if(has(PETS2,id)||PETS2.some(x=>x[1]===e))return;PETS2.push([id,e,n,0,p]);keep(e);mark('pet:'+id,t,p)}));
+
+/* ---------- Мебель, декор, кровати ---------- */
+safe('fur',()=>{
+const C=(b,s)=>`<span class="lrc">${b}<small class="lrs" style="left:44%;top:-8%">${s}</small></span>`,
+f=(id,h,n,pr,s,x,y,c,z)=>[id,h,n,pr,s,x,y,z,c],
+tier=p=>p<=90?['c',p]:p<=150?['r',r10(220+(p-91)*120/59)]:['e',r10(500+(p-151)*200/149)];
+[
+f('bedmoon',C('🛏️','🌙'),'Лунная кровать',280,24,50,66,'bed'),f('bedsakura',C('🛏️','🌸'),'Кровать-сакура',280,24,50,66,'bed'),f('bedstar',C('🛏️','⭐'),'Звёздная кровать',300,24,50,66,'bed'),
+f('bedpaw',C('🛏️','🐾'),'Лапкин дом',240,24,50,66,'bed'),f('bedbfly',C('🛏️','🦋'),'Кровать с бабочкой',300,24,50,66,'bed'),f('bedribbon',C('🛏️','🎀'),'Кровать с бантом',260,24,50,66,'bed'),
+f('pc','🖥️','Компьютер',160,14,70,60,'furn'),f('guitar','🎸','Гитара',120,13,18,72,'furn'),f('easel','🎨','Мольберт',130,14,82,66,'furn'),f('scope','🔭','Телескоп',150,14,14,66,'furn'),
+f('basket','🧺','Корзинка',70,11,32,84,'furn'),f('drums','🥁','Барабаны',140,12,84,74,'furn'),f('radio','📻','Радио',80,9,22,60,'furn'),f('arcade','🕹️','Аркада',180,13,60,78,'furn'),
+f('vase','🏺','Ваза',60,10,26,80,'deco'),f('matr','🪆','Матрёшка',50,9,72,82,'deco'),f('giftbox','🎁','Подарок',60,10,40,84,'deco'),f('yarn','🧶','Клубок',30,8,58,86,'deco'),
+f('aqua','🐠','Аквариум',140,12,20,64,'deco'),f('piny','🪅','Пиньята',80,10,50,12,'deco'),f('puzzle','🧩','Пазл',40,8,66,84,'deco'),f('cakee','🍰','Тортик',70,9,46,80,'deco'),
+f('trophy','🏆','Кубок',90,9,84,60,'deco'),f('snowm','⛄','Снеговик',80,12,10,70,'deco'),f('pumpk','🎃','Тыква',60,10,90,80,'deco'),f('lotus','🪷','Лотос',90,10,34,84,'deco'),
+f('palm','🌴','Пальма',110,18,90,60,'deco'),f('bamb','🎍','Бамбук',90,16,8,60,'deco'),f('mush','🍄','Грибочки',50,9,76,86,'deco'),
+f('kite','🪁','Воздушный змей',60,12,20,30,'wall',1),f('sunset','🌅','Постер «Закат»',60,13,50,28,'wall',1),f('mount','🏞️','Постер «Горы»',60,13,64,30,'wall',1),f('masks','🎭','Маски',70,12,30,24,'wall',1),
+f('disco','🪩','Диско-шар',130,12,50,14,'wall',1),f('lant','<span>🏮🏮🏮🏮</span>','Фонарики',80,9,50,8,'wall',1),f('koi','🎏','Карпы кои',70,12,80,26,'wall',1),
+f('neon4','<span class="lrn">★</span>','Неон «★»',110,9,22,34,'wall',1),f('neon5','<span class="lrn b">meow</span>','Неон «meow»',130,10,72,20,'wall',1),f('neon6','<span class="lrn">xoxo</span>','Неон «xoxo»',130,10,30,18,'wall',1)
+].forEach(a=>{if(has(FUR,a[0]))return;const[t,p]=tier(a[3]);a[3]=p;FUR.push(a);keep(a[1]);mark('fur:'+a[0],t,p)})});
+
+/* ---------- Деревья любви (+15) ---------- */
+safe('trees',()=>{
+const g='<ellipse cx="100" cy="158" rx="50" ry="6" fill="rgba(0,0,0,.22)"/>',
+tr=(c,w,h)=>`<rect x="${100-w/2}" y="${158-h}" width="${w}" height="${h}" rx="${w/3}" fill="${c}"/>`,
+ci=(x,y,r,f)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`,
+an=(a,v,d)=>`<animate attributeName="${a}" values="${v}" dur="${d}s" repeatCount="indefinite"/>`;
+[
+['sp_pine','Пушистая ель',320,'c',()=>g+tr('#6b4428',10,22)+'<polygon points="100,14 72,62 128,62" fill="#2f9a55"/><polygon points="100,36 62,90 138,90" fill="#27864a"/><polygon points="100,60 52,126 148,126" fill="#1f7a40"/>'+ci(100,14,5,'#ffd23f')+ci(84,76,3,'#ff4f6a')+ci(116,100,3,'#ffd23f')+ci(78,112,3,'#4fc3ff')],
+['sp_birch','Берёзка',340,'c',()=>g+tr('#f2f0e6',10,78)+'<g fill="#3a3a3a"><rect x="96" y="112" width="6" height="2"/><rect x="99" y="126" width="5" height="2"/><rect x="95" y="98" width="5" height="2"/></g>'+ci(100,58,30,'#a7e07a')+ci(76,72,20,'#8fd36a')+ci(124,72,20,'#8fd36a')+ci(100,40,16,'#c2ee98')],
+['sp_oak','Могучий дуб',380,'c',()=>g+tr('#7a4f2e',18,66)+ci(100,70,38,'#2f8f4a')+ci(68,90,25,'#3fa65a')+ci(132,90,25,'#3fa65a')+ci(100,48,26,'#4fbf6b')],
+['sp_palm','Пальма',400,'c',()=>g+'<path d="M98 158Q90 112 104 70" stroke="#a67848" stroke-width="11" fill="none" stroke-linecap="round"/>'+['M104 70Q76 48 46 70','M104 70Q84 40 60 40','M104 70Q112 38 140 42','M104 70Q134 54 160 80','M104 70Q100 46 100 30'].map(d=>`<path d="${d}" stroke="#3fa65a" stroke-width="9" fill="none" stroke-linecap="round"/>`).join('')+ci(100,76,5,'#7a4f2e')+ci(110,80,5,'#7a4f2e')],
+['sp_cactus','Цветущий кактус',420,'c',()=>g+'<rect x="86" y="62" width="28" height="96" rx="14" fill="#3fa65a"/><path d="M86 108H70Q60 108 60 96V84M114 98H130Q140 98 140 86V74" stroke="#3fa65a" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M93 80v62M107 80v62" stroke="#1f7a40" stroke-width="2" opacity=".4"/>'+ci(100,58,7,'#ff7ab8')+ci(60,80,5,'#ffd23f')+ci(140,70,5,'#ff7ab8')],
+['sp_bamboo','Бамбук',450,'c',()=>g+[78,100,122].map((x,i)=>{const h=[100,126,88][i];return `<rect x="${x-5}" y="${158-h}" width="10" height="${h}" rx="4" fill="#7fcf5a"/>`+[1,2,3].map(k=>`<rect x="${x-6}" y="${158-h+k*h/4}" width="12" height="3" rx="1.5" fill="#4f9a35"/>`).join('')+`<path d="M${x+5} ${170-h}q16-4 22 4q-14 4-22-4zM${x-5} ${184-h}q-16-4-22 4q14 4 22-4z" fill="#59b843"/>`}).join('')],
+['sp_willow','Плакучая ива',700,'r',()=>g+tr('#6b4a2e',14,70)+ci(100,62,38,'#6fc27a')+[58,70,82,94,106,118,130,142].map((x,i)=>`<path d="M${x} 70Q${x-5} ${100+i%3*8} ${x+(i%2?4:-4)} ${132-i%3*6}" stroke="#58b36a" stroke-width="3.2" fill="none" stroke-linecap="round"/>`).join('')],
+['sp_maple','Осенний клён',760,'r',()=>g+tr('#6b4a2e',14,68)+ci(100,66,36,'#e8692a')+ci(72,84,24,'#f2a33a')+ci(130,84,24,'#d8432e')+ci(100,48,24,'#f5b947')+`<g fill="#e8692a"><path d="M40 138l6-6 4 6-4 4z"><animateTransform attributeName="transform" type="translate" values="0 -30;8 6" dur="3.2s" repeatCount="indefinite"/></path><path d="M156 128l6-6 4 6-4 4z"><animateTransform attributeName="transform" type="translate" values="0 -26;-8 10" dur="3.8s" repeatCount="indefinite"/></path></g>`],
+['sp_cherry','Цветущая вишня',850,'r',()=>g+'<path d="M100 158Q96 120 100 96M100 116Q82 104 70 88M100 108Q120 98 132 84" stroke="#6b4a2e" stroke-width="9" fill="none" stroke-linecap="round"/>'+ci(100,64,34,'#ffb7d0')+ci(68,80,22,'#ff9fc0')+ci(134,78,22,'#ffc6da')+ci(100,44,20,'#ffd6e6')+`<g fill="#ffc6da"><circle cx="54" cy="120" r="3">${an('cy','100;148',3)}</circle><circle cx="150" cy="110" r="3">${an('cy','96;148',3.6)}</circle><circle cx="108" cy="110" r="2.5">${an('cy','90;150',4.2)}</circle></g>`],
+['sp_baobab','Баобаб',900,'r',()=>g+'<path d="M72 158Q80 110 70 84H130Q120 110 128 158Z" fill="#9a6b45"/><path d="M84 150Q88 116 84 90" stroke="#7a4f2e" stroke-width="3" fill="none" opacity=".5"/><path d="M70 84Q50 70 44 52M100 82V50M130 84Q150 70 156 52" stroke="#8a5a3a" stroke-width="7" fill="none" stroke-linecap="round"/>'+ci(44,48,15,'#5db85a')+ci(100,42,17,'#6fc96a')+ci(156,48,15,'#5db85a')+ci(70,40,11,'#4fa84e')+ci(130,40,11,'#4fa84e')],
+['sp_mush','Грибное дерево',950,'r',()=>g+'<rect x="88" y="94" width="24" height="64" rx="10" fill="#f6ead2"/><path d="M36 100Q36 36 100 36Q164 36 164 100Q100 112 36 100Z" fill="#e5484d"/><g fill="#fff"><circle cx="70" cy="68" r="8"/><circle cx="104" cy="54" r="10"/><circle cx="136" cy="76" r="7"/><circle cx="90" cy="88" r="5"/></g><rect x="132" y="130" width="8" height="28" rx="4" fill="#f6ead2"/><path d="M122 132Q122 118 136 118Q150 118 150 132Z" fill="#c084fc"/><rect x="58" y="138" width="6" height="20" rx="3" fill="#f6ead2"/><path d="M50 140Q50 129 61 129Q72 129 72 140Z" fill="#ffb347"/>'],
+['sp_cloud','Облачное дерево',1200,'e',()=>g+tr('#a8c4e8',12,60)+ci(70,78,24,'#fff')+ci(100,58,32,'#fff')+ci(132,78,24,'#fff')+ci(100,86,26,'#eef5ff')+'<g fill="none" stroke-width="3" opacity=".75"><path d="M52 112Q100 52 148 112" stroke="#ff7ab8"/><path d="M58 112Q100 62 142 112" stroke="#ffd23f"/><path d="M64 112Q100 72 136 112" stroke="#5ee0a8"/></g>'],
+['sp_lantern','Дерево фонариков',1300,'e',()=>g+tr('#4a2f20',14,70)+ci(100,66,38,'#2a1a30')+ci(70,84,24,'#34203a')+ci(130,84,24,'#34203a')+[[64,92],[96,108],[132,94],[84,70],[116,70]].map(([x,y],i)=>`<g style="filter:drop-shadow(0 0 6px #ff9a3c)"><line x1="${x}" y1="${y-10}" x2="${x}" y2="${y}" stroke="#d9b36a" stroke-width="1.5"/><ellipse cx="${x}" cy="${y+8}" rx="7" ry="9" fill="#ff7a2f">${an('opacity','1;.6;1',2+i*.4)}</ellipse></g>`).join('')],
+['sp_crystal','Хрустальное дерево',1450,'e',()=>g+'<g style="filter:drop-shadow(0 0 8px #7DF9FF)"><polygon points="100,20 120,70 100,150 80,70" fill="#7DF9FF" opacity=".9"/><polygon points="70,70 82,100 74,150 60,104" fill="#a78bfa" opacity=".9"/><polygon points="130,70 118,100 126,150 140,104" fill="#a78bfa" opacity=".9"/><polygon points="100,20 120,70 100,64" fill="#fff" opacity=".5"/><polygon points="46,112 56,136 50,152 40,134" fill="#f0abfc"/><polygon points="154,112 144,136 150,152 160,134" fill="#f0abfc"/></g>'],
+['sp_galaxy','Галактическое дерево',2200,'l',()=>g+tr('#241b4a',12,64)+'<g style="filter:drop-shadow(0 0 10px #818CF8)">'+ci(100,66,38,'#1b1550')+ci(70,86,24,'#241b66')+ci(130,86,24,'#241b66')+ci(100,46,24,'#2c2078')+'</g>'+[[84,50],[112,60],[70,84],[130,82],[100,38],[96,88],[120,96]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${1.6+i%3*.5}" fill="${['#fff','#7DF9FF','#f9a8d4'][i%3]}">${an('opacity','1;.2;1',1.6+i*.3)}</circle>`).join('')+'<path d="M60 80Q100 56 140 84" stroke="#f472b6" stroke-width="2" fill="none" opacity=".6"/>']
+].forEach(([id,n,p,t,fn])=>{if(has(TSP,id))return;TSP.push([id,n,p,fn]);mark('tree:'+id,t,p)})});
+
+/* ---------- Темы приложения (+10) ---------- */
+safe('themes',()=>[
+['t_forest','Лесная чаща','#4ADE80','#BBF7D0','#FACC15','74,222,128','250,204,21',['#04110A','#08200F','#103420'],'#0A2314','fa-tree',160,'c'],
+['t_coffee','Кофейня','#D6A370','#F1D3B3','#FB923C','214,163,112','251,146,60',['#150D08','#21150C','#33200F'],'#27180D','fa-mug-hot',180,'c'],
+['t_garden','Весенний сад','#F9A8D4','#FCE7F3','#86EFAC','249,168,212','134,239,172',['#14100F','#201619','#33202B'],'#2A1A22','fa-seedling',200,'c'],
+['t_lagoon','Лагуна','#2DD4BF','#99F6E4','#38BDF8','45,212,191','56,189,248',['#031614','#062623','#0B3A38'],'#072B29','fa-water',380,'r'],
+['t_ice','Ледяной дворец','#7DD3FC','#E0F2FE','#C4B5FD','125,211,252','196,181,253',['#050E1A','#0A1A2E','#112A47'],'#0D2038','fa-snowflake',420,'r'],
+['t_gift','Праздничный вечер','#FBBF24','#FEF3C7','#F43F5E','251,191,36','244,63,94',['#180A0C','#2A1015','#451A22'],'#33121A','fa-gift',450,'r'],
+['t_cane','Зимняя ярмарка','#F87171','#FECACA','#34D399','248,113,113','52,211,153',['#12080A','#1F0F12','#2E1A1F'],'#26131A','fa-candy-cane',480,'r'],
+['t_volcano','Вулкан','#FB7185','#FECDD3','#F97316','251,113,133','249,115,22',['#190608','#2A0B0E','#451418'],'#32090C','fa-bolt',700,'e'],
+['t_galaxy','Галактика','#818CF8','#C7D2FE','#F472B6','129,140,248','244,114,182',['#05051A','#0B0B2E','#17164A'],'#0F0F38','fa-star',850,'e'],
+['t_tokyo','Неон-Токио','#22D3EE','#A5F3FC','#F43F5E','34,211,238','244,63,94',['#04080F','#0A1020','#101C36'],'#0B1428','fa-microchip',900,'e']
+].forEach(d=>{if(has(DK,d[0]))return;DK.push(d.slice(0,11));DECO.push([d[0],d[1],d[2],d[3],d[4],d[5],d[6],999,{b:d[7],p:d[8],fx:d[0]}]);FXX[d[0]]=[d[9],14];mark('deco:'+d[0],d[11],d[10])}));
+
+/* ---------- Плашки и карточки (+10) ---------- */
+[['tape','r',700],['stars','r',800],['hearts','r',850],['ribbon','e',900],['frost','e',900],['vines','e',900],['cloud','e',900],['ghost','e',900],['neonframe','e',1000],['gold','l',1100]].forEach(([k,t,p])=>mark('cmod:'+k,t,p));
+css(`@keyframes cmTw{50%{opacity:.35;transform:scale(.8)}}@keyframes cmFl{50%{transform:translateY(-4px) rotate(4deg)}}@keyframes cmNeon{50%{box-shadow:0 0 22px rgba(var(--pr),.85),inset 0 0 16px rgba(var(--pr),.35)}}
+html[data-cmod=tape] .card::before,html[data-cmod=tape] .card::after{content:"";position:absolute;top:-7px;width:46px;height:15px;background:repeating-linear-gradient(45deg,rgba(255,214,102,.92) 0 6px,rgba(255,244,200,.92) 6px 12px);border-radius:2px;pointer-events:none}
+html[data-cmod=tape] .card::before{left:12px;transform:rotate(-6deg)}html[data-cmod=tape] .card::after{right:12px;transform:rotate(5deg)}
+html[data-cmod=stars] .card{box-shadow:0 0 18px rgba(255,226,122,.14)}
+html[data-cmod=stars] .card::before{content:"✦ ✧ ✦";position:absolute;top:-11px;left:50%;transform:translateX(-50%);color:#fff3b0;text-shadow:0 0 8px #ffd54a;letter-spacing:6px;font-size:13px;pointer-events:none}
+html[data-cmod=stars] .card::after{content:"✧";position:absolute;right:14px;bottom:6px;color:#fff3b0;font-size:16px;text-shadow:0 0 8px #ffd54a;animation:cmTw 2.4s ease-in-out infinite;pointer-events:none}
+html[data-cmod=hearts] .card::before{content:"💗 💗 💗";position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:14px;letter-spacing:4px;pointer-events:none}
+html[data-cmod=hearts] .card::after{content:"💞";position:absolute;right:10px;bottom:-9px;font-size:18px;animation:cmTw 2s ease-in-out infinite;pointer-events:none}
+html[data-cmod=ribbon] .card::before{content:"🎀";position:absolute;left:-6px;top:-15px;font-size:28px;transform:rotate(-18deg);filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));pointer-events:none}
+html[data-cmod=frost] .card{border-color:rgba(190,230,255,.5);box-shadow:inset 0 0 14px rgba(190,230,255,.18),0 0 14px rgba(125,211,252,.15)}
+html[data-cmod=frost] .card::before{content:"❄ ❅ ❄";position:absolute;top:-10px;left:16px;color:#d8f1ff;text-shadow:0 0 8px #7dd3fc;font-size:13px;letter-spacing:5px;pointer-events:none}
+html[data-cmod=frost] .card::after{content:"❅";position:absolute;right:12px;bottom:4px;color:#d8f1ff;font-size:16px;opacity:.7;pointer-events:none}
+html[data-cmod=vines] .card::before{content:"🌿";position:absolute;left:-8px;top:-12px;font-size:24px;transform:rotate(-20deg);pointer-events:none}
+html[data-cmod=vines] .card::after{content:"🍃";position:absolute;right:-6px;bottom:-12px;font-size:22px;transform:rotate(20deg);pointer-events:none}
+html[data-cmod=cloud] .card::before{content:"";position:absolute;left:18px;top:-14px;width:72px;height:22px;background:radial-gradient(circle 11px at 14px 14px,#fff 96%,transparent),radial-gradient(circle 13px at 36px 10px,#fff 96%,transparent),radial-gradient(circle 11px at 58px 14px,#fff 96%,transparent),linear-gradient(#fff,#fff) 14px 12px/44px 10px no-repeat;opacity:.92;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));pointer-events:none}
+html[data-cmod=ghost] .card::before{content:"👻";position:absolute;right:12px;top:-17px;font-size:26px;animation:cmFl 3s ease-in-out infinite;pointer-events:none}
+html[data-cmod=neonframe] .card{border:1px solid rgba(var(--pr),.9);box-shadow:0 0 12px rgba(var(--pr),.55),inset 0 0 12px rgba(var(--pr),.22);animation:cmNeon 3s ease-in-out infinite}
+html[data-cmod=gold] .card{border-color:rgba(255,205,80,.7);box-shadow:0 0 0 2px rgba(255,205,80,.22),inset 0 0 16px rgba(255,200,70,.12),0 0 18px rgba(255,200,70,.18)}
+html[data-cmod=gold] .card::before{content:"❖";position:absolute;left:8px;top:-11px;color:#ffd54a;font-size:16px;text-shadow:0 0 8px #ffd54a;pointer-events:none}
+html[data-cmod=gold] .card::after{content:"❖";position:absolute;right:8px;bottom:-11px;color:#ffd54a;font-size:16px;text-shadow:0 0 8px #ffd54a;pointer-events:none}`);
+try{if(typeof drawShop==='function'&&typeof cur!=='undefined'&&cur==='shop')drawShop()}catch{}
 })();
 </script>
 </body></html>
