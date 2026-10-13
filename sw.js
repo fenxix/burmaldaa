@@ -1,9 +1,10 @@
-const V='burmalda-v19';
+const V='burmalda-v21';
 const CORE=['./','index.html','manifest.webmanifest'];
 const EXTRA=['icon-192.png','icon-512.png','maskable-512.png','favicon.png','apple-touch-icon.png',
  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js',
- 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'];
-const HOSTS=['cdnjs.cloudflare.com','cdn.jsdelivr.net','fonts.googleapis.com','fonts.gstatic.com'];
+ 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+ 'https://cdn.tailwindcss.com'];
+const HOSTS=['cdnjs.cloudflare.com','cdn.jsdelivr.net','cdn.tailwindcss.com','fonts.googleapis.com','fonts.gstatic.com'];
 const good=r=>r&&(r.ok||r.type==='opaque');
 const store=(c,req,res)=>good(res)?c.put(req,res.clone()):0;
 const net=(r,ms)=>new Promise((ok,no)=>{const t=setTimeout(()=>no(new Error('timeout')),ms);fetch(r).then(x=>{clearTimeout(t);ok(x)},e=>{clearTimeout(t);no(e)})});
