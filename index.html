@@ -3640,8 +3640,8 @@ function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
  const selT=gv.zone==='tank';
  set('fmMap',FMZ.map(z=>bed(M.zs[z[0]])).join('')+anMapBtns(now)
   +`<button class="fmz fmz-tank${selT?' sel':''}" style="grid-area:wt" onclick="fmZone('tank')" aria-pressed="${selT}" aria-label="Резервуар с водой"><span class="fm-tank"><i ${H('tk',M.moist)}></i><b ${T('tkp',fmPct(M.moist))}></b></span><span class="fmz-n">Резервуар</span>${M.dry?`<span class="fmbd">💧${M.dry}</span>`:''}</button>`
-  +(()=>{const sl=anRows().A.filter(a=>a.se>0),nx=sl.reduce((m,a)=>Math.min(m,a.se),1e15),bk=Object.keys(SPC).reduce((t,sp)=>{const m=bookMask(sp);let n=0;for(let i=0;i<5;i++)if(m&(1<<i))n++;return t+n},0);
-   return`<button class="fmz fmz-mk" style="grid-area:sale" onclick="anSale()" aria-label="Животные на продаже"><span class="fmz-n">На продаже</span><span class="fm-pets"><i class="fm-pet">🏷️</i></span><span class="fmz-s">${sl.length?sl.length+' шт. · '+(nx>now?'ещё '+gfmt(nx-now):'решается…'):'пока пусто'}</span>${sl.length?`<span class="fmbd">${sl.length}</span>`:''}</button>`
+  +(()=>{const sl=anRows().A.filter(a=>a.se>0),bn=sl.reduce((t,a)=>t+anBuyCnt(a),0),bk=Object.keys(SPC).reduce((t,sp)=>{const m=bookMask(sp);let n=0;for(let i=0;i<5;i++)if(m&(1<<i))n++;return t+n},0);
+   return`<button class="fmz fmz-mk" style="grid-area:sale" onclick="anSale()" aria-label="Животные на продаже"><span class="fmz-n">На продаже</span><span class="fm-pets"><i class="fm-pet">🏷️</i></span><span class="fmz-s">${sl.length?sl.length+' шт.'+(bn?' · 👤 '+bn:' · ждём'):'пока пусто'}</span>${bn?`<span class="fmbd" style="background:#ef4444;color:#fff">${bn}</span>`:sl.length?`<span class="fmbd">${sl.length}</span>`:''}</button>`
    +`<button class="fmz fmz-mk" style="grid-area:book" onclick="anBook()" aria-label="Книга животных"><span class="fmz-n">Книга</span><span class="fm-pets"><i class="fm-pet">📖</i></span><span class="fmz-s">${bk}/30 открыто</span></button>`})());
  /* карточка выбранной зоны */
  const act=(c,txt,fn,dis)=>`<button class="fm-act bg-gradient-to-r ${c}" ${dis?'disabled':''} onclick="${fn}">${txt}</button>`;
@@ -3683,7 +3683,7 @@ window.fmDo=async k=>{if(gv.busy)return;const M=fmModel(gsec()),z=M.zs[gv.zone];
  }catch(e){console.error('farm-act',e)}finally{gv.busy=false;gvRender()}};
 function gvOpen(){let R=$('gv');if(!R){R=document.createElement('div');R.id='gv';R.className='gv';R.setAttribute('role','dialog');R.setAttribute('aria-label','Огород');
   R.innerHTML=`<div class="mx-auto flex h-full w-full max-w-[430px] flex-col"><div class="flex items-center gap-3 px-4 pb-2 pt-3"><button class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/85 text-stone-600 shadow-lg" onclick="gvClose()" aria-label="Закрыть"><i class="fa-solid fa-arrow-left"></i></button><div class="min-w-0 flex-1"><p id="fmHi" class="truncate text-[15px] font-extrabold text-stone-700"></p><p id="fmFarm" class="truncate text-xs font-bold text-stone-500"></p></div><span id="gvCoins" class="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-700 shadow-lg"></span></div><div class="fm-scroll flex-1 space-y-3 overflow-y-auto px-4 pb-8 pt-1"><div id="fmStats" class="grid grid-cols-4 gap-2"></div><div id="fmMap" class="fm-map rounded-3xl shadow-lg"></div><div id="fmCard" class="fm-card rounded-3xl bg-white/85 p-4 shadow-lg"></div></div></div>`;document.body.appendChild(R)}
- gv.open=true;if(!gv.zone)gv.zone='b0';R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);gvRender()}
+ gv.open=true;if(!gv.zone)gv.zone='b0';R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);try{anOpened()}catch{}gvRender()}
 window.gvClose=()=>{try{anClose()}catch{}gv.open=false;clearInterval(gv.tm);const R=$('gv');if(R)R.classList.remove('on');gvBadge()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gv.open)gvClose()});
 document.addEventListener('click',e=>{if(lr.edit||gv.open)return;const el=e.target.closest&&e.target.closest('#lrStage .lri[data-k="gvbed"]');if(el){e.stopPropagation();gvOpen()}});
@@ -3775,11 +3775,11 @@ const anBetter=(a,b)=>a.v!==b.v?a.v>b.v:a.until!==b.until?a.until>b.until:a.ac!=
 const anGone=new Map();
 const anRows=()=>{const best={},stale=[],E=[],es={},now=Date.now();
  lr.items.forEach(r=>{const t=String(r.item),a=t.split(':');
-  if(a[0]==='_an'&&a.length>=9&&SPC[a[2]]){const o={id:a[1],sp:a[2],born:+a[3]||0,until:+a[4]||0,pen:a[5],cd:+a[6]||0,ad:+a[7]||0,ac:+a[8]||0,v:+a[9]||0,vi:Math.max(0,Math.min(4,+a[10]||0)),sa:+a[11]||0,s0:+a[12]||0,se:+a[13]||0,sc:+a[14]||0,item:t},c=best[o.id];
+  if(a[0]==='_an'&&a.length>=9&&SPC[a[2]]){const o={id:a[1],sp:a[2],born:+a[3]||0,until:+a[4]||0,pen:a[5],cd:+a[6]||0,ad:+a[7]||0,ac:+a[8]||0,v:+a[9]||0,vi:Math.max(0,Math.min(4,+a[10]||0)),sa:+a[11]||0,s0:+a[12]||0,se:+a[13]||0,sc:+a[14]||0,sr:+a[15]||0,dl:a[16]||'',item:t},c=best[o.id];
    if(!c)best[o.id]=o;else if(anBetter(o,c)){stale.push(c.item);best[o.id]=o}else stale.push(o.item)}
   else if(a[0]==='_eg'&&a.length>=5&&SPC[a[2]]&&!es[a[1]]){es[a[1]]=1;E.push({id:a[1],sp:a[2],t0:+a[3]||0,pen:a[4],vi:a.length>=6&&a[5]!==''?+a[5]:-1,item:t})}});
  return{A:Object.values(best).filter(o=>!(anGone.get(o.id)>now)),E,stale}};
-const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}:${a.v||0}:${a.vi||0}:${a.sa||0}:${a.s0||0}:${a.se||0}:${a.sc||0}`;
+const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}:${a.v||0}:${a.vi||0}:${a.sa||0}:${a.s0||0}:${a.se||0}:${a.sc||0}:${a.sr||0}:${a.dl||''}`;
 const anEgRow=e=>`_eg:${e.id}:${e.sp}:${e.t0}:${e.pen}:${e.vi>=0?e.vi:''}`;
 const anEff=(a,now)=>Math.max(0,now-a.born-Math.max(0,now-a.until));
 const anStage=(a,now)=>{const g=SPC[a.sp].gr,m=anEff(a,now)/60;return m>=g[1]?2:m>=g[0]?1:0};
@@ -3814,7 +3814,7 @@ function anTick(now){const {A,E,stale}=anRows();
    const vi=e.vi>=0?e.vi:anVarPick(e.sp,e.id),a={id:e.id,sp:e.sp,born,until:born+Math.round(C.H*1800),pen:e.pen,cd:0,ad:0,ac:0,v:1,vi};
    await anWrite(anRow(a),[e.item]);const nw=await bookAdd(e.sp,vi);toast('Вылупилась '+vEm(e.sp,vi,16).replace(/<[^>]+>/g,'')+' '+vTitle(e.sp,vi)+(nw?' · новая в книге 📖':'')+(VT[vi]>=2?' ✨':''))}finally{anBusy.delete(k)}})});
  A.forEach(a=>{const k='b'+a.sp+a.vi;if(bookMask(a.sp)&(1<<a.vi)||anBusy.has(k))return;anBusy.add(k);anRun(async()=>{try{await bookAdd(a.sp,a.vi)}finally{anBusy.delete(k)}})});
- A.forEach(a=>{if(!(a.se>0)||now<a.se)return;const k='s'+a.id+':'+a.s0;if(anBusy.has(k)||(anSaleCd.get(k)||0)>Date.now())return;anBusy.add(k);anRun(async()=>{try{await anResolveSale(a.id,a.s0)}finally{anBusy.delete(k)}})});
+ A.forEach(a=>{if(!(a.se>0))return;const k='s'+a.id+':'+a.s0;if(anBusy.has(k)||(anSaleCd.get(k)||0)>Date.now())return;if(!anPlan(a,now))return;anBusy.add(k);anRun(async()=>{try{await anResolveSale(a.id,a.s0)}finally{anBusy.delete(k)}})});anLogTick();
  const st=stale.filter(i=>!anCl.has(i));if(st.length){st.forEach(i=>anCl.add(i));anRun(async()=>{try{const t=st.filter(i=>lr.items.some(r=>r.item===i));if(t.length)await anWrite(null,t)}finally{st.forEach(i=>anCl.delete(i))}})}}
 const anCount=pid=>{const {A,E}=anRows();return A.filter(a=>a.pen===pid).length+E.filter(e=>e.pen===pid).length};
 window.anBuyEgg=sp=>anRun(async()=>{const C=SPC[sp],pid=Object.keys(PENS).find(k=>PENS[k].sp.includes(sp));if(!own('pen:'+pid))return;
@@ -3833,28 +3833,147 @@ window.anBreed=pid=>anRun(async()=>{const now=gsec(),{A}=anRows();if(anCount(pid
  const sp=Object.keys(by).find(k=>by[k].length>=2);if(!sp)return toast('Нужна пара взрослых сытых животных одного вида, не на отдыхе');
  const [p1,p2]=by[sp],cd=now+SPC[sp].cool*60,id=rid(),r=anHash('b'+id),vi=r<.3?p1.vi:r<.6?p2.vi:-1;
  await anSave(Object.assign({},p1,{cd}));await anSave(Object.assign({},p2,{cd}));await anWrite(anEgRow({id,sp,t0:now,pen:pid,vi}),[]);toast('Появилось яйцо 🥚 · пара отдыхает '+SPC[sp].cool+' мин')});
-const anSaleCd=new Map(),anLogKey='bm_salelog';
-const anLog=e=>{try{const a=JSON.parse(localStorage.getItem(anLogKey)||'[]');a.unshift(Object.assign({t:Date.now()},e));localStorage.setItem(anLogKey,JSON.stringify(a.slice(0,8)))}catch{}};
-const anLogGet=()=>{try{return JSON.parse(localStorage.getItem(anLogKey)||'[]')}catch{return[]}};
-async function anResolveSale(id,s0){const cur=anRows().A.find(x=>x.id===id);if(!cur||!(cur.se>0)||cur.s0!==s0||gsec()<cur.se)return;
- const sold=anHash('r'+id+':'+s0)<cur.sc/100,ask=cur.sa;
- if(!sold){if(await anSave(Object.assign({},cur,{sa:0,s0:0,se:0,sc:0}))===false)return;anLog({sp:cur.sp,vi:cur.vi,sa:ask,sc:cur.sc,r:'no'});toast('Никто не купил: '+vTitle(cur.sp,cur.vi)+' за '+ask+' 🪙 (шанс был '+cur.sc+'%) — вернулась в загон 😕');anLast='';return}
- /* «забираем» строку на сервере: платит только то устройство, которому удалось её удалить */
- let cl;try{const r=await sb.from(gDB).delete().eq('room_id',S.room).eq('item',cur.item).select();cl=r.error?'err':(r.data&&r.data.length?'ok':'no')}catch(e){cl='err'}
- if(cl==='no'){anSaleCd.set(id+':'+s0,Date.now()+20000);return}
- if(cl==='err')await sb.from(gDB).delete().eq('room_id',S.room).eq('item',cur.item);
- anGone.set(id,Date.now()+60000);const rest=anItems(id);lr.items=lr.items.filter(i=>!String(i.item).startsWith('_an:'+id+':'));rest.forEach(i=>lrPendSet(i,null));
- for(const i of rest)if(i!==cur.item)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',i);
- gvRender();anLog({sp:cur.sp,vi:cur.vi,sa:ask,sc:cur.sc,r:'sold'});toast('🏷️ '+vTitle(cur.sp,cur.vi)+' продана за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
+/* ---- продажа: покупатели приходят, пишут в чат и торгуются ---- */
+const AN_NB=4,AN_EXP=86400,anSaleCd=new Map(),anToasted=new Set(),anPre=v=>lr.k==='main'?v:lr.k+'~'+v;
+let anQuiet=false,anSince=0,anNews=null,anBuy=null;
+const anLS=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},anLSset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.nbd{position:absolute;right:-7px;top:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#ef4444;color:#fff;font:800 11px/20px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 2px 7px rgba(239,68,68,.6);box-sizing:border-box}.nbd.s{position:static;display:inline-block;margin-left:6px;vertical-align:middle}.ew{position:relative;display:inline-block;min-width:44px;text-align:center}`}));
+const BYP=[['Марина','👩‍🌾','f'],['Дима','👨‍🌾','m'],['Бабушка Нина','👵','f'],['Лёва','🧑‍🌾','m'],['Тётя Галя','👩‍🍳','f'],['Дядя Коля','👨‍🦳','m'],['Соня','👧','f'],['Фермер Пётр','🧔','m'],['Алиса','👩‍🦰','f'],['Макс','👦','m'],['Дедушка Миша','👴','m'],['Оля','👩','f']].map(x=>({n:x[0],e:x[1],g:x[2]}));
+const BUD=['Коплю на новый забор 🧱','Ещё корм на зиму закупать 🌾','Надо отложить на подарки 🎁','Урожай в этом году скромный 🌽','Недавно потратился на ярмарке 🎪'];
+const RXF=/^F([a-z]+)x(\d+)$/,RXA=/^A([a-z0-9]+)_(\d+)_([a-z]+)(\d)$/;
+const foodVal=c=>Math.round(3+CROPS[c].g*.4);
+const anExVal=t=>{let m=RXF.exec(t);if(m)return CROPS[m[1]]?foodVal(m[1])*(+m[2]):0;m=RXA.exec(t);return m?+m[2]:0};
+const anExTxt=t=>{let m=RXF.exec(t);if(m)return CROPS[m[1]]?CROPS[m[1]].e+' ×'+m[2]:'корм';m=RXA.exec(t);return m&&SPC[m[3]]?SPC[m[3]].e+' '+vTitle(m[3],+m[4]):'питомец'};
+/* рыночная цена на момент выставления (скрыта от игрока); у старых лотов считаем тем же способом */
+const anSr=a=>a.sr>0?a.sr:anReal(a.sp,a.vi,anStage(a,a.s0||gsec()),Math.floor((a.s0||gsec())/86400));
+const anH=(a,k,n)=>anHash('y'+a.id+':'+a.s0+':'+k+':'+n);
+/* покупатель k для лота: всё считается из хэша, поэтому на обоих телефонах он одинаковый и в базе хранится только ход торга */
+const anBy=(a,k)=>{const R=anSr(a),h=n=>anH(a,k,n),ask=a.sa,pi=(Math.floor(h(0)*BYP.length)+k*3)%BYP.length,B=Math.max(1,Math.round(R*(.6+.7*h(1)))),q=Math.max(.3,Math.min(3,ask/R));
+ let t=a.s0;for(let j=0;j<=k;j++)t+=Math.round((45+500*anH(a,j,6))*(.5+.6*q));
+ return{k,pi,P:BYP[pi],B,come:B>=ask*.55,imp:B>=ask&&h(2)<.35,O:Math.max(1,Math.min(ask,Math.round(B*(.62+.2*h(3))))),pat:2+Math.floor(h(4)*3),rs:Math.floor(h(5)*100),t}};
+/* ход торга: «номер.статус.предложение.раунды.добавки.события|…» (без двоеточий, чтобы жить в строке _an) */
+const anDeals=a=>String(a.dl||'').split('|').filter(Boolean).map(x=>{const f=x.split('.');return{k:+f[0],st:f[1]||'o',off:+f[2]||0,rd:+f[3]||0,ex:f[4]?f[4].split('+'):[],ev:f[5]?f[5].split(','):[]}});
+const anDlStr=ds=>ds.map(d=>[d.k,d.st,d.off,d.rd,d.ex.join('+'),d.ev.join(',')].join('.')).join('|');
+const anBuyCnt=a=>anDeals(a).filter(d=>d.st==='o').length;
+const anBeff=(b,d)=>b.B+d.ex.reduce((s,t)=>s+anExVal(t)*.9,0);
+const anPlan=(a,now)=>{if(!(a.se>0))return null;if(!a.sr)return{mig:1};const arr=[];for(let k=0;k<AN_NB;k++){const b=anBy(a,k);if(b.come&&b.t<=now)arr.push(b)}
+ const au=arr.find(b=>b.imp);if(au)return{auto:au};const ds=anDeals(a),add=arr.filter(b=>!ds.some(d=>d.k===b.k));if(add.length)return{add};if(now>=a.se)return{exp:1};return null};
+function anNegRaise(a,d,X){const b=anBy(a,d.k),Be=anBeff(b,d);if(X<=Be*.97)return{sold:X};d.rd++;
+ if(X>Be*1.8||d.rd>b.pat){d.ev.push('u'+X,'w');d.st='x';return{walk:1}}
+ const off2=Math.max(d.off,Math.min(Math.round(Be*.92),Math.round(d.off+(X-d.off)*(.25+.25*anHash('z'+a.id+':'+d.k+':'+d.rd+':'+X)))));d.ev.push('u'+X,'r'+off2);d.off=off2;return{off:off2}}
+function anNegExtra(a,d,evTok,val){const b=anBy(a,d.k),Be=anBeff(b,d),off2=Math.max(d.off,Math.min(Math.round(Be*.97),Math.round(d.off+val*.85)));d.ev.push('e'+evTok,'g'+off2);d.off=off2;return off2}
+/* тексты чата */
+const anPick=(a,k,i,L)=>L[Math.floor(anHash('p'+a.id+':'+k+':'+i)*L.length)];
+const anWhy=(a,b)=>{const f=b.P.g==='f',e=SPC[a.sp].e,L=['Только завожу свою ферму — нужен первый житель '+e+'!','Хочу подарить его племяннице на день рождения 🎁','Давно '+(f?'искала':'искал')+' именно такого питомца '+e+' — вы меня выручите!','Дома уже '+(f?'приготовила':'приготовил')+' уютное место 🏡','Говорят, такие приносят удачу ✨','Сын уже неделю просит себе '+e+' 🥹','Хочу показать его на деревенской ярмарке 🎪','У меня во дворе слишком тихо — пусть будет веселее 🌼'];
+ if(VT[a.vi]>=2)L.unshift(TIER[VT[a.vi]].n+' находка! Такие попадаются редко 🤩',TIER[VT[a.vi]].n+' находка — мечта любого коллекционера 🤩');return L[b.rs%L.length]};
+const anGreet=(a,b)=>['Здравствуйте!','Привет!','Добрый день!','Хозяин, привет!'][Math.floor(anH(a,b.k,7)*4)]+' '+anWhy(a,b)+' Готов'+(b.P.g==='f'?'а':'')+' дать '+b.O+' 🪙. Договоримся?';
+function anMsgs(a,d){const b=anBy(a,d.k),M=[{w:'b',x:anGreet(a,b),tm:b.t}];let off=b.O,last='';
+ d.ev.forEach((e,i)=>{const c=e[0],v=e.slice(1),p=L=>anPick(a,d.k,i,L);
+  if(c==='u')M.push({w:'s',x:'Давайте '+v+' 🪙?'});
+  else if(c==='e'){last=v;M.push({w:'s',x:'Добавлю в нагрузку: '+anExTxt(v)})}
+  else if(c==='r'){const n=+v;M.push({w:'b',x:n>off?p(['Хм, дороговато… Ладно, уступлю: ','Давайте так: ','Ну… могу чуть поднять: '])+n+' 🪙. '+p(BUD):'Выше '+n+' 🪙 никак. '+p(BUD)});off=n}
+  else if(c==='g'){const n=+v;M.push({w:'b',x:p(['О, ещё и ','Ого, в придачу ','Так ещё и '])+anExTxt(last)+'! Тогда дам '+n+' 🪙.'});off=n}
+  else if(c==='q'){const n=+v;M.push({w:'b',x:'Кое-чего из набора уже нет… Тогда '+n+' 🪙.'});off=n}
+  else if(c==='w')M.push({w:'b',x:p(['Нет, это уже слишком. Пойду поищу в другом месте 🚶','Слишком дорого для меня. Удачи с продажей!','Ой, так не пойдёт. Всего доброго!'])});
+  else if(c==='n'){M.push({w:'s',x:'Простите, но нет 🙏'});M.push({w:'b',x:'Жаль… Ладно, всего доброго! 👋'})}});return M}
+const anBMsgs=d=>1+d.ev.filter(e=>'rgqw'.includes(e[0])).length;
+const anRkey=(a,d)=>a.id+'.'+a.s0+'.'+d.k;
+const anUnread=(a,d)=>d.st==='o'&&anBMsgs(d)>(anLS('bm_dlr',{})[anRkey(a,d)]||0);
+const anMarkRead=(a,d)=>{const m=anLS('bm_dlr',{});m[anRkey(a,d)]=anBMsgs(d);const ks=Object.keys(m);if(ks.length>60)delete m[ks[0]];anLSset('bm_dlr',m)};
+/* общий журнал продаж: строки _sl, видны обоим телефонам */
+const anLogPut=(a,price,kind,pi,nx)=>{const it='_sl:'+a.id+':'+gsec()+':'+a.sp+':'+a.vi+':'+price+':'+kind+':'+(pi||0)+':'+(nx||0);anToasted.add(it);return anWrite(it,[])};
+const anLogRows=()=>lr.items.map(r=>String(r.item)).filter(t=>t.startsWith('_sl:')).map(t=>{const a=t.split(':');return{item:t,id:a[1],t:+a[2]||0,sp:a[3],vi:+a[4]||0,price:+a[5]||0,kind:a[6]||'',pi:+a[7]||0,nx:+a[8]||0}}).filter(e=>SPC[e.sp]).sort((x,y)=>y.t-x.t);
+const anLogLine=e=>{const t=vTitle(e.sp,e.vi),em=SPC[e.sp].e;return e.kind==='s'||e.kind==='m'?'🏷️ '+em+' '+t+' — продано за '+e.price+' 🪙 · '+(BYP[e.pi]?BYP[e.pi].n:'покупатель')+(e.nx?' (с набором)':''):e.kind==='e1'?'⌛ '+em+' '+t+': покупатели разошлись, не договорились (просил '+e.price+' 🪙)':'⌛ '+em+' '+t+': никто не заинтересовался — цена '+e.price+' 🪙 слишком высокая'};
+function anLogTick(){const L=anLogRows();
+ if(L.length>12&&!anCl.has('log')){anCl.add('log');const old=L.slice(12).map(e=>e.item);anRun(async()=>{try{await anWrite(null,old.filter(i=>lr.items.some(r=>r.item===i)))}finally{anCl.delete('log')}})}
+ if(anQuiet)return;const seen=anLS('bm_slseen',0);L.slice().reverse().forEach(e=>{if(e.t>seen&&!anToasted.has(e.item)){anToasted.add(e.item);toast(anLogLine(e));anLSset('bm_slseen',Math.max(anLS('bm_slseen',0),e.t))}})}
+/* заход на ферму: ждём 2 секунды, пока «догонится» время, и показываем всё, что произошло без тебя */
+function anOpened(){anQuiet=true;anSince=gsec();setTimeout(()=>{try{anNewsRun()}catch(e){console.error('an-news',e)}},1900)}
+function anNewsRun(){anQuiet=false;if(!gv.open||anMode)return;const seen=anLS('bm_slseen',0),now=gsec();anLSset('bm_slseen',now);if(!seen)return;
+ const items=anLogRows().filter(e=>e.t>seen).reverse().map(anLogLine);
+ anRows().A.filter(a=>a.se>0).forEach(a=>{const n=anDeals(a).filter(d=>d.st==='o'&&anBy(a,d.k).t>seen).length;if(n)items.push('👤 '+SPC[a.sp].e+' '+vTitle(a.sp,a.vi)+': '+(n===1?'новый покупатель ждёт ответа':'новых покупателей: '+n))});
+ if(!items.length)return;anNews=items;anEnsure();anMode='news';anSel=null;anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())}
+function newsHtml(){return'<div class="hd"><div style="flex:1"><b style="font-size:20px">🔔 Пока тебя не было</b><div class="sm2">Покупатели ещё ждут — можно поторговаться</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">'+(anNews||[]).map(x=>'<div class="bk" style="font-size:13px;font-weight:800;line-height:1.35">'+x+'</div>').join('')+'</div><button class="b s" style="width:100%;margin-top:4px" onclick="anSale()">🏷️ Открыть «На продаже»</button>'}
+/* завершение сделки: платит только то устройство, которому удалось «забрать» строку животного */
+async function anExBad(a,k,t,user){const ds=anDeals(a),d=ds.find(x=>x.k===k);if(!d)return false;d.ex=d.ex.filter(z=>z!==t);const n=Math.max(1,d.off-Math.round(anExVal(t)*.85));d.off=n;d.ev.push('q'+n);
+ if(await anSave(Object.assign({},a,{dl:anDlStr(ds)}))===false)return false;if(user)toast('Часть набора уже недоступна — предложение пересчитано');anLast='';anSheetDraw(gsec());return false}
+async function anFinish(cur,k,price,kind,user){
+ const all=anRows().A,a=all.find(x=>x.id===cur.id);if(!a||!(a.se>0)||a.s0!==cur.s0)return false;
+ const d=anDeals(a).find(x=>x.k===k),b=anBy(a,k),inv=gvInv(),ex=d?d.ex:[];
+ for(const t of ex){const m=RXF.exec(t);if(m){if(!((inv[m[1]]||0)>=+m[2]))return anExBad(a,k,t,user)}else{const mm=RXA.exec(t),x=mm&&all.find(z=>z.id===mm[1]);if(!x||x.se>0)return anExBad(a,k,t,user)}}
+ let cl;try{const r=await sb.from(gDB).delete().eq('room_id',S.room).eq('item',a.item).select();cl=r.error?'err':(r.data&&r.data.length?'ok':'no')}catch(e){cl='err'}
+ if(cl==='no'){let still=null;try{const r=await sb.from(gDB).select('item').eq('room_id',S.room);if(!r.error)still=(r.data||[]).some(x=>x.item===anPre(a.item))}catch{}
+  anSaleCd.set(a.id+':'+a.s0,Date.now()+(still===false?20000:60000));
+  if(still===false){if(user)toast('Это животное уже продано или снято с продажи');return false}
+  toast(still===true?'Сервер не даёт удалить запись животного — продажа отменена. Проверь права DELETE для таблицы в Supabase':'Нет связи с базой, попробуй ещё раз');return false}
+ if(cl==='err'){try{const r=await sb.from(gDB).delete().eq('room_id',S.room).eq('item',a.item);if(r.error)throw r.error}catch(e){anSaleCd.set(a.id+':'+a.s0,Date.now()+20000);toast('Нет связи с базой, попробуй ещё раз');return false}}
+ anGone.set(a.id,Date.now()+60000);const rest=anItems(a.id);lr.items=lr.items.filter(i=>!String(i.item).startsWith('_an:'+a.id+':'));rest.forEach(i=>lrPendSet(i,null));
+ for(const i of rest)if(i!==a.item)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',i);
+ for(const t of ex){const m=RXF.exec(t);if(m){const iv=gvInv();await gvSetInv(m[1],Math.max(0,(iv[m[1]]||0)-(+m[2])))}else{const mm=RXA.exec(t);if(mm)await anDel(mm[1])}}
+ gvRender();await anLogPut(a,price,kind,b.pi,ex.length);
+ if(user||!anQuiet){toast('🏷️ Продано: '+SPC[a.sp].e+' '+vTitle(a.sp,a.vi)+' — '+price+' 🪙 · '+b.P.n);anLSset('bm_slseen',Math.max(anLS('bm_slseen',0),gsec()))}
+ if(anSel===a.id){anMode='sale';anSel=null;anBuy=null;gv.apn=null;gv.acf=''}anLast='';
+ await fmEarn(price,'с фермы');try{anSheetDraw(gsec())}catch{}return true}
+/* что-то произошло с лотом: миграция старого, новые покупатели, мгновенная покупка, истёк срок */
+async function anResolveSale(id,s0){const cur=anRows().A.find(x=>x.id===id);if(!cur||!(cur.se>0)||cur.s0!==s0)return;const now=gsec(),pl=anPlan(cur,now);if(!pl)return;
+ if(pl.mig){await anSave(Object.assign({},cur,{sr:anSr(cur),se:Math.max(cur.se,cur.s0+AN_EXP),sc:0,dl:''}));return}
+ if(pl.auto)return void await anFinish(cur,pl.auto.k,cur.sa,'s',false);
+ if(pl.add){const ds=anDeals(cur);pl.add.forEach(b=>ds.push({k:b.k,st:'o',off:b.O,rd:0,ex:[],ev:[]}));if(await anSave(Object.assign({},cur,{dl:anDlStr(ds)}))===false)return;
+  if(!anQuiet)pl.add.forEach(b=>{if(b.t>=anSince-2)toast('👤 '+b.P.n+' хочет купить '+SPC[cur.sp].e+' за '+b.O+' 🪙')});anLast='';return void anSheetDraw(gsec())}
+ if(pl.exp){const had=anDeals(cur).length>0,ask=cur.sa;if(await anSave(Object.assign({},cur,{sa:0,s0:0,se:0,sc:0,sr:0,dl:''}))===false)return;
+  await anLogPut(cur,ask,had?'e1':'e0',0,0);if(!anQuiet){toast(anLogLine({sp:cur.sp,vi:cur.vi,price:ask,kind:had?'e1':'e0'}));anLSset('bm_slseen',Math.max(anLS('bm_slseen',0),gsec()))}anLast='';anSheetDraw(gsec())}}
 window.anSellOpen=()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||a.se>0)return;gv.sellOn=!gv.sellOn;gv.msg='';gv.ask=0;anLast='';anSheetDraw(gsec())};
 window.anAsk=v=>{gv.ask=Math.max(0,Math.min(99999,Math.round(+v)||0))};
 window.anSell=()=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||a.se>0)return;const now=gsec(),d=anDay(),ac=a.ad===d?a.ac:0;
- if(ac>=3){gv.msg='Сегодня покупатели больше не придут 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Впиши свою цену');
- const p=anChance(ask,anReal(a.sp,a.vi,anStage(a,now),d)),sc=Math.round(p*100),wait=Math.round((120+900*anHash('t'+a.id+':'+now))*(1.6-p));
- if(await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+wait,sc}))===false){anLast='';return anSheetDraw(gsec())}
- gv.sellOn=false;gv.msg='';gv.ask=0;
- toast('🏷️ Выставлено за '+ask+' 🪙 · шанс '+sc+'% · решение через '+gfmt(wait));anLast='';anSheetDraw(gsec())});
-window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;if(await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0}))===false)return;toast('Снято с продажи ↩️');anLast='';anSheetDraw(gsec())});
+ if(ac>=3){gv.msg='Сегодня больше не получится выставить 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Впиши свою цену');
+ const sr=anReal(a.sp,a.vi,anStage(a,now),d);
+ if(await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+AN_EXP,sc:0,sr,dl:''}))===false){anLast='';return anSheetDraw(gsec())}
+ gv.sellOn=false;gv.msg='';gv.ask=0;toast('🏷️ Выставлено за '+ask+' 🪙 · скоро придут покупатели');anLast='';anSheetDraw(gsec())});
+window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;if(await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0,sr:0,dl:''}))===false)return;toast('Снято с продажи ↩️');if(anMode==='buyers'||anMode==='chat'){anMode='sale';anSel=null;anBuy=null}anLast='';anSheetDraw(gsec())});
+/* ---- экраны: покупатели и чат ---- */
+window.anBuyers=id=>{anEnsure();anMode='buyers';anSel=id;anBuy=null;gv.apn=null;gv.acf='';anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
+window.anBack=()=>{if(anMode==='chat'){anMode='buyers';anBuy=null}else{anMode='sale';anSel=null}gv.apn=null;gv.acf='';anLast='';anSheetDraw(gsec())};
+window.anChat=k=>{const a=anRows().A.find(x=>x.id===anSel);if(!a)return;const d=anDeals(a).find(x=>x.k===k);if(!d)return;anMode='chat';anBuy=k;gv.apn=null;gv.arz=0;anMarkRead(a,d);anLast='';anSheetDraw(gsec())};
+window.anPanel=p=>{gv.apn=gv.apn===p?null:p;gv.arz=0;anLast='';anSheetDraw(gsec())};
+window.anRaiseIn=v=>{gv.arz=Math.max(0,Math.min(99999,Math.round(+v)||0))};
+window.anRaiseSet=v=>{gv.arz=v;anLast='';anSheetDraw(gsec())};
+const anAcceptNow=k=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||!(a.se>0))return;const d=anDeals(a).find(x=>x.k===k&&x.st==='o');if(!d)return;await anFinish(a,k,d.off,'m',true)});
+window.anAccept=k=>anAcceptNow(k);
+window.anSellTap=k=>{const key=anSel+'.'+k;if(gv.acf===key){gv.acf='';return anAcceptNow(k)}gv.acf=key;clearTimeout(gv._ct);gv._ct=setTimeout(()=>{if(gv.acf===key){gv.acf='';anLast='';anSheetDraw(gsec())}},3500);anLast='';anSheetDraw(gsec())};
+window.anRaise=k=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||!(a.se>0))return;const ds=anDeals(a),d=ds.find(x=>x.k===k&&x.st==='o');if(!d)return;const X=gv.arz|0;
+ if(!(X>d.off))return toast('Цена должна быть выше предложения: '+d.off+' 🪙');const r=anNegRaise(a,d,X);
+ if(r.sold)return void await anFinish(a,k,r.sold,'m',true);
+ if(await anSave(Object.assign({},a,{dl:anDlStr(ds)}))===false)return;gv.apn=null;gv.arz=0;anLast='';anSheetDraw(gsec())});
+window.anNo=k=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||!(a.se>0))return;const ds=anDeals(a),d=ds.find(x=>x.k===k&&x.st==='o');if(!d)return;d.st='x';d.ev.push('n');
+ if(await anSave(Object.assign({},a,{dl:anDlStr(ds)}))===false)return;gv.apn=null;toast('Отказали покупателю');anLast='';anSheetDraw(gsec())});
+window.anExtra=(k,t)=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||!(a.se>0))return;const ds=anDeals(a),d=ds.find(x=>x.k===k&&x.st==='o');if(!d)return;
+ if(d.ev.filter(e=>e[0]==='e').length>=6)return toast('Хватит добавок, покупатель и так доволен 😅');
+ const inv=gvInv(),all=anRows().A;let evTok,val;
+ if(t[0]==='F'){const c=t.slice(1);if(!CROPS[c]||!(inv[c]>0))return toast('Такого урожая нет');const old=d.ex.find(z=>z.startsWith('F'+c+'x')),n=old?(+old.split('x')[1]||0):0;if(n+1>inv[c])return toast('Больше такого корма нет 🧺');
+  if(!old&&d.ex.length>=3)return toast('Максимум 3 разных добавки');d.ex=d.ex.filter(z=>z!==old);d.ex.push('F'+c+'x'+(n+1));evTok='F'+c+'x1';val=foodVal(c)}
+ else{const x=all.find(z=>z.id===t.slice(1));if(!x||x.se>0||x.id===a.id)return toast('Этого питомца сейчас не предложить');if(d.ex.some(z=>z.startsWith('A'+x.id+'_')))return toast('Уже добавлен');if(d.ex.length>=3)return toast('Максимум 3 разных добавки');
+  val=Math.round(anReal(x.sp,x.vi,anStage(x,gsec()),anDay())*.8);evTok='A'+x.id+'_'+val+'_'+x.sp+x.vi;d.ex.push(evTok)}
+ anNegExtra(a,d,evTok,val);if(await anSave(Object.assign({},a,{dl:anDlStr(ds)}))===false)return;anLast='';anSheetDraw(gsec())});
+function buyersHtml(a,now){const ds=anDeals(a),op=ds.filter(d=>d.st==='o'),go=ds.filter(d=>d.st!=='o');
+ const row=d=>{const b=anBy(a,d.k),un=anUnread(a,d),cf=gv.acf===a.id+'.'+d.k;
+  return'<div class="bk by"><button class="chb" onclick="anChat('+d.k+')" aria-label="Чат с покупателем"><i class="fa-solid fa-comment-dots"></i>'+(un?'<i class="dot"></i>':'')+'</button><div class="byi" onclick="anChat('+d.k+')"><span class="av">'+b.P.e+'</span><div style="min-width:0"><b>'+b.P.n+'</b><span class="sm">'+(un?'новое сообщение · ':'')+'хочет '+d.off+' 🪙'+(d.ex.length?' · +'+d.ex.length+' доб.':'')+'</span></div></div><button class="rb" onclick="anSellTap('+d.k+')">'+(cf?'Точно? '+d.off+' 🪙':'Продать')+'</button></div>'};
+ const gone=d=>{const b=anBy(a,d.k);return'<div class="bk by" style="opacity:.55" onclick="anChat('+d.k+')"><span class="av" style="font-size:24px">'+b.P.e+'</span><div class="byi"><div><b style="font-size:13px">'+b.P.n+'</b><span class="sm">ушёл'+(b.P.g==='f'?'ла':'')+'</span></div></div><i class="fa-solid fa-comment-dots" style="opacity:.6;margin-right:8px"></i></div>'};
+ return'<div class="hd"><button class="x" onclick="anBack()" aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button><span style="font-size:42px;line-height:1">'+vEm(a.sp,a.vi,42)+'</span><div style="flex:1;min-width:0"><b style="font-size:18px;display:block">'+vTitle(a.sp,a.vi)+'</b><div class="sm2">Просишь '+a.sa+' 🪙 · покупателей: '+op.length+'</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div>'
+  +'<div style="margin-top:14px">'+(op.length?op.map(row).join(''):'<p class="sm2" style="text-align:center;padding:18px 0;font-size:13px">'+(go.length?'Все покупатели ушли. Лот висит ещё '+gfmt(a.se-now)+' — могут прийти другие.':'Пока никто не пришёл. Покупатели появляются в течение получаса — чем честнее цена, тем быстрее.')+'</p>')+(go.length?'<p class="sm2" style="margin:10px 2px 6px">Ушли</p>'+go.map(gone).join(''):'')+'</div>'
+  +'<div class="bt" style="margin-top:6px"><button class="b s" onclick="anOpen(\''+a.id+'\')">🐾 Питомец</button><button class="b f" onclick="anUnlist(\''+a.id+'\')">↩️ Снять с продажи</button></div>'}
+function chatHtml(a,d,now){const b=anBy(a,d.k),M=anMsgs(a,d),open=d.st==='o',all=anRows().A,inv=gvInv(),off=d.off,k=d.k;
+ const tm=s=>{const x=new Date(s*1000);return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0')};
+ const bub=M.map(m=>'<div class="mb '+m.w+'">'+m.x+(m.tm?'<small>'+tm(m.tm)+'</small>':'')+'</div>').join('');
+ let panel='';
+ if(open&&gv.apn==='raise'){const c=[1.1,1.25,1.5].map(m=>Math.round(off*m)).filter((v,i,r)=>v>off&&r.indexOf(v)===i);
+  panel='<div class="pnl"><div class="fd">'+c.map(v=>'<button class="ch'+(gv.arz===v?' on':'')+'" onclick="anRaiseSet('+v+')">'+v+' 🪙</button>').join('')+'</div><div style="display:flex;gap:8px"><input type="number" inputmode="numeric" min="1" value="'+(gv.arz||'')+'" placeholder="Твоя цена 🪙" oninput="anRaiseIn(this.value)" aria-label="Цена"><button class="b g" style="padding:12px 16px" onclick="anRaise('+k+')">Предложить</button></div><p class="sm2" style="margin:6px 2px 0">Сейчас предлагают '+off+' 🪙. Если перегнуть — покупатель обидится и уйдёт.</p></div>'}
+ else if(open&&gv.apn==='more'){const used={};d.ex.forEach(t=>{const m=RXF.exec(t);if(m)used[m[1]]=+m[2]});
+  const fs=Object.keys(inv).filter(c=>CROPS[c]&&inv[c]-(used[c]||0)>0).map(c=>'<button class="ch" onclick="anExtra('+k+',\'F'+c+'\')">'+CROPS[c].e+' ×'+(inv[c]-(used[c]||0))+'</button>').join('');
+  const as=all.filter(x=>x.id!==a.id&&!(x.se>0)&&!d.ex.some(t=>t.startsWith('A'+x.id+'_'))).map(x=>'<button class="ch" onclick="anExtra('+k+',\'A'+x.id+'\')">'+vEm(x.sp,x.vi,20)+' <small>'+STN[anStage(x,now)]+'</small></button>').join('');
+  panel='<div class="pnl"><p class="sm2" style="margin:0 2px 4px">Добавить еду в нагрузку</p><div class="fd">'+(fs||'<span class="sm2">Корма нет</span>')+'</div><p class="sm2" style="margin:2px 2px 4px">Добавить питомца</p><div class="fd">'+(as||'<span class="sm2">Свободных питомцев нет</span>')+'</div></div>'}
+ const acts=open?'<div class="bt" style="margin-top:10px"><button class="b g" style="font-size:14px;padding:13px 8px" onclick="anAccept('+k+')">✅ Согласиться · '+off+' 🪙</button><button class="b n" style="font-size:14px;padding:13px 8px" onclick="anNo('+k+')">❌ Отказать</button><button class="b s" style="font-size:14px;padding:13px 8px" onclick="anPanel(\'raise\')">📈 Поднять цену</button><button class="b f" style="font-size:14px;padding:13px 8px" onclick="anPanel(\'more\')">🎁 Предложить ещё</button></div>':'<div class="st" style="text-align:center;margin-top:10px"><b>Покупатель ушёл</b></div>';
+ return'<div class="hd"><button class="x" onclick="anBack()" aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button><span style="font-size:38px;line-height:1">'+b.P.e+'</span><div style="flex:1;min-width:0"><b style="font-size:17px;display:block">'+b.P.n+'</b><div class="sm2">'+(open?'предлагает '+off+' 🪙':'ушёл'+(b.P.g==='f'?'ла':''))+(d.ex.length?' · в наборе: '+d.ex.map(anExTxt).join(' ')+'':'')+'</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div>'
+  +'<div class="cb" id="anCh">'+bub+'</div>'+panel+acts}
 /* ---- карточка животного и книга ---- */
 let anMode=null,anSel=null,anLast='';
 function anEnsure(){if($('anSheet'))return;const st=document.createElement('style');st.textContent=`#anSheet{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(25,12,35,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}#anSheet.on{display:flex}
@@ -3867,34 +3986,43 @@ function anEnsure(){if($('anSheet'))return;const st=document.createElement('styl
 #anSheet .bt{display:grid;grid-template-columns:1fr 1fr;gap:10px}#anSheet .b{border:0;border-radius:18px;padding:14px;font-weight:800;font-size:15px;color:#44342a;box-shadow:0 4px 12px rgba(0,0,0,.12)}#anSheet .b.f{background:linear-gradient(135deg,#fbcfe8,#fda4af)}#anSheet .b.s{background:linear-gradient(135deg,#fde68a,#fdba74)}#anSheet .b.g{background:linear-gradient(135deg,#bbf7d0,#6ee7b7)}
 #anSheet input{min-width:0;flex:1;border:0;border-radius:16px;padding:12px;font-size:16px;font-weight:800;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);color:#44342a}
 #anSheet .bk{background:rgba(255,255,255,.6);border-radius:20px;padding:10px;margin-bottom:10px}#anSheet .bkh{display:flex;justify-content:space-between;font-weight:800;margin-bottom:8px}#anSheet .bkr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-#anSheet .bc{background:#fff;border:2px solid;border-radius:14px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}#anSheet .bc small{font-size:9px;font-weight:700;line-height:1.1}#anSheet .bc.off{border-color:rgba(0,0,0,.08);background:rgba(255,255,255,.45);opacity:.7}`;
+#anSheet .bc{background:#fff;border:2px solid;border-radius:14px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}#anSheet .bc small{font-size:9px;font-weight:700;line-height:1.1}#anSheet .bc.off{border-color:rgba(0,0,0,.08);background:rgba(255,255,255,.45);opacity:.7}
+#anSheet .sm2{font-size:12px;font-weight:700;opacity:.65;margin-top:3px}#anSheet .b.n{background:linear-gradient(135deg,#e7e5e4,#d6d3d1)}#anSheet .b.rb2{background:linear-gradient(135deg,#f87171,#dc2626);color:#fff;position:relative}#anSheet .b.rb2 .nbd{position:static;margin-left:8px;background:#fff;color:#dc2626;box-shadow:none}
+#anSheet .by{display:flex;align-items:center;gap:8px}#anSheet .chb{position:relative;flex:none;width:46px;height:46px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.14);font-size:19px;color:#7c5a3a}#anSheet .dot{position:absolute;right:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#ef4444;border:2px solid #fff;font-size:0}
+#anSheet .byi{flex:1;min-width:0;display:flex;align-items:center;gap:8px}#anSheet .byi .av{font-size:32px;line-height:1}#anSheet .byi b{display:block;font-size:14px}#anSheet .byi .sm{display:block;font-size:12px;font-weight:700;opacity:.75}
+#anSheet .rb{flex:none;border:0;border-radius:14px;padding:12px 14px;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,#f87171,#dc2626);box-shadow:0 4px 12px rgba(220,38,38,.38)}
+#anSheet .cb{display:flex;flex-direction:column;gap:8px;max-height:36vh;overflow:auto;margin-top:12px;padding:2px}#anSheet .mb{max-width:84%;padding:9px 12px;border-radius:16px;font-size:14px;font-weight:700;line-height:1.35}#anSheet .mb small{display:block;font-size:10px;opacity:.5;margin-top:2px}#anSheet .mb.b{align-self:flex-start;background:#fff;border-bottom-left-radius:4px}#anSheet .mb.s{align-self:flex-end;background:linear-gradient(135deg,#fde68a,#fdba74);border-bottom-right-radius:4px}
+#anSheet .pnl{background:rgba(255,255,255,.65);border-radius:16px;padding:10px;margin-top:10px}`;
  document.head.appendChild(st);document.body.insertAdjacentHTML('beforeend','<div id="anSheet" onclick="if(event.target===this)anClose()"><div class="pn" id="anPn"></div></div>')}
 window.anOpen=id=>{anEnsure();anMode='an';anSel=id;gv.sellOn=false;gv.msg='';anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
 window.anSale=()=>{anEnsure();anMode='sale';anSel=null;anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
 window.anBook=()=>{anEnsure();anMode='book';anSel=null;anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
-window.anClose=()=>{anMode=null;anSel=null;gv.sellOn=false;const e=$('anSheet');if(e)e.classList.remove('on')};
+window.anClose=()=>{anMode=null;anSel=null;anBuy=null;gv.apn=null;gv.acf='';gv.sellOn=false;const e=$('anSheet');if(e)e.classList.remove('on')};
 function anSheetHtml(a,now){const C=SPC[a.sp],T=TIER[VT[a.vi]],st=anStage(a,now),d=anDay(),ac=a.ad===d?a.ac:0,inv=gvInv(),ks=Object.keys(inv).filter(k=>inv[k]>0&&CROPS[k]);
  if(!gv.feed||!(inv[gv.feed]>0))gv.feed=ks[0]||null;
  const food=ks.length?ks.map(k=>`<button class="ch${gv.feed===k?' on':''}" onclick="anPickFeed('${k}')">${CROPS[k].e} ×${inv[k]}</button>`).join(''):'<span style="font-size:12px;font-weight:700;opacity:.6">Корма нет — вырасти урожай 🧺</span>';
- const onSale=a.se>0,sell=onSale?`<div class="st" style="margin-top:12px;border:2px solid #f59e0b"><span>🏷️ Выставлено на продажу</span><b>${a.sa} 🪙 · шанс ${a.sc}%</b><span style="margin-top:4px">${a.se>now?'Покупатель решит через '+gfmt(a.se-now):'Покупатель решает…'}</span></div>`
- :gv.sellOn?`<div style="display:flex;gap:8px;margin-top:12px"><input type="number" inputmode="numeric" min="1" value="${gv.ask||''}" placeholder="Твоя цена 🪙" oninput="anAsk(this.value)" aria-label="Цена"><button class="b g" style="padding:12px 16px" onclick="anSell()">Выставить</button></div><p style="font-size:11px;font-weight:700;opacity:.65;margin:6px 2px 0">Цену не подсказываем — угадай сам. Чем ближе к рыночной, тем выше шанс и быстрее купят. Шанс покажем после выставления, покупатель придёт не сразу. ${gv.msg?'<br><b style="opacity:1;color:#b45309">'+gv.msg+'</b>':''}</p>`:'';
+ const onSale=a.se>0,nb=onSale?anBuyCnt(a):0,sell=onSale?`<div class="st" style="margin-top:12px;border:2px solid #f59e0b"><span>🏷️ Выставлено на продажу</span><b>${a.sa} 🪙</b><span style="margin-top:4px">${nb?'Покупателей: '+nb+' — загляни в чат':'Ждём покупателей…'} · ещё ${gfmt(Math.max(0,a.se-now))}</span></div><button class="b rb2" style="width:100%;margin-top:8px" onclick="anBuyers('${a.id}')">👥 Покупатели${nb?'<i class="nbd s">'+nb+'</i>':''}</button>`
+ :gv.sellOn?`<div style="display:flex;gap:8px;margin-top:12px"><input type="number" inputmode="numeric" min="1" value="${gv.ask||''}" placeholder="Твоя цена 🪙" oninput="anAsk(this.value)" aria-label="Цена"><button class="b g" style="padding:12px 16px" onclick="anSell()">Выставить</button></div><p style="font-size:11px;font-weight:700;opacity:.65;margin:6px 2px 0">Это стартовая цена — рыночную не подсказываем. Придут покупатели и начнут торговаться: можно уступить, поднять цену или добавить в нагрузку еду и питомцев. Слишком дорого — никто не придёт. ${gv.msg?'<br><b style="opacity:1;color:#b45309">'+gv.msg+'</b>':''}</p>`:'';
  const stat=(l,v,id)=>`<div class="st"><span>${l}</span><b${id?` id="${id}"`:''}>${v}</b></div>`;
  return`<div class="hd"><div style="font-size:56px;line-height:1;width:64px;text-align:center">${vEm(a.sp,a.vi,56)}</div><div style="flex:1;min-width:0"><b style="font-size:19px;display:block">${vTitle(a.sp,a.vi)}</b><div style="margin-top:5px"><span class="tg" style="background:${T.c}">${T.n}</span><span style="font-size:12px;font-weight:800">${STN[st]}</span></div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div>
  <div class="gr"><div class="st" style="grid-column:1/3"><span>Сытость</span><b id="anD-sat"></b><div class="bar"><i id="anD-bar" style="width:0%"></i></div></div>
  ${stat('Возраст','','anD-age')}${stat('До взросления','','anD-next')}${stat('Разведение','','anD-br')}${stat('Жильё',PENS[a.pen]?PENS[a.pen].n:'—')}${stat('Яйцо стоило',C.egg+' 🪙')}${stat('Выставлений сегодня',(3-ac)+' из 3')}</div>
  <div class="fd">${food}</div><div class="bt"><button class="b f" onclick="anFeed('${a.id}')">🍽️ Кормить</button><button class="b s" onclick="${onSale?`anUnlist('${a.id}')`:'anSellOpen()'}">${onSale?'↩️ Снять с продажи':'💰 '+(gv.sellOn?'Скрыть':'Продать')}</button></div>${sell}`}
-function saleHtml(now){const L=anRows().A.filter(a=>a.se>0).sort((x,y)=>x.se-y.se),H=anLogGet().filter(e=>SPC[e.sp]),
- hist=H.length?`<p style="font-size:11px;font-weight:800;opacity:.6;margin:14px 2px 6px">Недавно</p>`+H.map(e=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:5px 2px">${vEm(e.sp,e.vi,18)}<span>${vTitle(e.sp,e.vi)} — ${e.r==='sold'?'<b style="color:#047857">продана за '+e.sa+' 🪙</b>':'<b style="color:#b45309">не купили</b> (просили '+e.sa+' 🪙, шанс '+e.sc+'%)'}</span></div>`).join(''):'';
- const rows=L.map(a=>`<div class="bk" style="display:flex;align-items:center;gap:10px"><div onclick="anOpen('${a.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">${vEm(a.sp,a.vi,34)}<div style="min-width:0"><b style="font-size:14px;display:block">${vTitle(a.sp,a.vi)}</b><span style="font-size:12px;font-weight:700;opacity:.75">${a.sa} 🪙 · шанс ${a.sc}% · ${a.se>now?'ещё '+gfmt(a.se-now):'решается…'}</span></div></div><button class="x" onclick="anUnlist('${a.id}')" aria-label="Снять с продажи">↩️</button></div>`).join('');
- return`<div class="hd"><div style="flex:1"><b style="font-size:20px">🏷️ Животные на продаже</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">${L.length?'Покупатель решает не сразу — у каждого свой шанс и время':'Пока никого не выставили'}</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${rows||'<p style="font-size:13px;font-weight:700;opacity:.6;text-align:center;padding:18px 0">Открой животное в загоне и нажми «Продать»</p>'}</div>${hist}`}
+function saleHtml(now){const L=anRows().A.filter(a=>a.se>0).sort((x,y)=>x.s0-y.s0),H=anLogRows().slice(0,8),
+  hist=H.length?`<p style="font-size:11px;font-weight:800;opacity:.6;margin:14px 2px 6px">Недавно</p>`+H.map(e=>`<div style="font-size:12px;font-weight:700;padding:5px 2px;line-height:1.35">${anLogLine(e)}</div>`).join(''):'';
+  const rows=L.map(a=>{const n=anBuyCnt(a);return`<div class="bk" style="display:flex;align-items:center;gap:10px"><div onclick="anBuyers('${a.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"><span class="ew">${vEm(a.sp,a.vi,34)}${n?`<i class="nbd">${n}</i>`:''}</span><div style="min-width:0"><b style="font-size:14px;display:block">${vTitle(a.sp,a.vi)}</b><span style="font-size:12px;font-weight:700;opacity:.75">${a.sa} 🪙 · ${n?'покупателей: '+n:'ждём покупателей…'}</span></div></div><button class="x" onclick="anUnlist('${a.id}')" aria-label="Снять с продажи">↩️</button></div>`}).join('');
+  return`<div class="hd"><div style="flex:1"><b style="font-size:20px">🏷️ Животные на продаже</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">${L.length?'Нажми на животное — увидишь покупателей и сможешь поторговаться':'Пока никого не выставили'}</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${rows||'<p style="font-size:13px;font-weight:700;opacity:.6;text-align:center;padding:18px 0">Открой животное в загоне и нажми «Продать»</p>'}</div>${hist}`}
 function bookHtml(){let tot=0,got=0;const secs=Object.keys(SPC).map(sp=>{const m=bookMask(sp);let n=0;
  const cells=VN[sp].map((nm,i)=>{tot++;const T=TIER[VT[i]];if(m&(1<<i)){n++;got++;return`<div class="bc" style="border-color:${T.c}">${vEm(sp,i,32)}<small>${nm}</small><small style="color:${T.c}">${T.n}</small></div>`}
   return`<div class="bc off"><span style="font-size:32px;line-height:1;filter:grayscale(1) brightness(.4)">${SPC[sp].e}</span><small>???</small></div>`}).join('');
  return`<div class="bk"><div class="bkh"><span>${SPC[sp].e} ${SPC[sp].n}</span><span>${n}/5</span></div><div class="bkr">${cells}</div></div>`}).join('');
  return`<div class="hd"><div style="flex:1"><b style="font-size:20px">📖 Книга животных</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">Открыто ${got} из ${tot} · новые виды выпадают из яиц</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${secs}</div>`}
 function anSheetDraw(now){if(!anMode)return;if(!gv.open)return anClose();const pn=$('anPn');if(!pn)return;let a=null,html;
- if(anMode==='book')html=bookHtml();else if(anMode==='sale')html=saleHtml(now);else{a=anRows().A.find(x=>x.id===anSel);if(!a)return anClose();html=anSheetHtml(a,now)}
- const f=document.activeElement;if(html!==anLast&&!(f&&f.tagName==='INPUT'&&pn.contains(f))){pn.innerHTML=html;anLast=html}
+ if(anMode==='book')html=bookHtml();else if(anMode==='sale')html=saleHtml(now);else if(anMode==='news')html=newsHtml();
+  else if(anMode==='buyers'||anMode==='chat'){const x=anRows().A.find(z=>z.id===anSel);if(!x||!(x.se>0)){anMode='sale';anSel=null;anBuy=null;html=saleHtml(now)}
+   else if(anMode==='chat'){const d=anDeals(x).find(z=>z.k===anBuy);if(!d){anMode='buyers';anBuy=null;html=buyersHtml(x,now)}else{if(anUnread(x,d))anMarkRead(x,d);html=chatHtml(x,d,now)}}else html=buyersHtml(x,now)}
+  else{a=anRows().A.find(x=>x.id===anSel);if(!a)return anClose();html=anSheetHtml(a,now)}
+ const f=document.activeElement;if(html!==anLast&&!(f&&f.tagName==='INPUT'&&pn.contains(f))){pn.innerHTML=html;anLast=html;const cc=$('anCh');if(cc)cc.scrollTop=cc.scrollHeight}
  if(a){const C=SPC[a.sp],st=anStage(a,now),eff=anEff(a,now),sat=Math.round(anSat(a,now)),sd=(id,v)=>{const e=$(id);if(e&&e.textContent!==v)e.textContent=v};
   sd('anD-sat','🍖 '+sat+'%');const br=$('anD-bar');if(br)br.style.width=sat+'%';sd('anD-age',gfmt(eff));sd('anD-next',st<2?gfmt(C.gr[st]*60-eff):'—');
   sd('anD-br',st<2?'Ещё мал':sat<=0?'Голоден':a.cd>now?'Отдых '+gfmt(a.cd-now):'Готов ✅')}}
@@ -3913,7 +4041,7 @@ function anCard(pid,now,W,T,head,act){const P=PENS[pid];
  const food=ks.length?ks.map(k=>`<button class="fm-seed${gv.feed===k?' on':''}" onclick="anPickFeed('${k}')"><span class="block text-2xl leading-none">${CROPS[k].e}</span><b class="mt-1 block text-[11px]">×${inv[k]}</b></button>`).join(''):'<p class="w-full py-3 text-center text-xs font-semibold text-stone-500">Корма нет — вырасти урожай на грядках 🧺</p>';
  const list=mine.map(a=>{const st=anStage(a,now),sat=Math.round(anSat(a,now)),rest=a.cd>now;
   return`<button type="button" class="flex w-full items-center gap-3 rounded-3xl bg-orange-50 p-3 text-left shadow-lg" onclick="anOpen('${a.id}')"><span class="w-9 text-center leading-none">${vEm(a.sp,a.vi,[22,30,38][st])}</span>
-   <span class="min-w-0 flex-1"><span class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${VN[a.sp][a.vi]} · ${STN[st]}${rest&&st===2?' · 💤':''}${a.se>0?' · 🏷️':''}</span><span ${T('as'+a.id,'🍖 '+sat+'%')}></span></span><span class="mt-1 block h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ab'+a.id,sat)}></i></span></span><span class="text-lg text-stone-400">›</span></button>`}).join('');
+   <span class="min-w-0 flex-1"><span class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${VN[a.sp][a.vi]} · ${STN[st]}${rest&&st===2?' · 💤':''}${a.se>0?' · 🏷️'+(anBuyCnt(a)?'<i class="nbd s">'+anBuyCnt(a)+'</i>':''):''}</span><span ${T('as'+a.id,'🍖 '+sat+'%')}></span></span><span class="mt-1 block h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ab'+a.id,sat)}></i></span></span><span class="text-lg text-stone-400">›</span></button>`}).join('');
  const egl=eggs.map(e=>{const C=SPC[e.sp],left=e.t0+C.hat*60-now;return`<div class="flex items-center gap-3 rounded-3xl bg-amber-50 p-3 shadow-lg"><span class="text-2xl">🥚</span><span class="flex-1 text-xs font-bold text-stone-600">Яйцо: ${C.n.toLowerCase()}</span><span class="text-xs font-bold text-stone-500" ${T('eg'+e.id,left>0?gfmt(left):'вылупляется…')}></span></div>`}).join('');
  return head(P.e,'bg-amber-100',P.n,cnt?(hungry?'Кто-то голоден 🥺':'Все сыты 😌'):'Пока пусто',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
   +`<p class="mb-1 mt-4 text-xs font-bold text-stone-500">Купить яйцо · мест ${cnt}/${P.cap}</p><div class="fm-row">${eggBtns}</div>`
