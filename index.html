@@ -3490,13 +3490,13 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 .gv{position:fixed;inset:0;z-index:900;display:none;color:#4a3b52;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);background:radial-gradient(circle at 12% 6%,rgba(255,214,231,.75),transparent 42%),radial-gradient(circle at 94% 28%,rgba(200,236,255,.75),transparent 40%),linear-gradient(180deg,#fff4e8 0%,#ecf8e6 55%,#e2f1ff 100%)}
 .gv.on{display:block}
 .gv .fm-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.fm-map{position:relative;aspect-ratio:1/.86;padding:16px 12px 12px;display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:1.12fr 1fr;grid-template-areas:"b0 b1 b2" "wt pen pen";overflow:hidden;background:radial-gradient(rgba(255,255,255,.42) 2px,transparent 2.5px) 0 0/22px 22px,linear-gradient(160deg,#dcf5cc,#bfe8b2)}
+.fm-map{position:relative;aspect-ratio:1/1.24;padding:16px 12px 12px;display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:1.12fr 1fr .95fr;grid-template-areas:"b0 b1 b2" "wt pen pen" "p0 p1 p2";overflow:hidden;background:radial-gradient(rgba(255,255,255,.42) 2px,transparent 2.5px) 0 0/22px 22px,linear-gradient(160deg,#dcf5cc,#bfe8b2)}
 .fmz{position:relative;min-width:0;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 6px;color:#5a4636;font-weight:800;font-size:11px;line-height:1.15;text-align:center;box-shadow:0 6px 14px rgba(70,110,60,.22),inset 0 0 0 2px rgba(255,255,255,.55);transition:transform .25s ease,box-shadow .25s ease,filter .25s ease}
 .fmz:not(.sel){filter:saturate(.9)}
 .fmz.sel{transform:translateY(-2px) scale(1.035);z-index:2;box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(255,120,183,.8),0 12px 26px rgba(255,120,183,.45)}
 .fmz-bed{background:linear-gradient(160deg,#f8e1c9,#ebc7a2)}
 .fmz-tank{background:linear-gradient(160deg,#dcf0ff,#b9ddf8)}
-.fmz-pen{background:linear-gradient(160deg,#fff2d3,#ffdfa8);border:2px dashed rgba(150,110,60,.42)}
+.fmz-pen{background:linear-gradient(160deg,#fff2d3,#ffdfa8);border:2px dashed rgba(150,110,60,.42)}.fmz-lock{background:linear-gradient(160deg,#ece7e1,#d9d2c9);color:#7a6f64;border:2px dashed rgba(120,105,90,.4)}.fmz-lock .lk{font-size:22px;line-height:1}.fmz-an{background:linear-gradient(160deg,#fff7df,#ffe3b4);border:2px dashed rgba(150,110,60,.42)}
 .fmz-n{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fmz-s{font-size:10px;font-weight:700;opacity:.7;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fmsoil{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;max-width:92px}
@@ -3571,7 +3571,7 @@ async function gvWater(i,quiet){const p=gvSlots()[i];if(!p)return false;const no
  const cell=document.querySelector('#gv [data-plot="'+i+'"]');if(cell){cell.classList.add('splash');setTimeout(()=>cell.classList.remove('splash'),850)}gvVib();
  await gvPut(i,gvRow(i,p.crop,Math.round(I.eff),now,now+I.C.w*60));return true}
 window.gvTap=async i=>{const p=gvSlots()[i],now=gsec();
- if(!p){const C=CROPS[gv.seed];if(!C)return;if(C.p>0&&!own('crop:'+gv.seed))return toast('Сначала открой эти семена 🔒');gvVib();return gvPut(i,gvRow(i,gv.seed,0,now,now))}
+ if(!p){const C=CROPS[gv.seed];if(!C)return;if(!bedOwned(FMZ[i>>2][0]))return toast('Сначала купи грядку 🔒');if(C.p>0&&!own('crop:'+gv.seed))return toast('Сначала открой эти семена 🔒');gvVib();return gvPut(i,gvRow(i,gv.seed,0,now,now))}
  const I=gvInfo(p,now);
  if(I.ready){const inv=gvInv();gvVib();toast('+'+GVY+' '+I.C.e+' в урожай');gvPut(i,null);return gvSetInv(p.crop,(inv[p.crop]||0)+GVY)}
  if(!I.moist)return gvWater(i);toast(I.C.n+': вырастет через '+gfmt(I.left)+' 🌱')};
@@ -3617,7 +3617,7 @@ function fmApply(R,live){
 /* Рендер без мерцания: разметка (структура) заменяется только когда меняется состояние,
    а полоски и числа обновляются на месте — поэтому тапы по кнопкам не «теряются» между тиками */
 function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
- const now=gsec(),M=fmModel(now),live={};
+ const now=gsec(),M=fmModel(now),live={};try{anTick(now)}catch(e){console.error('an-tick',e)}
  const W=(k,v)=>{live[k]=v==null?0:v;return`data-w="${k}" style="width:0%"`},H=(k,v)=>{live[k]=v==null?0:v;return`data-h="${k}" style="height:0%"`},T=(k,v)=>{live[k]=v;return`data-t="${k}"`};
  const set=(id,h)=>{const e=$(id);if(!e)return false;if(e._h===h)return false;e._h=h;e.innerHTML=h;return true};
  const bar=(k,c,v)=>`<div class="h-3 overflow-hidden rounded-full bg-stone-200/70 shadow-inner"><i class="block h-full rounded-full transition-[width] duration-700 ${c}" ${W(k,v)}></i></div>`;
@@ -3631,18 +3631,20 @@ function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
  set('fmStats',stat('bg-orange-100','🧺','s0','Урожай')+stat('bg-sky-100','💧','s1','Влажность')+stat('bg-emerald-100','💚','s2','Здоровье')+stat('bg-violet-100','✨','s3','Сбор'));
  /* карта сверху */
  const pets=fmPets(),hungry=pets.some(p=>p.sat!=null&&p.sat<35);
- const bed=z=>{const C=z.top&&CROPS[z.top],sel=gv.zone===z.id;
+ const bed=z=>{if(!bedOwned(z.id)){const sl=gv.zone===z.id;return`<button class="fmz fmz-lock${sl?' sel':''}" style="grid-area:${z.id}" onclick="fmZone('${z.id}')" aria-label="${z.nm} закрыта"><span class="lk">🔒</span><span class="fmz-n">${z.nm}</span><span class="fmz-s">${BEDP[z.id]} 🪙</span></button>`}const C=z.top&&CROPS[z.top],sel=gv.zone===z.id;
   return`<button class="fmz fmz-bed${sel?' sel':''}" style="grid-area:${z.id}" onclick="fmZone('${z.id}')" aria-pressed="${sel}" aria-label="${z.nm}"><span class="fmz-n">${z.nm}</span><span class="fmsoil">${z.a.map(x=>x.e?'<i class="fmc e"></i>':`<i class="fmc ${x.st}">${x.em}</i>`).join('')}</span><span class="fmz-s">${C?C.e+' '+C.n:'пусто'}</span><span class="fmbar"><b ${W('m'+z.id,z.prog)}></b></span>${z.rd.length?`<span class="fmbd">✨${z.rd.length}</span>`:z.dr.length?`<span class="fmbd">💧${z.dr.length}</span>`:''}</button>`};
  const selT=gv.zone==='tank',selP=gv.zone==='pen';
- set('fmMap',FMZ.map(z=>bed(M.zs[z[0]])).join('')
+ set('fmMap',FMZ.map(z=>bed(M.zs[z[0]])).join('')+anMapBtns(now)
   +`<button class="fmz fmz-tank${selT?' sel':''}" style="grid-area:wt" onclick="fmZone('tank')" aria-pressed="${selT}" aria-label="Резервуар с водой"><span class="fm-tank"><i ${H('tk',M.moist)}></i><b ${T('tkp',fmPct(M.moist))}></b></span><span class="fmz-n">Резервуар</span>${M.dry?`<span class="fmbd">💧${M.dry}</span>`:''}</button>`
-  +`<button class="fmz fmz-pen${selP?' sel':''}" style="grid-area:pen" onclick="fmZone('pen')" aria-pressed="${selP}" aria-label="Зона животных"><span class="fmz-n">Зона животных</span><span class="fm-pets">${pets.length?pets.slice(0,4).map((p,i)=>`<i class="fm-pet" style="animation-delay:-${(i*.55).toFixed(2)}s">${p.em}</i>`).join(''):'<i class="fm-pet">🐾</i>'}</span><span class="fmz-s">${pets.length?pets.length+' в комнате':'пока нет питомцев'}</span>${hungry?'<span class="fmbd">🍖</span>':''}</button>`);
+  +`<button class="fmz fmz-pen${selP?' sel':''}" style="grid-area:pen" onclick="fmZone('pen')" aria-pressed="${selP}" aria-label="Питомцы"><span class="fmz-n">Питомцы</span><span class="fm-pets">${pets.length?pets.slice(0,4).map((p,i)=>`<i class="fm-pet" style="animation-delay:-${(i*.55).toFixed(2)}s">${p.em}</i>`).join(''):'<i class="fm-pet">🐾</i>'}</span><span class="fmz-s">${pets.length?pets.length+' в комнате':'пока нет питомцев'}</span>${hungry?'<span class="fmbd">🍖</span>':''}</button>`);
  /* карточка выбранной зоны */
  const act=(c,txt,fn,dis)=>`<button class="fm-act bg-gradient-to-r ${c}" ${dis?'disabled':''} onclick="${fn}">${txt}</button>`;
  const meter=(ic,lb,k,c,v)=>`<div><div class="mb-1 flex justify-between text-xs font-bold text-stone-500"><span>${ic} ${lb}</span><span ${T(k+'t',fmPct(v))}></span></div>${bar(k,c,v)}</div>`;
  const head=(ic,bg,ttl,chip,cc)=>`<div class="flex items-center gap-3"><div class="grid h-14 w-14 shrink-0 place-items-center rounded-3xl ${bg} text-3xl shadow-lg">${ic}</div><div class="min-w-0 flex-1"><h3 class="truncate text-lg font-extrabold text-stone-700">${ttl}</h3><span class="mt-1 inline-block rounded-full px-2.5 py-1 text-xs font-bold ${cc}">${chip}</span></div></div>`;
  let card='';
- if(M.zs[gv.zone]){const z=M.zs[gv.zone],C=z.top&&CROPS[z.top],[ch,cc]=fmChip(z);
+ if(M.zs[gv.zone]&&!bedOwned(gv.zone)){card=head('🔒','bg-stone-100',M.zs[gv.zone].nm,'Закрыта','bg-stone-100 text-stone-500')+`<p class="mt-3 text-xs font-semibold text-stone-500">Грядку нужно купить: на ней 4 места для посадки.</p>`+act('from-emerald-200 to-lime-200','🪙 Купить грядку · '+BEDP[gv.zone],`anBuyBed('${gv.zone}')`)}
+  else if(AN_PEN[gv.zone]){card=anCard(gv.zone,now,W,T,head,act)}
+  else if(M.zs[gv.zone]){const z=M.zs[gv.zone],C=z.top&&CROPS[z.top],[ch,cc]=fmChip(z);
   const plots=z.a.map(x=>x.e?`<button class="fm-plot e" data-plot="${x.i}" onclick="gvTap(${x.i})" aria-label="Пустая грядка"><span class="text-2xl leading-none">＋</span><small>посадить</small></button>`
    :`<button class="fm-plot ${x.st}" data-plot="${x.i}" onclick="gvTap(${x.i})" aria-label="${x.C.n}"><span class="fm-pe">${x.em}</span>${x.st==='dry'?'<s class="fm-w">💧</s>':x.st==='rd'?'<s class="fm-w">✨</s>':''}<span class="fmbar"><b ${W('p'+x.i,x.pc)}></b></span><small ${T('pt'+x.i,x.st==='rd'?'собрать':x.st==='dry'?'полить':gfmt(x.left))}></small></button>`).join('');
   const seeds=Object.entries(CROPS).map(([k,c])=>{const lk=c.p>0&&!own('crop:'+k);return`<button class="fm-seed${gv.seed===k?' on':''}" onclick="gvSeed('${k}')"><span class="block text-2xl leading-none">${c.e}</span><b class="mt-1 block text-[11px]">${c.n}</b><small class="block text-[10px] opacity-70">${lk?'🔒 '+c.p+' 🪙':c.g+' мин'}</small></button>`}).join('');
@@ -3658,7 +3660,7 @@ function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
   const sats=pets.filter(p=>p.sat!=null).map(p=>p.sat),av=fmAvg(sats);
   const food=ks.length?ks.map(k=>{const c=CROPS[k];return`<button class="fm-seed${gv.feed===k?' on':''}" onclick="fmPick('${k}')"><span class="block text-2xl leading-none">${c.e}</span><b class="mt-1 block text-[11px]">×${M.inv[k]}</b><small class="block text-[10px] opacity-70">🍖+${c.s} 💗+${c.m}</small></button>`}).join(''):'<p class="w-full py-3 text-center text-xs font-semibold text-stone-500">Урожая пока нет — собери овощи на грядках 🧺</p>';
   const list=pets.length?pets.map(p=>`<div class="flex items-center gap-3 rounded-3xl bg-orange-50 p-3 shadow-lg"><span class="text-3xl leading-none">${p.em}</span><div class="min-w-0 flex-1"><div class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${esc(p.nm)}${p.st!=='idle'?' · 💤':''}</span><span ${T('pp'+p.id,'🍖 '+fmPct(p.sat))}></span></div><div class="mt-1 h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ps'+p.id,p.sat)}></i></div></div><button class="rounded-2xl bg-pink-200 px-3 py-2 text-xs font-extrabold text-pink-900 shadow-lg disabled:opacity-40" ${gv.feed&&p.st==='idle'?'':'disabled'} onclick="gvFeedPet('${p.id}')">Покормить</button></div>`).join(''):'<p class="py-3 text-center text-xs font-semibold text-stone-500">В комнате нет питомцев 🐾</p>';
-  card=head('🐾','bg-orange-100','Зона животных',av==null?'Питомцев нет':hungry?'Кто-то проголодался 🥺':'Все довольны 😌',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
+  card=head('🐾','bg-orange-100','Питомцы',av==null?'Питомцев нет':hungry?'Кто-то проголодался 🥺':'Все довольны 😌',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
    +`<p class="mb-1 mt-4 text-xs font-bold text-stone-500">Чем кормим</p><div class="fm-row">${food}</div><div class="mt-2 space-y-2">${list}</div>`}
  else{const gw=M.wet+M.dry;
   card=head('💧','bg-sky-100','Резервуар с водой',M.dry?'Нужно полить: '+M.dry:M.planted?'Воды хватает 💙':'Грядки пока пусты',M.dry?'bg-sky-100 text-sky-800':'bg-emerald-100 text-emerald-800')
@@ -3736,6 +3738,96 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 setInterval(async()=>{try{if(document.hidden||cur!=='loveroom'||lr.k!=='veg'||lr.edit||gv.open)return;const ps=window.petsOf?petsOf():[];if(!ps.length)return;
  const sl=gvSlots(),now=gsec(),i=sl.findIndex(p=>p&&(()=>{const I=gvInfo(p,now);return !I.ready&&!I.moist})());if(i<0)return;
  if(await gvWater(i,true)){const p=ps[Math.floor(Math.random()*ps.length)];try{sayP(p[0],'Полил грядку 💦')}catch{}toast((p[2]||'Питомец')+' полил грядку 💦')}}catch(e){console.error('veg-pets',e)}},25000);
+
+/* ===== Ферма: платные грядки и загоны, больше семян, животные ===== */
+Object.assign(CROPS,{
+ lettuce:{e:'🥬',n:'Салат',g:15,w:6,p:40,s:14,m:1},wheat:{e:'🌾',n:'Пшеница',g:20,w:8,p:50,s:20,m:1},peas:{e:'🫛',n:'Горох',g:22,w:8,p:55,s:16,m:2},
+ cucumber:{e:'🥒',n:'Огурец',g:25,w:10,p:60,s:16,m:2},onion:{e:'🧅',n:'Лук',g:28,w:10,p:70,s:14,m:1},garlic:{e:'🧄',n:'Чеснок',g:32,w:12,p:80,s:10,m:2},
+ pepper:{e:'🌶️',n:'Перец',g:35,w:12,p:90,s:10,m:6},broccoli:{e:'🥦',n:'Брокколи',g:40,w:14,p:100,s:20,m:2},eggplant:{e:'🍆',n:'Баклажан',g:50,w:15,p:110,s:22,m:3},
+ sunflower:{e:'🌻',n:'Подсолнух',g:50,w:16,p:120,s:12,m:8},mushroom:{e:'🍄',n:'Грибы',g:55,w:18,p:140,s:18,m:5},cherry:{e:'🍒',n:'Вишня',g:65,w:20,p:170,s:12,m:9},
+ grapes:{e:'🍇',n:'Виноград',g:70,w:22,p:180,s:18,m:7},pear:{e:'🍐',n:'Груша',g:70,w:22,p:180,s:20,m:6},peach:{e:'🍑',n:'Персик',g:75,w:24,p:190,s:20,m:7},
+ lemon:{e:'🍋',n:'Лимон',g:80,w:26,p:210,s:10,m:4},banana:{e:'🍌',n:'Банан',g:95,w:30,p:240,s:28,m:6},pineapple:{e:'🍍',n:'Ананас',g:110,w:36,p:280,s:26,m:8}});
+const BEDP={b0:60,b1:150,b2:300};
+const bedOwned=id=>{if(own('bed:'+id))return true;const z=FMZ.find(q=>q[0]===id);if(!z)return false;const sl=gvSlots();return z[2].some(i=>sl[i])};
+window.anBuyBed=id=>buy('bed:'+id,BEDP[id],()=>{gvRender()});
+window.anBuyPen=id=>buy('pen:'+id,PENS[id].price,()=>{gvRender()});
+const SPC={
+ chicken:{e:'🐔',n:'Курица',egg:25,top:80,hat:15,gr:[30,90],H:6,cool:30},duck:{e:'🦆',n:'Утка',egg:35,top:110,hat:20,gr:[40,110],H:6,cool:40},
+ rabbit:{e:'🐰',n:'Кролик',egg:45,top:140,hat:20,gr:[40,120],H:8,cool:40},sheep:{e:'🐑',n:'Овца',egg:80,top:260,hat:30,gr:[60,180],H:10,cool:60},
+ pig:{e:'🐖',n:'Свинья',egg:120,top:380,hat:40,gr:[90,240],H:10,cool:80},cow:{e:'🐄',n:'Корова',egg:200,top:650,hat:60,gr:[120,360],H:12,cool:120}};
+const PENS={p0:{n:'Курятник',e:'🐔',price:120,cap:5,sp:['chicken','duck']},p1:{n:'Загон',e:'🐑',price:260,cap:4,sp:['rabbit','sheep']},p2:{n:'Хлев',e:'🐄',price:480,cap:3,sp:['pig','cow']}};
+const AN_PEN=PENS,STF=[.3,.6,1],STN=['Малыш','Подросток','Взрослый'];
+const anDay=()=>Math.floor(Date.now()/864e5);
+const anHash=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return(h>>>0)/4294967295};
+const anReal=(sp,st,d)=>Math.max(1,Math.round(SPC[sp].top*STF[st]*(0.7+0.8*anHash(sp+':'+d))));
+const anChance=(ask,real)=>{const r=ask/real;return Math.max(.04,Math.min(.97,r<=1?r:1-(r-1)*2.2))};
+const anRows=()=>{const A=[],E=[];lr.items.forEach(r=>{const t=String(r.item),a=t.split(':');
+ if(a[0]==='_an'&&a.length>=9&&SPC[a[2]])A.push({id:a[1],sp:a[2],born:+a[3],until:+a[4],pen:a[5],cd:+a[6],ad:+a[7],ac:+a[8],item:t});
+ else if(a[0]==='_eg'&&a.length>=5&&SPC[a[2]])E.push({id:a[1],sp:a[2],t0:+a[3],pen:a[4],item:t})});return{A,E}};
+const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}`;
+const anEgRow=e=>`_eg:${e.id}:${e.sp}:${e.t0}:${e.pen}`;
+const anEff=(a,now)=>Math.max(0,now-a.born-Math.max(0,now-a.until));
+const anStage=(a,now)=>{const g=SPC[a.sp].gr,m=anEff(a,now)/60;return m>=g[1]?2:m>=g[0]?1:0};
+const anSat=(a,now)=>Math.max(0,Math.min(100,(a.until-now)/(SPC[a.sp].H*3600)*100));
+async function anPut(add,del){if(del)lr.items=lr.items.filter(i=>i.item!==del);let row=null;
+ if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row)}
+ gvRender();if(row)await lrSave(row);if(del&&del!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',del)}
+async function fmSpend(n,why){const {data,error}=await sb.rpc('couple_shop_buy',{p_room:S.room,p_item:'hint:'+why+Date.now(),p_price:n});
+ if(error){toast(error.message==='poor'?'Не хватает монет 🪙':error.message);return false}
+ S.wal.coins=data.coins;S.wal.owned=(data.owned||[]).filter(k=>k.slice(0,5)!=='hint:');try{drawX()}catch{}return true}
+async function fmEarn(n,why){n=Math.round(n);let left=n,last=null;while(left>0){const k=Math.min(500,left),{data,error}=await sb.rpc('couple_coin_add',{p_room:S.room,p_amount:k});if(error){toast(error.message);break}last=data;left-=k}
+ if(last!=null){S.wal.coins=last;toast('+'+(n-left)+' 🪙 '+why);try{drawX()}catch{}}}
+const anBusy=new Set();
+function anTick(now){const {E}=anRows();E.forEach(e=>{const C=SPC[e.sp],born=e.t0+C.hat*60;if(now<born||anBusy.has(e.id))return;anBusy.add(e.id);
+ anPut(anRow({id:e.id,sp:e.sp,born,until:born+Math.round(C.H*1800),pen:e.pen,cd:0,ad:0,ac:0}),e.item).then(()=>toast('Вылупился '+C.e+' '+C.n.toLowerCase()+'!')).finally(()=>anBusy.delete(e.id))})}
+const anCount=(pid)=>{const {A,E}=anRows();return A.filter(a=>a.pen===pid).length+E.filter(e=>e.pen===pid).length};
+window.anBuyEgg=async sp=>{if(gv.busy)return;const C=SPC[sp],pid=Object.keys(PENS).find(k=>PENS[k].sp.includes(sp));if(!own('pen:'+pid))return;
+ if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');if(cn()<C.egg)return toast('Не хватает монет 🪙');
+ gv.busy=true;try{if(!await fmSpend(C.egg,'egg'))return;await anPut(anEgRow({id:Math.random().toString(36).slice(2,8),sp,t0:gsec(),pen:pid}),null);toast('Яйцо 🥚 в загоне — вылупится через '+C.hat+' мин')}finally{gv.busy=false;gvRender()}};
+window.anFeed=async(id,quiet)=>{const {A}=anRows(),a=A.find(x=>x.id===id),c=gv.feed;if(!a)return false;if(!CROPS[c])return toast('Выбери еду из урожая 🧺'),false;
+ const inv=gvInv();if(!(inv[c]>0))return toast('Такого урожая нет'),false;const now=gsec(),H=SPC[a.sp].H*3600;
+ if(anSat(a,now)>=95){if(!quiet)toast('Уже сытый 😌');return false}
+ const n=Object.assign({},a);if(n.until<now){n.born+=now-n.until;n.until=now}
+ n.until=Math.min(now+H,n.until+Math.round(CROPS[c].s/100*H*2));
+ await gvSetInv(c,inv[c]-1);await anPut(anRow(n),a.item);return true};
+window.anFeedAll=async pid=>{if(gv.busy)return;gv.busy=true;try{const {A}=anRows();let n=0;for(const a of A.filter(x=>x.pen===pid&&anSat(x,gsec())<80)){if(await anFeed(a.id,true))n++;else break}toast(n?'Накормлено: '+n+' 🍽️':'Кормить некого или нет урожая')}finally{gv.busy=false;gvRender()}};
+window.anBreed=async pid=>{if(gv.busy)return;const now=gsec(),{A}=anRows();if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');
+ const by={};A.filter(a=>a.pen===pid&&anStage(a,now)===2&&a.cd<=now&&anSat(a,now)>0).forEach(a=>(by[a.sp]=by[a.sp]||[]).push(a));
+ const sp=Object.keys(by).find(k=>by[k].length>=2);if(!sp)return toast('Нужна пара взрослых сытых животных одного вида, не на отдыхе');
+ gv.busy=true;try{const [p1,p2]=by[sp],cd=now+SPC[sp].cool*60;await anPut(anRow(Object.assign({},p1,{cd})),p1.item);await anPut(anRow(Object.assign({},p2,{cd})),p2.item);
+  await anPut(anEgRow({id:Math.random().toString(36).slice(2,8),sp,t0:now,pen:pid}),null);toast('Появилось яйцо 🥚 · пара отдыхает '+SPC[sp].cool+' мин')}finally{gv.busy=false;gvRender()}};
+window.anSellOpen=id=>{const a=anRows().A.find(x=>x.id===id);if(!a)return;if(gv.sell===id){gv.sell=null;return gvRender()}gv.sell=id;gv.ask=Math.round(SPC[a.sp].top*STF[anStage(a,gsec())]);gvRender()};
+window.anAsk=v=>{gv.ask=Math.max(0,Math.min(99999,Math.round(+v)||0))};
+window.anSell=async()=>{if(gv.busy)return;const a=anRows().A.find(x=>x.id===gv.sell);if(!a)return;const now=gsec(),d=anDay(),ac=a.ad===d?a.ac:0;
+ if(ac>=3)return toast('Сегодня покупатели больше не придут 🌙');const ask=gv.ask;if(!(ask>0))return toast('Укажи цену');
+ const ok=Math.random()<anChance(ask,anReal(a.sp,anStage(a,now),d));gv.busy=true;
+ try{if(ok){gv.sell=null;await anPut(null,a.item);toast(SPC[a.sp].e+' продан(а) за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
+  else{await anPut(anRow(Object.assign({},a,{ad:d,ac:ac+1})),a.item);toast('Покупатель отказался — цена не подошла 🤷 Попыток сегодня: '+(2-ac))}}
+ finally{gv.busy=false;gvRender()}};
+function anMapBtns(now){const {A,E}=anRows();return Object.keys(PENS).map(pid=>{const P=PENS[pid],sel=gv.zone===pid;
+ if(!own('pen:'+pid))return`<button class="fmz fmz-lock${sel?' sel':''}" style="grid-area:${pid}" onclick="fmZone('${pid}')" aria-label="${P.n} закрыт"><span class="lk">🔒</span><span class="fmz-n">${P.n}</span><span class="fmz-s">${P.price} 🪙</span></button>`;
+ const mine=A.filter(a=>a.pen===pid),eg=E.filter(e=>e.pen===pid).length,hun=mine.some(a=>anSat(a,now)<25);
+ return`<button class="fmz fmz-an${sel?' sel':''}" style="grid-area:${pid}" onclick="fmZone('${pid}')" aria-label="${P.n}"><span class="fmz-n">${P.n}</span><span class="fm-pets">${mine.length||eg?mine.slice(0,3).map(a=>`<i class="fm-pet" style="font-size:${[15,19,24][anStage(a,now)]}px">${SPC[a.sp].e}</i>`).join('')+(eg?'<i class="fm-pet" style="font-size:16px">🥚</i>':''):'<i class="fm-pet" style="opacity:.4">'+P.e+'</i>'}</span><span class="fmz-s">${mine.length+eg}/${P.cap}${hun?' · 🍽️':''}</span></button>`}).join('')}
+function anCard(pid,now,W,T,head,act){const P=PENS[pid];
+ if(!own('pen:'+pid))return head(P.e,'bg-amber-100',P.n,'Закрыт 🔒','bg-stone-100 text-stone-500')
+  +`<p class="mt-3 text-xs font-semibold text-stone-500">Живут здесь: ${P.sp.map(k=>SPC[k].e+' '+SPC[k].n).join(', ')}. Мест: ${P.cap}. Животных заводят только из яиц, а яйца продаются в своём загоне.</p>`
+  +act('from-amber-200 to-orange-200','🪙 Купить · '+P.price,`anBuyPen('${pid}')`);
+ const {A,E}=anRows(),mine=A.filter(a=>a.pen===pid),eggs=E.filter(e=>e.pen===pid),inv=gvInv(),ks=Object.keys(inv).filter(k=>inv[k]>0&&CROPS[k]);
+ if(!gv.feed||!(inv[gv.feed]>0))gv.feed=ks[0]||null;
+ const hungry=mine.some(a=>anSat(a,now)<25),cnt=mine.length+eggs.length;
+ const eggBtns=P.sp.map(k=>{const C=SPC[k];return`<button class="fm-seed" onclick="anBuyEgg('${k}')"><span class="block text-2xl leading-none">🥚${C.e}</span><b class="mt-1 block text-[11px]">${C.n}</b><small class="block text-[10px] opacity-70">${C.egg} 🪙 · ${C.hat}м</small></button>`}).join('');
+ const food=ks.length?ks.map(k=>`<button class="fm-seed${gv.feed===k?' on':''}" onclick="fmPick('${k}')"><span class="block text-2xl leading-none">${CROPS[k].e}</span><b class="mt-1 block text-[11px]">×${inv[k]}</b></button>`).join(''):'<p class="w-full py-3 text-center text-xs font-semibold text-stone-500">Корма нет — вырасти урожай на грядках 🧺</p>';
+ const list=mine.map(a=>{const C=SPC[a.sp],st=anStage(a,now),sat=Math.round(anSat(a,now)),d=anDay(),ac=a.ad===d?a.ac:0,rest=a.cd>now;
+  return`<div class="rounded-3xl bg-orange-50 p-3 shadow-lg"><div class="flex items-center gap-3"><span class="w-9 text-center leading-none" style="font-size:${[22,30,38][st]}px">${C.e}</span>
+   <div class="min-w-0 flex-1"><div class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${STN[st]}${rest&&st===2?' · 💤':''}</span><span ${T('as'+a.id,'🍖 '+sat+'%')}></span></div><div class="mt-1 h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ab'+a.id,sat)}></i></div></div>
+   <button class="rounded-2xl bg-pink-200 px-3 py-2 text-xs font-extrabold text-pink-900 shadow" onclick="anFeed('${a.id}')">🍽️</button><button class="rounded-2xl bg-amber-200 px-3 py-2 text-xs font-extrabold text-amber-900 shadow" onclick="anSellOpen('${a.id}')">💰</button></div>`
+   +(gv.sell===a.id?`<div class="mt-3 flex gap-2"><input type="number" inputmode="numeric" min="1" value="${gv.ask}" oninput="anAsk(this.value)" class="min-w-0 flex-1 rounded-2xl bg-white px-3 py-2 text-sm font-bold text-stone-700 shadow" aria-label="Цена"><button class="rounded-2xl bg-emerald-200 px-3 py-2 text-xs font-extrabold text-emerald-900 shadow" onclick="anSell()">Предложить</button></div><p class="mt-1 text-[10px] font-semibold text-stone-500">Назови свою цену: покупатель согласится не всегда. Попыток сегодня: ${3-ac}</p>`:'')+`</div>`}).join('');
+ const egl=eggs.map(e=>{const C=SPC[e.sp],left=e.t0+C.hat*60-now;return`<div class="flex items-center gap-3 rounded-3xl bg-amber-50 p-3 shadow-lg"><span class="text-2xl">🥚</span><span class="flex-1 text-xs font-bold text-stone-600">Яйцо: ${C.n.toLowerCase()}</span><span class="text-xs font-bold text-stone-500" ${T('eg'+e.id,left>0?gfmt(left):'вылупляется…')}></span></div>`}).join('');
+ return head(P.e,'bg-amber-100',P.n,cnt?(hungry?'Кто-то голоден 🥺':'Все сыты 😌'):'Пока пусто',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
+  +`<p class="mb-1 mt-4 text-xs font-bold text-stone-500">Купить яйцо · мест ${cnt}/${P.cap}</p><div class="fm-row">${eggBtns}</div>`
+  +`<p class="mb-1 mt-2 text-xs font-bold text-stone-500">Чем кормим</p><div class="fm-row">${food}</div>`
+  +`<div class="mt-2 grid grid-cols-2 gap-2"><button class="rounded-2xl bg-gradient-to-r from-orange-200 to-amber-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anFeedAll('${pid}')">🍽️ Накормить всех</button><button class="rounded-2xl bg-gradient-to-r from-pink-200 to-rose-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBreed('${pid}')">💞 Развести</button></div>`
+  +`<div class="mt-3 space-y-2">${list}${egl}</div>`}
 }catch(e){console.error('room-v2',e)}})();
 
 </script>
