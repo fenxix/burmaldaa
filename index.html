@@ -3785,13 +3785,17 @@ const anEff=(a,now)=>Math.max(0,now-a.born-Math.max(0,now-a.until));
 const anStage=(a,now)=>{const g=SPC[a.sp].gr,m=anEff(a,now)/60;return m>=g[1]?2:m>=g[0]?1:0};
 const anSat=(a,now)=>Math.max(0,Math.min(100,(a.until-now)/(SPC[a.sp].H*3600)*100));
 /* все изменения идут по одной очереди, поэтому быстрые тапы не создают копий */
-let anQ=Promise.resolve();const anRun=fn=>{anQ=anQ.then(fn).catch(e=>console.error('an-op',e));return anQ};
+let anQ=Promise.resolve();const anRun=fn=>{anQ=anQ.then(()=>Promise.race([Promise.resolve().then(fn),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),20000))])).catch(e=>console.error('an-op',e));return anQ};
 const anItems=id=>lr.items.filter(i=>String(i.item).startsWith('_an:'+id+':')).map(i=>i.item);
-async function anWrite(add,dels){let row=null;
+const anPut=async r=>{try{const {error}=await sb.from(gDB).upsert({room_id:S.room,item:r.item,x:0,y:0,scale:1,flip:false,updated_by:S.uid,updated_at:new Date().toISOString()},{onConflict:'room_id,item'});if(error){toast('Не сохранилось: '+error.message);return false}return true}catch(e){toast('Нет связи с базой');return false}};
+/* старые строки удаляются только после того, как новая точно сохранилась */
+async function anWrite(add,dels){let row=null;const prev=lr.items.slice();
  if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row);lrPendSet(add,row)}
  dels.forEach(d=>{if(d!==add){lr.items=lr.items.filter(i=>i.item!==d);lrPendSet(d,null)}});
- gvRender();if(row)await lrSave(row);
- for(const d of dels)if(d!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',d)}
+ gvRender();
+ if(row&&!await anPut(row)){lr.items=prev;lrPendSet(add,prev.find(i=>i.item===add)||null);dels.forEach(d=>{if(d!==add)lrPendSet(d,prev.find(i=>i.item===d)||null)});gvRender();return false}
+ for(const d of dels)if(d!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',d);
+ return true}
 const anSave=a=>anWrite(anRow(Object.assign({},a,{v:(a.v||0)+1})),anItems(a.id));
 const anDel=id=>{anGone.set(id,Date.now()+60000);return anWrite(null,anItems(id))};
 const bookMask=sp=>{const r=lr.items.find(i=>i.item==='_book:'+sp);return r?Math.max(0,Math.round(+r.x||0)):0};
@@ -3820,7 +3824,7 @@ async function anFeedOne(id,quiet){const a=anRows().A.find(x=>x.id===id),c=gv.fe
  const inv=gvInv();if(!(inv[c]>0)){if(!quiet)toast('Такого урожая нет');return false}const now=gsec(),H=SPC[a.sp].H*3600;
  if(anSat(a,now)>=95){if(!quiet)toast('Уже сытый 😌');return false}
  const n=Object.assign({},a);if(n.until<now){n.born+=now-n.until;n.until=now}n.until=Math.min(now+H,n.until+Math.round(CROPS[c].s/100*H*2));
- await gvSetInv(c,inv[c]-1);await anSave(n);return true}
+ if(await anSave(n)===false)return false;await gvSetInv(c,inv[c]-1);return true}
 window.anFeed=id=>anRun(()=>anFeedOne(id));
 window.anFeedAll=pid=>anRun(async()=>{let n=0;for(const a of anRows().A.filter(x=>x.pen===pid&&anSat(x,gsec())<80)){if(await anFeedOne(a.id,true))n++;else break}toast(n?'Накормлено: '+n+' 🍽️':'Кормить некого или нет урожая')});
 window.anPickFeed=k=>{gv.feed=k;anLast='';gvRender()};
@@ -3829,26 +3833,28 @@ window.anBreed=pid=>anRun(async()=>{const now=gsec(),{A}=anRows();if(anCount(pid
  const sp=Object.keys(by).find(k=>by[k].length>=2);if(!sp)return toast('Нужна пара взрослых сытых животных одного вида, не на отдыхе');
  const [p1,p2]=by[sp],cd=now+SPC[sp].cool*60,id=rid(),r=anHash('b'+id),vi=r<.3?p1.vi:r<.6?p2.vi:-1;
  await anSave(Object.assign({},p1,{cd}));await anSave(Object.assign({},p2,{cd}));await anWrite(anEgRow({id,sp,t0:now,pen:pid,vi}),[]);toast('Появилось яйцо 🥚 · пара отдыхает '+SPC[sp].cool+' мин')});
-const anSaleCd=new Map();
+const anSaleCd=new Map(),anLogKey='bm_salelog';
+const anLog=e=>{try{const a=JSON.parse(localStorage.getItem(anLogKey)||'[]');a.unshift(Object.assign({t:Date.now()},e));localStorage.setItem(anLogKey,JSON.stringify(a.slice(0,8)))}catch{}};
+const anLogGet=()=>{try{return JSON.parse(localStorage.getItem(anLogKey)||'[]')}catch{return[]}};
 async function anResolveSale(id,s0){const cur=anRows().A.find(x=>x.id===id);if(!cur||!(cur.se>0)||cur.s0!==s0||gsec()<cur.se)return;
  const sold=anHash('r'+id+':'+s0)<cur.sc/100,ask=cur.sa;
- if(!sold){await anSave(Object.assign({},cur,{sa:0,s0:0,se:0,sc:0}));toast('Никто не купил: '+vTitle(cur.sp,cur.vi)+' вернулась в загон 😕');anLast='';return}
+ if(!sold){if(await anSave(Object.assign({},cur,{sa:0,s0:0,se:0,sc:0}))===false)return;anLog({sp:cur.sp,vi:cur.vi,sa:ask,sc:cur.sc,r:'no'});toast('Никто не купил: '+vTitle(cur.sp,cur.vi)+' за '+ask+' 🪙 (шанс был '+cur.sc+'%) — вернулась в загон 😕');anLast='';return}
  /* «забираем» строку на сервере: платит только то устройство, которому удалось её удалить */
  let cl;try{const r=await sb.from(gDB).delete().eq('room_id',S.room).eq('item',cur.item).select();cl=r.error?'err':(r.data&&r.data.length?'ok':'no')}catch(e){cl='err'}
  if(cl==='no'){anSaleCd.set(id+':'+s0,Date.now()+20000);return}
  if(cl==='err')await sb.from(gDB).delete().eq('room_id',S.room).eq('item',cur.item);
  anGone.set(id,Date.now()+60000);const rest=anItems(id);lr.items=lr.items.filter(i=>!String(i.item).startsWith('_an:'+id+':'));rest.forEach(i=>lrPendSet(i,null));
  for(const i of rest)if(i!==cur.item)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',i);
- gvRender();toast('🏷️ '+vTitle(cur.sp,cur.vi)+' продана за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
+ gvRender();anLog({sp:cur.sp,vi:cur.vi,sa:ask,sc:cur.sc,r:'sold'});toast('🏷️ '+vTitle(cur.sp,cur.vi)+' продана за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
 window.anSellOpen=()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||a.se>0)return;gv.sellOn=!gv.sellOn;gv.msg='';gv.ask=0;anLast='';anSheetDraw(gsec())};
 window.anAsk=v=>{gv.ask=Math.max(0,Math.min(99999,Math.round(+v)||0))};
 window.anSell=()=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a||a.se>0)return;const now=gsec(),d=anDay(),ac=a.ad===d?a.ac:0;
  if(ac>=3){gv.msg='Сегодня покупатели больше не придут 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Впиши свою цену');
  const p=anChance(ask,anReal(a.sp,a.vi,anStage(a,now),d)),sc=Math.round(p*100),wait=Math.round((120+900*anHash('t'+a.id+':'+now))*(1.6-p));
+ if(await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+wait,sc}))===false){anLast='';return anSheetDraw(gsec())}
  gv.sellOn=false;gv.msg='';gv.ask=0;
- await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+wait,sc}));
  toast('🏷️ Выставлено за '+ask+' 🪙 · шанс '+sc+'% · решение через '+gfmt(wait));anLast='';anSheetDraw(gsec())});
-window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0}));toast('Снято с продажи ↩️');anLast='';anSheetDraw(gsec())});
+window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;if(await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0}))===false)return;toast('Снято с продажи ↩️');anLast='';anSheetDraw(gsec())});
 /* ---- карточка животного и книга ---- */
 let anMode=null,anSel=null,anLast='';
 function anEnsure(){if($('anSheet'))return;const st=document.createElement('style');st.textContent=`#anSheet{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(25,12,35,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}#anSheet.on{display:flex}
@@ -3877,9 +3883,10 @@ function anSheetHtml(a,now){const C=SPC[a.sp],T=TIER[VT[a.vi]],st=anStage(a,now)
  <div class="gr"><div class="st" style="grid-column:1/3"><span>Сытость</span><b id="anD-sat"></b><div class="bar"><i id="anD-bar" style="width:0%"></i></div></div>
  ${stat('Возраст','','anD-age')}${stat('До взросления','','anD-next')}${stat('Разведение','','anD-br')}${stat('Жильё',PENS[a.pen]?PENS[a.pen].n:'—')}${stat('Яйцо стоило',C.egg+' 🪙')}${stat('Выставлений сегодня',(3-ac)+' из 3')}</div>
  <div class="fd">${food}</div><div class="bt"><button class="b f" onclick="anFeed('${a.id}')">🍽️ Кормить</button><button class="b s" onclick="${onSale?`anUnlist('${a.id}')`:'anSellOpen()'}">${onSale?'↩️ Снять с продажи':'💰 '+(gv.sellOn?'Скрыть':'Продать')}</button></div>${sell}`}
-function saleHtml(now){const L=anRows().A.filter(a=>a.se>0).sort((x,y)=>x.se-y.se);
+function saleHtml(now){const L=anRows().A.filter(a=>a.se>0).sort((x,y)=>x.se-y.se),H=anLogGet().filter(e=>SPC[e.sp]),
+ hist=H.length?`<p style="font-size:11px;font-weight:800;opacity:.6;margin:14px 2px 6px">Недавно</p>`+H.map(e=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:5px 2px">${vEm(e.sp,e.vi,18)}<span>${vTitle(e.sp,e.vi)} — ${e.r==='sold'?'<b style="color:#047857">продана за '+e.sa+' 🪙</b>':'<b style="color:#b45309">не купили</b> (просили '+e.sa+' 🪙, шанс '+e.sc+'%)'}</span></div>`).join(''):'';
  const rows=L.map(a=>`<div class="bk" style="display:flex;align-items:center;gap:10px"><div onclick="anOpen('${a.id}')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">${vEm(a.sp,a.vi,34)}<div style="min-width:0"><b style="font-size:14px;display:block">${vTitle(a.sp,a.vi)}</b><span style="font-size:12px;font-weight:700;opacity:.75">${a.sa} 🪙 · шанс ${a.sc}% · ${a.se>now?'ещё '+gfmt(a.se-now):'решается…'}</span></div></div><button class="x" onclick="anUnlist('${a.id}')" aria-label="Снять с продажи">↩️</button></div>`).join('');
- return`<div class="hd"><div style="flex:1"><b style="font-size:20px">🏷️ Животные на продаже</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">${L.length?'Покупатель решает не сразу — у каждого свой шанс и время':'Пока никого не выставили'}</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${rows||'<p style="font-size:13px;font-weight:700;opacity:.6;text-align:center;padding:18px 0">Открой животное в загоне и нажми «Продать»</p>'}</div>`}
+ return`<div class="hd"><div style="flex:1"><b style="font-size:20px">🏷️ Животные на продаже</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">${L.length?'Покупатель решает не сразу — у каждого свой шанс и время':'Пока никого не выставили'}</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${rows||'<p style="font-size:13px;font-weight:700;opacity:.6;text-align:center;padding:18px 0">Открой животное в загоне и нажми «Продать»</p>'}</div>${hist}`}
 function bookHtml(){let tot=0,got=0;const secs=Object.keys(SPC).map(sp=>{const m=bookMask(sp);let n=0;
  const cells=VN[sp].map((nm,i)=>{tot++;const T=TIER[VT[i]];if(m&(1<<i)){n++;got++;return`<div class="bc" style="border-color:${T.c}">${vEm(sp,i,32)}<small>${nm}</small><small style="color:${T.c}">${T.n}</small></div>`}
   return`<div class="bc off"><span style="font-size:32px;line-height:1;filter:grayscale(1) brightness(.4)">${SPC[sp].e}</span><small>???</small></div>`}).join('');
@@ -4611,11 +4618,33 @@ const SKINS=[
 ['ocean','Океан',['#a5f3fc,#06b6d4','#93c5fd,#3b82f6','#67e8f9,#0891b2','#5eead4,#0d9488','#bae6fd,#0284c7','#c7d2fe,#6366f1','#99f6e4,#14b8a6','#7dd3fc,#1d4ed8'],'rgba(6,60,100,.45)',''],
 ['sunset','Закат',['#fecaca,#ef4444','#fed7aa,#f97316','#fde68a,#f59e0b','#fbcfe8,#ec4899','#ddd6fe,#a855f7','#fdba74,#ea580c','#fda4af,#e11d48','#fcd34d,#d97706'],'rgba(90,25,45,.45)',''],
 ['forest','Лес',['#bbf7d0,#16a34a','#d9f99d,#65a30d','#a7f3d0,#059669','#fde68a,#ca8a04','#fdba74,#c2410c','#d6d3d1,#78716c','#86efac,#15803d','#bef264,#4d7c0f'],'rgba(10,50,30,.5)',''],
-['ice','Лёд',['#f0f9ff,#7dd3fc','#e0f2fe,#38bdf8','#f1f5f9,#94a3b8','#e0e7ff,#818cf8','#ecfeff,#22d3ee','#f8fafc,#cbd5e1','#dbeafe,#60a5fa','#f5f3ff,#a78bfa'],'rgba(160,210,255,.14)','glass']
+['ice','Лёд',['#f0f9ff,#7dd3fc','#e0f2fe,#38bdf8','#f1f5f9,#94a3b8','#e0e7ff,#818cf8','#ecfeff,#22d3ee','#f8fafc,#cbd5e1','#dbeafe,#60a5fa','#f5f3ff,#a78bfa'],'rgba(160,210,255,.14)','glass'],
+['lava','Лава',['#fde047,#f97316','#fb923c,#dc2626','#f87171,#991b1b','#fbbf24,#b45309','#fca5a5,#e11d48','#fdba74,#c2410c','#facc15,#ea580c','#ef4444,#7f1d1d'],'#1c0605','glow'],
+['sakura','Сакура',['#fff1f2,#fda4af','#fce7f3,#f9a8d4','#ffe4e6,#fb7185','#fdf2f8,#f472b6','#fae8ff,#e879f9','#fef3c7,#fcd34d','#ecfccb,#a3e635','#e0f2fe,#7dd3fc'],'rgba(255,205,225,.2)','jelly'],
+['galaxy','Галактика',['#c084fc,#6d28d9','#818cf8,#312e81','#38bdf8,#1d4ed8','#f0abfc,#a21caf','#a78bfa,#4c1d95','#67e8f9,#0e7490','#fb7185,#9f1239','#fde68a,#b45309'],'#0a0822','glow'],
+['gold','Золото',['#fef08a,#ca8a04','#fde68a,#b45309','#fcd34d,#92400e','#fbbf24,#a16207','#fef9c3,#eab308','#fdba74,#b45309','#f5d0a9,#9a6b32','#fffbeb,#d97706'],'rgba(60,40,5,.55)','gem'],
+['mint','Мята',['#ccfbf1,#2dd4bf','#d1fae5,#34d399','#cffafe,#22d3ee','#ecfccb,#a3e635','#e0f2fe,#7dd3fc','#fef9c3,#facc15','#fce7f3,#f9a8d4','#ede9fe,#a78bfa'],'rgba(8,70,62,.4)','matte'],
+['pixel','Пиксели',['#ff6b81,#c0173a','#a78bfa,#5b21b6','#4cc9f0,#1565c0','#4ade80,#15803d','#a3e635,#4d7c0f','#facc15,#b45309','#fb923c,#c2410c','#f472b6,#9d174d'],'#101827','pixel'],
+['cyber','Киберпанк',['#ff2fd1,#ff2fd1','#00e5ff,#00e5ff','#d4ff00,#d4ff00','#ff7a00,#ff7a00','#7a5cff,#7a5cff','#00ff9d,#00ff9d','#ff3b6b,#ff3b6b','#ffe600,#ffe600'],'#050816','outline'],
+['choco','Шоколад',['#d6a77a,#7c4a21','#f5d0a9,#a0622d','#fbcfe8,#c2418a','#fde68a,#b7791f','#e7c9a9,#5b3a1e','#fecaca,#b45454','#bef264,#5e8a1e','#fff7ed,#9a7b5b'],'rgba(55,30,15,.6)','matte'],
+['aurora','Аврора',['#6ee7b7,#047857','#5eead4,#0f766e','#a5b4fc,#4338ca','#c4b5fd,#6d28d9','#67e8f9,#0e7490','#86efac,#15803d','#f0abfc,#86198f','#93c5fd,#1e40af'],'rgba(5,22,48,.65)','glass'],
+['berry','Ягоды',['#f9a8d4,#be185d','#d8b4fe,#7e22ce','#fda4af,#be123c','#c4b5fd,#5b21b6','#fbcfe8,#9d174d','#e9d5ff,#6b21a8','#fecdd3,#9f1239','#ddd6fe,#4c1d95'],'rgba(50,10,45,.55)','jelly'],
+['jewel','Самоцветы',['#34d399,#047857','#60a5fa,#1d4ed8','#f87171,#b91c1c','#c084fc,#7e22ce','#fbbf24,#b45309','#22d3ee,#0e7490','#f472b6,#be185d','#a3e635,#4d7c0f'],'rgba(10,10,30,.5)','gem'],
+['mono','Монохром',['#e5e7eb,#6b7280','#d1d5db,#4b5563','#f3f4f6,#9ca3af','#9ca3af,#374151','#ffffff,#d1d5db','#cbd5e1,#475569','#e2e8f0,#64748b','#a1a1aa,#27272a'],'rgba(0,0,0,.45)','matte']
 ];
 {let c='';SKINS.forEach(([id,,p,bg,fx])=>{if(id==='classic')return;const q=`html[data-bbs="${id}"] `;
- p.forEach((g,i)=>{const [a,b]=g.split(',');c+=`${q}.bb-c.k${i}{background:linear-gradient(145deg,${a},${b})${fx==='glow'?`;box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 0 10px ${b}`:''}${fx==='glass'?';box-shadow:inset 0 0 0 1px rgba(255,255,255,.8),inset 0 6px 8px rgba(255,255,255,.5),0 2px 6px rgba(0,0,0,.2)':''}}\n`});
+  const fxCss=(a,b)=>{const bg=`background:linear-gradient(145deg,${a},${b})`;
+   if(fx==='glow')return bg+`;box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 0 10px ${b}`;
+   if(fx==='glass')return bg+';box-shadow:inset 0 0 0 1px rgba(255,255,255,.8),inset 0 6px 8px rgba(255,255,255,.5),0 2px 6px rgba(0,0,0,.2)';
+   if(fx==='jelly')return bg+';box-shadow:inset 0 -5px 8px rgba(0,0,0,.2),inset 0 5px 7px rgba(255,255,255,.6),0 3px 6px rgba(0,0,0,.25)';
+   if(fx==='gem')return bg+';box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),inset 5px 5px 6px rgba(255,255,255,.35),inset -5px -5px 7px rgba(0,0,0,.3),0 2px 5px rgba(0,0,0,.3)';
+   if(fx==='pixel')return `background:${b};border-radius:2px;box-shadow:inset 3px 3px 0 ${a},inset -3px -3px 0 rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.5)`;
+   if(fx==='outline')return `background:linear-gradient(145deg,${a}30,${b}55);box-shadow:inset 0 0 0 2px ${b},inset 0 0 8px ${a}88,0 0 9px ${b}99`;
+   if(fx==='matte')return `background:${b};box-shadow:inset 0 -3px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.18)`;
+   return bg};
+  p.forEach((g,i)=>{const [a,b]=g.split(',');c+=`${q}.bb-c.k${i}{${fxCss(a,b)}}\n`});
  if(bg)c+=`${q}#blocks .bb-board{background:${bg}}\n`;
+ if(fx==='outline'||fx==='pixel')c+=`${q}.bb-c:not(.f){background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}\n`;
  if(fx==='glow')c+=`${q}.bb-c:not(.f){background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(160,100,255,.18)}\n`});
  const s2=document.createElement('style');s2.textContent=c;document.head.appendChild(s2)}
 const skinOk=id=>SKINS.some(x=>x[0]===id);
