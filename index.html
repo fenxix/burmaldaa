@@ -421,7 +421,11 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 const rmView=()=>{const k=lr.k,all=lr.all||[];
  const v=all.filter(r=>k==='main'?!String(r.item).includes('~'):String(r.item).startsWith(k+'~')).map(r=>k==='main'?r:{...r,item:r.item.slice(k.length+1)});
  if(k!=='main'&&!v.some(r=>String(r.item).startsWith('_theme:')))v.push({item:'_theme:'+RDEF[k],x:0,y:0,scale:1,flip:false,updated_at:''});return v};
-lrLoad=async function(){if(!S.room||lr.drag)return;const {data,error}=await sb.from(T).select('*').eq('room_id',S.room);if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}lr.all=data||[];lr.items=rmView();lrDraw()};
+const lrPend=new Map(),lrPendSet=(item,row)=>lrPend.set(lr.k+'|'+item,{row,ts:Date.now()});
+const lrMerge=v=>{const now=Date.now(),pre=lr.k+'|';lrPend.forEach((p,key)=>{if(now-p.ts>8000){lrPend.delete(key);return}if(!key.startsWith(pre))return;
+ const it=key.slice(pre.length),i=v.findIndex(r=>r.item===it);
+ if(p.row){if(i<0)v.push(p.row);else v[i]=p.row}else if(i>=0)v.splice(i,1)});return v};
+let lrSeq=0;lrLoad=async function(){if(!S.room||lr.drag)return;const my=++lrSeq;const {data,error}=await sb.from(T).select('*').eq('room_id',S.room);if(my!==lrSeq)return;if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}lr.all=data||[];lr.items=lrMerge(rmView());lrDraw()};
 window.rmGo=async k=>{const r=RM.find(x=>x[0]===k);if(!r)return;
  if(r[2]>0&&!own('rm:'+k)){await buy('rm:'+k,r[2],()=>{});if(!own('rm:'+k))return}
  lr.k=k;try{localStorage.setItem('lrk',k)}catch{}lr.sel=null;lr.edit=false;lr.items=[];await lrLoad()};
@@ -3561,8 +3565,8 @@ const gfmt=s=>{const m=Math.ceil(s/60);return m<=1?'<1м':m<60?m+'м':Math.floor
 const gvSlots=()=>{const m={};lr.items.forEach(r=>{const s=String(r.item);if(!s.startsWith('_plot:'))return;const a=s.split(':');if(a.length<6||!CROPS[a[2]])return;const o={slot:+a[1],crop:a[2],eff:+a[3]||0,t:+a[4]||0,m:+a[5]||0,item:s},c=m[o.slot];if(!c||o.t>c.t||(o.t===c.t&&o.m>c.m))m[o.slot]=o});return Array.from({length:12},(_,i)=>m[i]||null)};
 const gvInfo=(p,now)=>{const C=CROPS[p.crop],G=C.g*60,eff=Math.min(G,p.eff+Math.max(0,Math.min(now,p.m)-p.t)),ready=eff>=G;return{C,G,eff,ready,moist:!ready&&p.m>now,prog:eff/G,left:G-eff}};
 const gvInv=()=>{const o={};lr.items.forEach(r=>{const s=String(r.item);if(s.startsWith('_inv:')&&CROPS[s.slice(5)])o[s.slice(5)]=Math.max(0,Math.round(+r.x||0))});return o};
-const gvSetInv=(c,n)=>{const row={item:'_inv:'+c,x:Math.max(0,n),y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==row.item);lr.items.push(row);return lrSave(row)};
-const gvPut=async(slot,nr)=>{const olds=lr.items.filter(i=>String(i.item).startsWith('_plot:'+slot+':'));lr.items=lr.items.filter(i=>!olds.includes(i));if(nr)lr.items.push(nr);gvRender();
+const gvSetInv=(c,n)=>{const row={item:'_inv:'+c,x:Math.max(0,n),y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==row.item);lr.items.push(row);lrPendSet(row.item,row);return lrSave(row)};
+const gvPut=async(slot,nr)=>{const olds=lr.items.filter(i=>String(i.item).startsWith('_plot:'+slot+':'));lr.items=lr.items.filter(i=>!olds.includes(i));if(nr){lr.items.push(nr);lrPendSet(nr.item,nr)}olds.forEach(o=>{if(!nr||o.item!==nr.item)lrPendSet(o.item,null)});gvRender();
  if(nr)await lrSave(nr);for(const o of olds)if(!nr||o.item!==nr.item)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',o.item)};
 const gvRow=(slot,c,eff,t,m)=>({item:`_plot:${slot}:${c}:${eff}:${t}:${m}`,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()});
 const gvVib=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch{}};
@@ -3617,7 +3621,7 @@ function fmApply(R,live){
 /* Рендер без мерцания: разметка (структура) заменяется только когда меняется состояние,
    а полоски и числа обновляются на месте — поэтому тапы по кнопкам не «теряются» между тиками */
 function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
- const now=gsec(),M=fmModel(now),live={};try{anTick(now)}catch(e){console.error('an-tick',e)}
+ const now=gsec(),M=fmModel(now),live={};try{anTick(now);anSheetDraw(now)}catch(e){console.error('an-tick',e)}
  const W=(k,v)=>{live[k]=v==null?0:v;return`data-w="${k}" style="width:0%"`},H=(k,v)=>{live[k]=v==null?0:v;return`data-h="${k}" style="height:0%"`},T=(k,v)=>{live[k]=v;return`data-t="${k}"`};
  const set=(id,h)=>{const e=$(id);if(!e)return false;if(e._h===h)return false;e._h=h;e.innerHTML=h;return true};
  const bar=(k,c,v)=>`<div class="h-3 overflow-hidden rounded-full bg-stone-200/70 shadow-inner"><i class="block h-full rounded-full transition-[width] duration-700 ${c}" ${W(k,v)}></i></div>`;
@@ -3684,7 +3688,7 @@ window.fmDo=async k=>{if(gv.busy)return;const M=fmModel(gsec()),z=M.zs[gv.zone];
 function gvOpen(){let R=$('gv');if(!R){R=document.createElement('div');R.id='gv';R.className='gv';R.setAttribute('role','dialog');R.setAttribute('aria-label','Огород');
   R.innerHTML=`<div class="mx-auto flex h-full w-full max-w-[430px] flex-col"><div class="flex items-center gap-3 px-4 pb-2 pt-3"><button class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/85 text-stone-600 shadow-lg" onclick="gvClose()" aria-label="Закрыть"><i class="fa-solid fa-arrow-left"></i></button><div class="min-w-0 flex-1"><p id="fmHi" class="truncate text-[15px] font-extrabold text-stone-700"></p><p id="fmFarm" class="truncate text-xs font-bold text-stone-500"></p></div><span id="gvCoins" class="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-700 shadow-lg"></span></div><div class="fm-scroll flex-1 space-y-3 overflow-y-auto px-4 pb-8 pt-1"><div id="fmStats" class="grid grid-cols-4 gap-2"></div><div id="fmMap" class="fm-map rounded-3xl shadow-lg"></div><div id="fmCard" class="fm-card rounded-3xl bg-white/85 p-4 shadow-lg"></div></div></div>`;document.body.appendChild(R)}
  gv.open=true;if(!gv.zone)gv.zone='b0';R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);gvRender()}
-window.gvClose=()=>{gv.open=false;clearInterval(gv.tm);const R=$('gv');if(R)R.classList.remove('on');gvBadge()};
+window.gvClose=()=>{try{anClose()}catch{}gv.open=false;clearInterval(gv.tm);const R=$('gv');if(R)R.classList.remove('on');gvBadge()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gv.open)gvClose()});
 document.addEventListener('click',e=>{if(lr.edit||gv.open)return;const el=e.target.closest&&e.target.closest('#lrStage .lri[data-k="gvbed"]');if(el){e.stopPropagation();gvOpen()}});
 function gvBadge(){const st=$('lrStage');if(!st||cur!=='loveroom')return;const d=lr.k==='veg'?{x:50,y:70}:lr.items.find(i=>i.item==='gvbed');let b=st.querySelector('.gvbadge');const now=gsec(),n=d?gvSlots().filter(p=>p&&gvInfo(p,now).ready).length:0;
@@ -3751,82 +3755,149 @@ const BEDP={b0:60,b1:150,b2:300};
 const bedOwned=id=>{if(own('bed:'+id))return true;const z=FMZ.find(q=>q[0]===id);if(!z)return false;const sl=gvSlots();return z[2].some(i=>sl[i])};
 window.anBuyBed=id=>buy('bed:'+id,BEDP[id],()=>{gvRender()});
 window.anBuyPen=id=>buy('pen:'+id,PENS[id].price,()=>{gvRender()});
+const rid=()=>Math.random().toString(36).slice(2,8);
 const SPC={
  chicken:{e:'🐔',n:'Курица',egg:25,top:80,hat:15,gr:[30,90],H:6,cool:30},duck:{e:'🦆',n:'Утка',egg:35,top:110,hat:20,gr:[40,110],H:6,cool:40},
  rabbit:{e:'🐰',n:'Кролик',egg:45,top:140,hat:20,gr:[40,120],H:8,cool:40},sheep:{e:'🐑',n:'Овца',egg:80,top:260,hat:30,gr:[60,180],H:10,cool:60},
  pig:{e:'🐖',n:'Свинья',egg:120,top:380,hat:40,gr:[90,240],H:10,cool:80},cow:{e:'🐄',n:'Корова',egg:200,top:650,hat:60,gr:[120,360],H:12,cool:120}};
+const TIER=[{n:'Обычная',c:'#94a3b8',m:1},{n:'Необычная',c:'#10b981',m:1.4},{n:'Редкая',c:'#3b82f6',m:1.9},{n:'Легендарная',c:'#f59e0b',m:3}];
+const VFX=['','sepia(.55) saturate(1.8)','hue-rotate(95deg) saturate(1.25)','grayscale(1) brightness(.6)','sepia(1) saturate(4) hue-rotate(-8deg) drop-shadow(0 0 5px #fbbf24)'];
+const VT=[0,0,1,2,3],VW=[40,30,15,10,5];
+const VN={chicken:['Белая','Рыжая','Изумрудная','Ночная','Золотая'],duck:['Полевая','Медная','Малахитовая','Ночная','Золотая'],rabbit:['Снежный','Рыжий','Мятный','Лунный','Золотой'],
+ sheep:['Облачная','Карамельная','Мятная','Грозовая','Золотая'],pig:['Розовая','Рыжая','Мятная','Угольная','Золотая'],cow:['Пёстрая','Бурая','Мятная','Шоколадная','Золотая']};
+const vEm=(sp,vi,px)=>`<span style="display:inline-block;font-size:${px}px;line-height:1;filter:${VFX[vi]||'none'}">${SPC[sp].e}</span>`;
+const vTitle=(sp,vi)=>VN[sp][vi]+' '+SPC[sp].n.toLowerCase();
 const PENS={p0:{n:'Курятник',e:'🐔',price:120,cap:5,sp:['chicken','duck']},p1:{n:'Загон',e:'🐑',price:260,cap:4,sp:['rabbit','sheep']},p2:{n:'Хлев',e:'🐄',price:480,cap:3,sp:['pig','cow']}};
 const AN_PEN=PENS,STF=[.3,.6,1],STN=['Малыш','Подросток','Взрослый'];
 const anDay=()=>Math.floor(Date.now()/864e5);
 const anHash=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return(h>>>0)/4294967295};
-const anReal=(sp,st,d)=>Math.max(1,Math.round(SPC[sp].top*STF[st]*(0.7+0.8*anHash(sp+':'+d))));
+const anVarPick=(sp,id)=>{let r=anHash('v'+sp+id)*100,i=0;for(;i<VW.length-1;i++){if(r<VW[i])break;r-=VW[i]}return i};
+const anReal=(sp,vi,st,d)=>Math.max(1,Math.round(SPC[sp].top*STF[st]*TIER[VT[vi]].m*(0.7+0.8*anHash(sp+':'+d))));
 const anChance=(ask,real)=>{const r=ask/real;return Math.max(.04,Math.min(.97,r<=1?r:1-(r-1)*2.2))};
-const anRows=()=>{const A=[],E=[];lr.items.forEach(r=>{const t=String(r.item),a=t.split(':');
- if(a[0]==='_an'&&a.length>=9&&SPC[a[2]])A.push({id:a[1],sp:a[2],born:+a[3],until:+a[4],pen:a[5],cd:+a[6],ad:+a[7],ac:+a[8],item:t});
- else if(a[0]==='_eg'&&a.length>=5&&SPC[a[2]])E.push({id:a[1],sp:a[2],t0:+a[3],pen:a[4],item:t})});return{A,E}};
-const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}`;
-const anEgRow=e=>`_eg:${e.id}:${e.sp}:${e.t0}:${e.pen}`;
+/* строки: _an:id:вид:родился:сыт_до:загон:отдых_до:день:попытки:версия:разновидность  ·  _eg:id:вид:t0:загон:разновидность  ·  _book:вид (x = маска открытых) */
+const anBetter=(a,b)=>a.v!==b.v?a.v>b.v:a.until!==b.until?a.until>b.until:a.ac!==b.ac?a.ac>b.ac:a.item>b.item;
+const anGone=new Map();
+const anRows=()=>{const best={},stale=[],E=[],es={},now=Date.now();
+ lr.items.forEach(r=>{const t=String(r.item),a=t.split(':');
+  if(a[0]==='_an'&&a.length>=9&&SPC[a[2]]){const o={id:a[1],sp:a[2],born:+a[3]||0,until:+a[4]||0,pen:a[5],cd:+a[6]||0,ad:+a[7]||0,ac:+a[8]||0,v:+a[9]||0,vi:Math.max(0,Math.min(4,+a[10]||0)),item:t},c=best[o.id];
+   if(!c)best[o.id]=o;else if(anBetter(o,c)){stale.push(c.item);best[o.id]=o}else stale.push(o.item)}
+  else if(a[0]==='_eg'&&a.length>=5&&SPC[a[2]]&&!es[a[1]]){es[a[1]]=1;E.push({id:a[1],sp:a[2],t0:+a[3]||0,pen:a[4],vi:a.length>=6&&a[5]!==''?+a[5]:-1,item:t})}});
+ return{A:Object.values(best).filter(o=>!(anGone.get(o.id)>now)),E,stale}};
+const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}:${a.v||0}:${a.vi||0}`;
+const anEgRow=e=>`_eg:${e.id}:${e.sp}:${e.t0}:${e.pen}:${e.vi>=0?e.vi:''}`;
 const anEff=(a,now)=>Math.max(0,now-a.born-Math.max(0,now-a.until));
 const anStage=(a,now)=>{const g=SPC[a.sp].gr,m=anEff(a,now)/60;return m>=g[1]?2:m>=g[0]?1:0};
 const anSat=(a,now)=>Math.max(0,Math.min(100,(a.until-now)/(SPC[a.sp].H*3600)*100));
-async function anPut(add,del){if(del)lr.items=lr.items.filter(i=>i.item!==del);let row=null;
- if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row)}
- gvRender();if(row)await lrSave(row);if(del&&del!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',del)}
+/* все изменения идут по одной очереди, поэтому быстрые тапы не создают копий */
+let anQ=Promise.resolve();const anRun=fn=>{anQ=anQ.then(fn).catch(e=>console.error('an-op',e));return anQ};
+const anItems=id=>lr.items.filter(i=>String(i.item).startsWith('_an:'+id+':')).map(i=>i.item);
+async function anWrite(add,dels){let row=null;
+ if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row);lrPendSet(add,row)}
+ dels.forEach(d=>{if(d!==add){lr.items=lr.items.filter(i=>i.item!==d);lrPendSet(d,null)}});
+ gvRender();if(row)await lrSave(row);
+ for(const d of dels)if(d!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',d)}
+const anSave=a=>anWrite(anRow(Object.assign({},a,{v:(a.v||0)+1})),anItems(a.id));
+const anDel=id=>{anGone.set(id,Date.now()+60000);return anWrite(null,anItems(id))};
+const bookMask=sp=>{const r=lr.items.find(i=>i.item==='_book:'+sp);return r?Math.max(0,Math.round(+r.x||0)):0};
+async function bookAdd(sp,vi){const m=bookMask(sp);if(m&(1<<vi))return false;const row={item:'_book:'+sp,x:m|(1<<vi),y:0,scale:1,flip:false,updated_at:new Date().toISOString()};
+ lr.items=lr.items.filter(i=>i.item!==row.item);lr.items.push(row);lrPendSet(row.item,row);await lrSave(row);return true}
 async function fmSpend(n,why){const {data,error}=await sb.rpc('couple_shop_buy',{p_room:S.room,p_item:'hint:'+why+Date.now(),p_price:n});
  if(error){toast(error.message==='poor'?'Не хватает монет 🪙':error.message);return false}
  S.wal.coins=data.coins;S.wal.owned=(data.owned||[]).filter(k=>k.slice(0,5)!=='hint:');try{drawX()}catch{}return true}
 async function fmEarn(n,why){n=Math.round(n);let left=n,last=null;while(left>0){const k=Math.min(500,left),{data,error}=await sb.rpc('couple_coin_add',{p_room:S.room,p_amount:k});if(error){toast(error.message);break}last=data;left-=k}
  if(last!=null){S.wal.coins=last;toast('+'+(n-left)+' 🪙 '+why);try{drawX()}catch{}}}
-const anBusy=new Set();
-function anTick(now){const {E}=anRows();E.forEach(e=>{const C=SPC[e.sp],born=e.t0+C.hat*60;if(now<born||anBusy.has(e.id))return;anBusy.add(e.id);
- anPut(anRow({id:e.id,sp:e.sp,born,until:born+Math.round(C.H*1800),pen:e.pen,cd:0,ad:0,ac:0}),e.item).then(()=>toast('Вылупился '+C.e+' '+C.n.toLowerCase()+'!')).finally(()=>anBusy.delete(e.id))})}
-const anCount=(pid)=>{const {A,E}=anRows();return A.filter(a=>a.pen===pid).length+E.filter(e=>e.pen===pid).length};
-window.anBuyEgg=async sp=>{if(gv.busy)return;const C=SPC[sp],pid=Object.keys(PENS).find(k=>PENS[k].sp.includes(sp));if(!own('pen:'+pid))return;
+const anBusy=new Set(),anCl=new Set();
+function anTick(now){const {A,E,stale}=anRows();
+ E.forEach(e=>{const C=SPC[e.sp],born=e.t0+C.hat*60,k='e'+e.id;if(now<born||anBusy.has(k))return;anBusy.add(k);
+  anRun(async()=>{try{const cur=anRows();if(!cur.E.some(x=>x.id===e.id))return;
+   if(cur.A.some(x=>x.id===e.id)){await anWrite(null,[e.item]);return}
+   const vi=e.vi>=0?e.vi:anVarPick(e.sp,e.id),a={id:e.id,sp:e.sp,born,until:born+Math.round(C.H*1800),pen:e.pen,cd:0,ad:0,ac:0,v:1,vi};
+   await anWrite(anRow(a),[e.item]);const nw=await bookAdd(e.sp,vi);toast('Вылупилась '+vEm(e.sp,vi,16).replace(/<[^>]+>/g,'')+' '+vTitle(e.sp,vi)+(nw?' · новая в книге 📖':'')+(VT[vi]>=2?' ✨':''))}finally{anBusy.delete(k)}})});
+ A.forEach(a=>{const k='b'+a.sp+a.vi;if(bookMask(a.sp)&(1<<a.vi)||anBusy.has(k))return;anBusy.add(k);anRun(async()=>{try{await bookAdd(a.sp,a.vi)}finally{anBusy.delete(k)}})});
+ const st=stale.filter(i=>!anCl.has(i));if(st.length){st.forEach(i=>anCl.add(i));anRun(async()=>{try{const t=st.filter(i=>lr.items.some(r=>r.item===i));if(t.length)await anWrite(null,t)}finally{st.forEach(i=>anCl.delete(i))}})}}
+const anCount=pid=>{const {A,E}=anRows();return A.filter(a=>a.pen===pid).length+E.filter(e=>e.pen===pid).length};
+window.anBuyEgg=sp=>anRun(async()=>{const C=SPC[sp],pid=Object.keys(PENS).find(k=>PENS[k].sp.includes(sp));if(!own('pen:'+pid))return;
  if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');if(cn()<C.egg)return toast('Не хватает монет 🪙');
- gv.busy=true;try{if(!await fmSpend(C.egg,'egg'))return;await anPut(anEgRow({id:Math.random().toString(36).slice(2,8),sp,t0:gsec(),pen:pid}),null);toast('Яйцо 🥚 в загоне — вылупится через '+C.hat+' мин')}finally{gv.busy=false;gvRender()}};
-window.anFeed=async(id,quiet)=>{const {A}=anRows(),a=A.find(x=>x.id===id),c=gv.feed;if(!a)return false;if(!CROPS[c])return toast('Выбери еду из урожая 🧺'),false;
- const inv=gvInv();if(!(inv[c]>0))return toast('Такого урожая нет'),false;const now=gsec(),H=SPC[a.sp].H*3600;
+ if(!await fmSpend(C.egg,'egg'))return;await anWrite(anEgRow({id:rid(),sp,t0:gsec(),pen:pid,vi:-1}),[]);toast('Яйцо 🥚 в загоне — вылупится через '+C.hat+' мин')});
+async function anFeedOne(id,quiet){const a=anRows().A.find(x=>x.id===id),c=gv.feed;if(!a)return false;if(!CROPS[c]){if(!quiet)toast('Выбери еду из урожая 🧺');return false}
+ const inv=gvInv();if(!(inv[c]>0)){if(!quiet)toast('Такого урожая нет');return false}const now=gsec(),H=SPC[a.sp].H*3600;
  if(anSat(a,now)>=95){if(!quiet)toast('Уже сытый 😌');return false}
- const n=Object.assign({},a);if(n.until<now){n.born+=now-n.until;n.until=now}
- n.until=Math.min(now+H,n.until+Math.round(CROPS[c].s/100*H*2));
- await gvSetInv(c,inv[c]-1);await anPut(anRow(n),a.item);return true};
-window.anFeedAll=async pid=>{if(gv.busy)return;gv.busy=true;try{const {A}=anRows();let n=0;for(const a of A.filter(x=>x.pen===pid&&anSat(x,gsec())<80)){if(await anFeed(a.id,true))n++;else break}toast(n?'Накормлено: '+n+' 🍽️':'Кормить некого или нет урожая')}finally{gv.busy=false;gvRender()}};
-window.anBreed=async pid=>{if(gv.busy)return;const now=gsec(),{A}=anRows();if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');
+ const n=Object.assign({},a);if(n.until<now){n.born+=now-n.until;n.until=now}n.until=Math.min(now+H,n.until+Math.round(CROPS[c].s/100*H*2));
+ await gvSetInv(c,inv[c]-1);await anSave(n);return true}
+window.anFeed=id=>anRun(()=>anFeedOne(id));
+window.anFeedAll=pid=>anRun(async()=>{let n=0;for(const a of anRows().A.filter(x=>x.pen===pid&&anSat(x,gsec())<80)){if(await anFeedOne(a.id,true))n++;else break}toast(n?'Накормлено: '+n+' 🍽️':'Кормить некого или нет урожая')});
+window.anPickFeed=k=>{gv.feed=k;anLast='';gvRender()};
+window.anBreed=pid=>anRun(async()=>{const now=gsec(),{A}=anRows();if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');
  const by={};A.filter(a=>a.pen===pid&&anStage(a,now)===2&&a.cd<=now&&anSat(a,now)>0).forEach(a=>(by[a.sp]=by[a.sp]||[]).push(a));
  const sp=Object.keys(by).find(k=>by[k].length>=2);if(!sp)return toast('Нужна пара взрослых сытых животных одного вида, не на отдыхе');
- gv.busy=true;try{const [p1,p2]=by[sp],cd=now+SPC[sp].cool*60;await anPut(anRow(Object.assign({},p1,{cd})),p1.item);await anPut(anRow(Object.assign({},p2,{cd})),p2.item);
-  await anPut(anEgRow({id:Math.random().toString(36).slice(2,8),sp,t0:now,pen:pid}),null);toast('Появилось яйцо 🥚 · пара отдыхает '+SPC[sp].cool+' мин')}finally{gv.busy=false;gvRender()}};
-window.anSellOpen=id=>{const a=anRows().A.find(x=>x.id===id);if(!a)return;if(gv.sell===id){gv.sell=null;return gvRender()}gv.sell=id;gv.ask=Math.round(SPC[a.sp].top*STF[anStage(a,gsec())]);gvRender()};
+ const [p1,p2]=by[sp],cd=now+SPC[sp].cool*60,id=rid(),r=anHash('b'+id),vi=r<.3?p1.vi:r<.6?p2.vi:-1;
+ await anSave(Object.assign({},p1,{cd}));await anSave(Object.assign({},p2,{cd}));await anWrite(anEgRow({id,sp,t0:now,pen:pid,vi}),[]);toast('Появилось яйцо 🥚 · пара отдыхает '+SPC[sp].cool+' мин')});
+window.anSellOpen=()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a)return;gv.sellOn=!gv.sellOn;gv.msg='';gv.ask=Math.round(SPC[a.sp].top*STF[anStage(a,gsec())]);anLast='';anSheetDraw(gsec())};
 window.anAsk=v=>{gv.ask=Math.max(0,Math.min(99999,Math.round(+v)||0))};
-window.anSell=async()=>{if(gv.busy)return;const a=anRows().A.find(x=>x.id===gv.sell);if(!a)return;const now=gsec(),d=anDay(),ac=a.ad===d?a.ac:0;
- if(ac>=3)return toast('Сегодня покупатели больше не придут 🌙');const ask=gv.ask;if(!(ask>0))return toast('Укажи цену');
- const ok=Math.random()<anChance(ask,anReal(a.sp,anStage(a,now),d));gv.busy=true;
- try{if(ok){gv.sell=null;await anPut(null,a.item);toast(SPC[a.sp].e+' продан(а) за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
-  else{await anPut(anRow(Object.assign({},a,{ad:d,ac:ac+1})),a.item);toast('Покупатель отказался — цена не подошла 🤷 Попыток сегодня: '+(2-ac))}}
- finally{gv.busy=false;gvRender()}};
+window.anSell=()=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a)return;const now=gsec(),d=anDay(),ac=a.ad===d?a.ac:0;
+ if(ac>=3){gv.msg='Сегодня покупатели больше не придут 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Укажи цену');
+ const ok=Math.random()<anChance(ask,anReal(a.sp,a.vi,anStage(a,now),d));
+ if(ok){anClose();await anDel(a.id);toast(vTitle(a.sp,a.vi)+' продана за '+ask+' 🪙');await fmEarn(ask,'с фермы')}
+ else{await anSave(Object.assign({},a,{ad:d,ac:ac+1}));gv.msg='Покупатель отказался — цена не подошла 🤷';anLast='';anSheetDraw(gsec())}});
+/* ---- карточка животного и книга ---- */
+let anMode=null,anSel=null,anLast='';
+function anEnsure(){if($('anSheet'))return;const st=document.createElement('style');st.textContent=`#anSheet{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(25,12,35,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}#anSheet.on{display:flex}
+#anSheet .pn{width:100%;max-width:460px;max-height:88vh;overflow:auto;background:linear-gradient(180deg,#fffaf0,#ffe9cb);color:#44342a;border-radius:28px 28px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.3);font-family:inherit}
+#anSheet .hd{display:flex;align-items:center;gap:14px}#anSheet .x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.07);font-size:18px;color:#6b5848}
+#anSheet .tg{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;color:#fff;margin-right:6px}
+#anSheet .gr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}#anSheet .st{background:rgba(255,255,255,.7);border-radius:16px;padding:9px 11px}#anSheet .st span{display:block;font-size:10px;font-weight:700;opacity:.6}#anSheet .st b{font-size:14px}
+#anSheet .bar{height:7px;border-radius:99px;background:rgba(0,0,0,.08);margin-top:5px;overflow:hidden}#anSheet .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#fdba74,#f59e0b);transition:width .6s}
+#anSheet .fd{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}#anSheet .ch{flex:none;border:2px solid transparent;background:rgba(255,255,255,.8);border-radius:14px;padding:6px 10px;font-weight:800;font-size:13px;color:#44342a}#anSheet .ch.on{border-color:#f59e0b;background:#fff3d6}
+#anSheet .bt{display:grid;grid-template-columns:1fr 1fr;gap:10px}#anSheet .b{border:0;border-radius:18px;padding:14px;font-weight:800;font-size:15px;color:#44342a;box-shadow:0 4px 12px rgba(0,0,0,.12)}#anSheet .b.f{background:linear-gradient(135deg,#fbcfe8,#fda4af)}#anSheet .b.s{background:linear-gradient(135deg,#fde68a,#fdba74)}#anSheet .b.g{background:linear-gradient(135deg,#bbf7d0,#6ee7b7)}
+#anSheet input{min-width:0;flex:1;border:0;border-radius:16px;padding:12px;font-size:16px;font-weight:800;background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);color:#44342a}
+#anSheet .bk{background:rgba(255,255,255,.6);border-radius:20px;padding:10px;margin-bottom:10px}#anSheet .bkh{display:flex;justify-content:space-between;font-weight:800;margin-bottom:8px}#anSheet .bkr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+#anSheet .bc{background:#fff;border:2px solid;border-radius:14px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}#anSheet .bc small{font-size:9px;font-weight:700;line-height:1.1}#anSheet .bc.off{border-color:rgba(0,0,0,.08);background:rgba(255,255,255,.45);opacity:.7}`;
+ document.head.appendChild(st);document.body.insertAdjacentHTML('beforeend','<div id="anSheet" onclick="if(event.target===this)anClose()"><div class="pn" id="anPn"></div></div>')}
+window.anOpen=id=>{anEnsure();anMode='an';anSel=id;gv.sellOn=false;gv.msg='';anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
+window.anBook=()=>{anEnsure();anMode='book';anSel=null;anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
+window.anClose=()=>{anMode=null;anSel=null;gv.sellOn=false;const e=$('anSheet');if(e)e.classList.remove('on')};
+function anSheetHtml(a,now){const C=SPC[a.sp],T=TIER[VT[a.vi]],st=anStage(a,now),d=anDay(),ac=a.ad===d?a.ac:0,inv=gvInv(),ks=Object.keys(inv).filter(k=>inv[k]>0&&CROPS[k]);
+ if(!gv.feed||!(inv[gv.feed]>0))gv.feed=ks[0]||null;
+ const food=ks.length?ks.map(k=>`<button class="ch${gv.feed===k?' on':''}" onclick="anPickFeed('${k}')">${CROPS[k].e} ×${inv[k]}</button>`).join(''):'<span style="font-size:12px;font-weight:700;opacity:.6">Корма нет — вырасти урожай 🧺</span>';
+ const sell=gv.sellOn?`<div style="display:flex;gap:8px;margin-top:12px"><input type="number" inputmode="numeric" min="1" value="${gv.ask}" oninput="anAsk(this.value)" aria-label="Цена"><button class="b g" style="padding:12px 16px" onclick="anSell()">Предложить</button></div><p style="font-size:11px;font-weight:700;opacity:.65;margin:6px 2px 0">Покупатель согласится не всегда: чем ближе цена к настоящей, тем вероятнее. ${gv.msg?'<br><b style="opacity:1;color:#b45309">'+gv.msg+'</b>':''}</p>`:'';
+ const stat=(l,v,id)=>`<div class="st"><span>${l}</span><b${id?` id="${id}"`:''}>${v}</b></div>`;
+ return`<div class="hd"><div style="font-size:56px;line-height:1;width:64px;text-align:center">${vEm(a.sp,a.vi,56)}</div><div style="flex:1;min-width:0"><b style="font-size:19px;display:block">${vTitle(a.sp,a.vi)}</b><div style="margin-top:5px"><span class="tg" style="background:${T.c}">${T.n}</span><span style="font-size:12px;font-weight:800">${STN[st]}</span></div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div>
+ <div class="gr"><div class="st" style="grid-column:1/3"><span>Сытость</span><b id="anD-sat"></b><div class="bar"><i id="anD-bar" style="width:0%"></i></div></div>
+ ${stat('Возраст','','anD-age')}${stat('До взросления','','anD-next')}${stat('Разведение','','anD-br')}${stat('Жильё',PENS[a.pen]?PENS[a.pen].n:'—')}${stat('Яйцо стоило',C.egg+' 🪙')}${stat('Попыток продажи',(3-ac)+' из 3 сегодня')}</div>
+ <div class="fd">${food}</div><div class="bt"><button class="b f" onclick="anFeed('${a.id}')">🍽️ Кормить</button><button class="b s" onclick="anSellOpen()">💰 ${gv.sellOn?'Скрыть':'Продать'}</button></div>${sell}`}
+function bookHtml(){let tot=0,got=0;const secs=Object.keys(SPC).map(sp=>{const m=bookMask(sp);let n=0;
+ const cells=VN[sp].map((nm,i)=>{tot++;const T=TIER[VT[i]];if(m&(1<<i)){n++;got++;return`<div class="bc" style="border-color:${T.c}">${vEm(sp,i,32)}<small>${nm}</small><small style="color:${T.c}">${T.n}</small></div>`}
+  return`<div class="bc off"><span style="font-size:32px;line-height:1;filter:grayscale(1) brightness(.4)">${SPC[sp].e}</span><small>???</small></div>`}).join('');
+ return`<div class="bk"><div class="bkh"><span>${SPC[sp].e} ${SPC[sp].n}</span><span>${n}/5</span></div><div class="bkr">${cells}</div></div>`}).join('');
+ return`<div class="hd"><div style="flex:1"><b style="font-size:20px">📖 Книга животных</b><div style="font-size:12px;font-weight:700;opacity:.65;margin-top:3px">Открыто ${got} из ${tot} · новые виды выпадают из яиц</div></div><button class="x" onclick="anClose()" aria-label="Закрыть">✕</button></div><div style="margin-top:14px">${secs}</div>`}
+function anSheetDraw(now){if(!anMode)return;if(!gv.open)return anClose();const pn=$('anPn');if(!pn)return;let a=null,html;
+ if(anMode==='book')html=bookHtml();else{a=anRows().A.find(x=>x.id===anSel);if(!a)return anClose();html=anSheetHtml(a,now)}
+ const f=document.activeElement;if(html!==anLast&&!(f&&f.tagName==='INPUT'&&pn.contains(f))){pn.innerHTML=html;anLast=html}
+ if(a){const C=SPC[a.sp],st=anStage(a,now),eff=anEff(a,now),sat=Math.round(anSat(a,now)),sd=(id,v)=>{const e=$(id);if(e&&e.textContent!==v)e.textContent=v};
+  sd('anD-sat','🍖 '+sat+'%');const br=$('anD-bar');if(br)br.style.width=sat+'%';sd('anD-age',gfmt(eff));sd('anD-next',st<2?gfmt(C.gr[st]*60-eff):'—');
+  sd('anD-br',st<2?'Ещё мал':sat<=0?'Голоден':a.cd>now?'Отдых '+gfmt(a.cd-now):'Готов ✅')}}
 function anMapBtns(now){const {A,E}=anRows();return Object.keys(PENS).map(pid=>{const P=PENS[pid],sel=gv.zone===pid;
  if(!own('pen:'+pid))return`<button class="fmz fmz-lock${sel?' sel':''}" style="grid-area:${pid}" onclick="fmZone('${pid}')" aria-label="${P.n} закрыт"><span class="lk">🔒</span><span class="fmz-n">${P.n}</span><span class="fmz-s">${P.price} 🪙</span></button>`;
  const mine=A.filter(a=>a.pen===pid),eg=E.filter(e=>e.pen===pid).length,hun=mine.some(a=>anSat(a,now)<25);
- return`<button class="fmz fmz-an${sel?' sel':''}" style="grid-area:${pid}" onclick="fmZone('${pid}')" aria-label="${P.n}"><span class="fmz-n">${P.n}</span><span class="fm-pets">${mine.length||eg?mine.slice(0,3).map(a=>`<i class="fm-pet" style="font-size:${[15,19,24][anStage(a,now)]}px">${SPC[a.sp].e}</i>`).join('')+(eg?'<i class="fm-pet" style="font-size:16px">🥚</i>':''):'<i class="fm-pet" style="opacity:.4">'+P.e+'</i>'}</span><span class="fmz-s">${mine.length+eg}/${P.cap}${hun?' · 🍽️':''}</span></button>`}).join('')}
+ return`<button class="fmz fmz-an${sel?' sel':''}" style="grid-area:${pid}" onclick="fmZone('${pid}')" aria-label="${P.n}"><span class="fmz-n">${P.n}</span><span class="fm-pets">${mine.length||eg?mine.slice(0,3).map(a=>`<i class="fm-pet">${vEm(a.sp,a.vi,[15,19,24][anStage(a,now)])}</i>`).join('')+(eg?'<i class="fm-pet" style="font-size:16px">🥚</i>':''):'<i class="fm-pet" style="opacity:.4">'+P.e+'</i>'}</span><span class="fmz-s">${mine.length+eg}/${P.cap}${hun?' · 🍽️':''}</span></button>`}).join('')}
 function anCard(pid,now,W,T,head,act){const P=PENS[pid];
  if(!own('pen:'+pid))return head(P.e,'bg-amber-100',P.n,'Закрыт 🔒','bg-stone-100 text-stone-500')
   +`<p class="mt-3 text-xs font-semibold text-stone-500">Живут здесь: ${P.sp.map(k=>SPC[k].e+' '+SPC[k].n).join(', ')}. Мест: ${P.cap}. Животных заводят только из яиц, а яйца продаются в своём загоне.</p>`
   +act('from-amber-200 to-orange-200','🪙 Купить · '+P.price,`anBuyPen('${pid}')`);
- const {A,E}=anRows(),mine=A.filter(a=>a.pen===pid),eggs=E.filter(e=>e.pen===pid),inv=gvInv(),ks=Object.keys(inv).filter(k=>inv[k]>0&&CROPS[k]);
+ const {A,E}=anRows(),mine=A.filter(a=>a.pen===pid).sort((x,y)=>x.id<y.id?-1:1),eggs=E.filter(e=>e.pen===pid),inv=gvInv(),ks=Object.keys(inv).filter(k=>inv[k]>0&&CROPS[k]);
  if(!gv.feed||!(inv[gv.feed]>0))gv.feed=ks[0]||null;
- const hungry=mine.some(a=>anSat(a,now)<25),cnt=mine.length+eggs.length;
+ const hungry=mine.some(a=>anSat(a,now)<25),cnt=mine.length+eggs.length,gotAll=Object.keys(SPC).reduce((s2,sp)=>{const m=bookMask(sp);let n=0;for(let i=0;i<5;i++)if(m&(1<<i))n++;return s2+n},0);
  const eggBtns=P.sp.map(k=>{const C=SPC[k];return`<button class="fm-seed" onclick="anBuyEgg('${k}')"><span class="block text-2xl leading-none">🥚${C.e}</span><b class="mt-1 block text-[11px]">${C.n}</b><small class="block text-[10px] opacity-70">${C.egg} 🪙 · ${C.hat}м</small></button>`}).join('');
- const food=ks.length?ks.map(k=>`<button class="fm-seed${gv.feed===k?' on':''}" onclick="fmPick('${k}')"><span class="block text-2xl leading-none">${CROPS[k].e}</span><b class="mt-1 block text-[11px]">×${inv[k]}</b></button>`).join(''):'<p class="w-full py-3 text-center text-xs font-semibold text-stone-500">Корма нет — вырасти урожай на грядках 🧺</p>';
- const list=mine.map(a=>{const C=SPC[a.sp],st=anStage(a,now),sat=Math.round(anSat(a,now)),d=anDay(),ac=a.ad===d?a.ac:0,rest=a.cd>now;
-  return`<div class="rounded-3xl bg-orange-50 p-3 shadow-lg"><div class="flex items-center gap-3"><span class="w-9 text-center leading-none" style="font-size:${[22,30,38][st]}px">${C.e}</span>
-   <div class="min-w-0 flex-1"><div class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${STN[st]}${rest&&st===2?' · 💤':''}</span><span ${T('as'+a.id,'🍖 '+sat+'%')}></span></div><div class="mt-1 h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ab'+a.id,sat)}></i></div></div>
-   <button class="rounded-2xl bg-pink-200 px-3 py-2 text-xs font-extrabold text-pink-900 shadow" onclick="anFeed('${a.id}')">🍽️</button><button class="rounded-2xl bg-amber-200 px-3 py-2 text-xs font-extrabold text-amber-900 shadow" onclick="anSellOpen('${a.id}')">💰</button></div>`
-   +(gv.sell===a.id?`<div class="mt-3 flex gap-2"><input type="number" inputmode="numeric" min="1" value="${gv.ask}" oninput="anAsk(this.value)" class="min-w-0 flex-1 rounded-2xl bg-white px-3 py-2 text-sm font-bold text-stone-700 shadow" aria-label="Цена"><button class="rounded-2xl bg-emerald-200 px-3 py-2 text-xs font-extrabold text-emerald-900 shadow" onclick="anSell()">Предложить</button></div><p class="mt-1 text-[10px] font-semibold text-stone-500">Назови свою цену: покупатель согласится не всегда. Попыток сегодня: ${3-ac}</p>`:'')+`</div>`}).join('');
+ const food=ks.length?ks.map(k=>`<button class="fm-seed${gv.feed===k?' on':''}" onclick="anPickFeed('${k}')"><span class="block text-2xl leading-none">${CROPS[k].e}</span><b class="mt-1 block text-[11px]">×${inv[k]}</b></button>`).join(''):'<p class="w-full py-3 text-center text-xs font-semibold text-stone-500">Корма нет — вырасти урожай на грядках 🧺</p>';
+ const list=mine.map(a=>{const st=anStage(a,now),sat=Math.round(anSat(a,now)),rest=a.cd>now;
+  return`<button type="button" class="flex w-full items-center gap-3 rounded-3xl bg-orange-50 p-3 text-left shadow-lg" onclick="anOpen('${a.id}')"><span class="w-9 text-center leading-none">${vEm(a.sp,a.vi,[22,30,38][st])}</span>
+   <span class="min-w-0 flex-1"><span class="flex justify-between text-xs font-bold text-stone-600"><span class="truncate">${VN[a.sp][a.vi]} · ${STN[st]}${rest&&st===2?' · 💤':''}</span><span ${T('as'+a.id,'🍖 '+sat+'%')}></span></span><span class="mt-1 block h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><i class="block h-full rounded-full bg-gradient-to-r from-orange-300 to-amber-300 transition-[width] duration-700" ${W('ab'+a.id,sat)}></i></span></span><span class="text-lg text-stone-400">›</span></button>`}).join('');
  const egl=eggs.map(e=>{const C=SPC[e.sp],left=e.t0+C.hat*60-now;return`<div class="flex items-center gap-3 rounded-3xl bg-amber-50 p-3 shadow-lg"><span class="text-2xl">🥚</span><span class="flex-1 text-xs font-bold text-stone-600">Яйцо: ${C.n.toLowerCase()}</span><span class="text-xs font-bold text-stone-500" ${T('eg'+e.id,left>0?gfmt(left):'вылупляется…')}></span></div>`}).join('');
  return head(P.e,'bg-amber-100',P.n,cnt?(hungry?'Кто-то голоден 🥺':'Все сыты 😌'):'Пока пусто',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
   +`<p class="mb-1 mt-4 text-xs font-bold text-stone-500">Купить яйцо · мест ${cnt}/${P.cap}</p><div class="fm-row">${eggBtns}</div>`
   +`<p class="mb-1 mt-2 text-xs font-bold text-stone-500">Чем кормим</p><div class="fm-row">${food}</div>`
   +`<div class="mt-2 grid grid-cols-2 gap-2"><button class="rounded-2xl bg-gradient-to-r from-orange-200 to-amber-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anFeedAll('${pid}')">🍽️ Накормить всех</button><button class="rounded-2xl bg-gradient-to-r from-pink-200 to-rose-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBreed('${pid}')">💞 Развести</button></div>`
+  +`<button class="mt-2 w-full rounded-2xl bg-gradient-to-r from-violet-200 to-sky-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBook()">📖 Книга животных · ${gotAll}/30</button>`
   +`<div class="mt-3 space-y-2">${list}${egl}</div>`}
 }catch(e){console.error('room-v2',e)}})();
 
@@ -4430,7 +4501,7 @@ const st=document.createElement('style');st.textContent=`
 /* ---------- разметка экрана ---------- */
 $('app').insertAdjacentHTML('beforeend',`<section class="screen" id="blocks"><div class="head"><button class="back" onclick="go('games')" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button><h2 class="sp">Block Blast</h2><button class="gear" onclick="bbMenu()" aria-label="Меню игры"><i class="fa-solid fa-sliders"></i></button></div>
 <div class="bb-top"><div class="bb-card"><span>Счёт</span><b id="bbScore">0</b></div><div class="bb-card"><span>Рекорд</span><b id="bbBest">0</b></div></div>
-<p class="bb-pt" id="bbPt"></p>
+<p class="bb-pt" id="bbPt" onclick="bbRank()" style="cursor:pointer"></p>
 <div class="bb-main"><div class="bb-wrap" id="bbWrap"><div class="bb-board" id="bbBoard"></div><div class="bb-over" id="bbOver"><div class="bb-ov"><p class="t">Игра окончена</p><div class="s" id="bbOvS">0</div><p class="n" id="bbOvN"></p><button class="bb-btn" onclick="bbAgain()">Играть снова</button><button class="bb-btn g" onclick="go('games')">К играм</button></div></div></div>
 <div class="bb-tray" id="bbTray"></div></div></section>`);
 
@@ -4449,7 +4520,7 @@ function drawTray(){$('bbTray').innerHTML=bb.pc.map((p,i)=>{if(!p)return`<div cl
 function hud(bump){const a=$('bbScore'),b=$('bbBest');if(!a)return;a.textContent=bb.score;b.textContent=bb.best;
  if(bump){a.classList.remove('bump');void a.offsetWidth;a.classList.add('bump')}
  const bd=$('bbBadge');if(bd)bd.textContent='Рекорд: '+bb.best;
- const pr=(bb.rows||[]).find(r=>r.user_id!==S.uid),el=$('bbPt');if(el)el.textContent=pr&&S.pt?S.pt.name+': рекорд '+pr.best:''}
+ const pr=(bb.rows||[]).find(r=>r.user_id!==S.uid),el=$('bbPt');if(el)el.textContent=pr&&S.pt?(bb.best>=(pr.best||0)?'🏆 ':'')+S.pt.name+': рекорд '+(pr.best||0)+' · рейтинг ›':(S.pt?'🏆 Рейтинг пары ›':'')}
 function pop(txt,r,c,cls){const w=$('bbWrap').getBoundingClientRect(),a=bb.cs[Math.max(0,Math.min(N-1,r))*N+Math.max(0,Math.min(N-1,c))].getBoundingClientRect(),e=document.createElement('div');
  e.className='bb-pop'+(cls?' '+cls:'');e.textContent=txt;e.style.left=(a.left-w.left+a.width/2)+'px';e.style.top=(a.top-w.top)+'px';$('bbWrap').appendChild(e);setTimeout(()=>e.remove(),950)}
 
@@ -4460,18 +4531,18 @@ function restore(){try{const j=JSON.parse(lg(SK)||'null');if(!j||!Array.isArray(
  bb.b=j.b;bb.pc=j.pc;bb.score=j.sc|0;bb.combo=j.cb|0;bb.startBest=j.sb|0;return true}catch{return false}}
 async function bbLoad(){if(!S.room||!S.uid)return;
  bb.loading=(async()=>{const {data,error}=await sb.from(BT).select('*').eq('room_id',S.room);if(error||!data)return;bb.rows=data;
-  const me=data.find(r=>r.user_id===S.uid);if(me){bb.games=Math.max(bb.games,me.games||0);if((me.best||0)>bb.best){bb.best=me.best;ls(BK,bb.best)}if(me.skin&&!lg(SKN)&&skinOk(me.skin))setSkin(me.skin,true)}hud()})();
+  const me=data.find(r=>r.user_id===S.uid);if(me){bb.games=Math.max(bb.games,me.games||0);if((me.best||0)>bb.best){bb.best=me.best;ls(BK,bb.best)}if(me.skin&&!lg(SKN)&&skinOk(me.skin))setSkin(me.skin,true)}hud();if(bb.best>((me&&me.best)||0))bbSync()})();
  try{await bb.loading}catch(e){console.warn('blocks-load',e)}}
 async function bbSync(){if(!S.room||!S.uid)return;try{await bb.loading}catch{}
  const {error}=await sb.from(BT).upsert({room_id:S.room,user_id:S.uid,best:bb.best,last:bb.last,games:bb.games,updated_at:new Date().toISOString()},{onConflict:'room_id,user_id'});
- if(error){console.warn('blocks-save',error.message);if(!bb.warned){bb.warned=true;toast('Block Blast: рекорд пока хранится только на этом устройстве')}}
- else{bb.synced=bb.best;const me=bb.rows.find(r=>r.user_id===S.uid);if(me)me.best=bb.best;else bb.rows.push({user_id:S.uid,best:bb.best});hud()}}
+ if(error){bb.err=error.message;console.warn('blocks-save',error.message);if(!bb.warned){bb.warned=true;toast('Block Blast: база не подключена, выполни blocks.sql в Supabase')}}
+ else{bb.err='';bb.synced=bb.best;const me=bb.rows.find(r=>r.user_id===S.uid);if(me){me.best=bb.best;me.last=bb.last;me.games=bb.games}else bb.rows.push({user_id:S.uid,best:bb.best,last:bb.last,games:bb.games});hud()}}
 
 /* ---------- ход ---------- */
 function newGame(){bb.b=Array(N*N).fill(null);bb.pc=triple();bb.score=0;bb.combo=0;bb.over=false;bb.lock=false;bb.startBest=bb.best;
  $('bbOver').classList.remove('on');paint();drawTray();hud();save()}
 function finish(silent){if(bb.over)return;bb.over=true;bb.lock=false;bb.last=bb.score;bb.games++;ls(SK,'');bbSync();if(silent)return;
- const nb=bb.score>0&&bb.score>bb.startBest;$('bbOvS').textContent=bb.score;$('bbOvN').textContent=nb?'Новый рекорд! 🎉':'Рекорд: '+bb.best;$('bbOver').classList.add('on');vib([60,40,60])}
+ const nb=bb.score>0&&bb.score>bb.startBest;$('bbOvS').textContent=bb.score;$('bbOvN').textContent=(nb?'Новый рекорд! 🎉':'Рекорд: '+bb.best)+bbRankLine();$('bbOver').classList.add('on');vib([60,40,60])}
 function place(i,r,c){const p=bb.pc[i],sh=shp(p);bb.lock=true;
  sh.cells.forEach(([y,x])=>{bb.b[(r+y)*N+c+x]=p.k});bb.pc[i]=null;
  let pts=sh.cells.length;const {R,C}=fullLines(bb.b),L=R.length+C.length,clr=new Set();
@@ -4479,7 +4550,7 @@ function place(i,r,c){const p=bb.pc[i],sh=shp(p);bb.lock=true;
  if(L){bb.combo++;pts+=L*(L+1)*5+(bb.combo>1?(bb.combo-1)*10:0);vib([16,28,16])}else{bb.combo=0;vib(8)}
  paint();sh.cells.forEach(([y,x])=>bb.cs[(r+y)*N+c+x].classList.add('put'));drawTray();
  const pr=r+(sh.h>>1),pc=c+(sh.w>>1);
- const add=(n,rr,cc,cls)=>{bb.score+=n;if(bb.score>bb.best){bb.best=bb.score;ls(BK,bb.best)}hud(true);pop('+'+n,rr,cc,cls)};
+ const add=(n,rr,cc,cls)=>{bb.score+=n;if(bb.score>bb.best){bb.best=bb.score;ls(BK,bb.best);const t=Date.now();if(t-(bb.tSync||0)>15000){bb.tSync=t;bbSync()}}hud(true);pop('+'+n,rr,cc,cls)};
  add(pts,pr,pc);
  if(L){const lab=L>=4?'Невероятно!':L===3?'Супер!':L===2?'Отлично!':'';const tx=[lab,bb.combo>1?'Комбо ×'+bb.combo:''].filter(Boolean).join(' · ');if(tx)setTimeout(()=>pop(tx,Math.max(0,pr-2),pc,'big'),120)}
  const after=()=>{
@@ -4539,9 +4610,21 @@ function setSkin(id,fromCloud){if(!skinOk(id))return;curSkin=id;ls(SKN,id);apply
  if(!fromCloud&&S.room&&S.uid){try{sb.from(BT).update({skin:id}).eq('room_id',S.room).eq('user_id',S.uid).then(r=>{if(r&&r.error)console.warn('blocks-skin',r.error.message)})}catch{}}}
 const sheet=h=>{$('setc').innerHTML=h;$('set').classList.add('on')};
 const ghostBtn='background:rgba(255,255,255,.08);box-shadow:none;border:1px solid rgba(255,255,255,.14)';
-window.bbMenu=()=>sheet(`<h3 class="ff" style="font-size:20px">Block Blast</h3><div style="display:grid;gap:10px;margin:14px 0 10px"><button class="btn" onclick="closeSet();bbNew()"><i class="fa-solid fa-rotate-right"></i>&nbsp; Начать заново</button><button class="btn" style="${ghostBtn}" onclick="bbSkins()"><i class="fa-solid fa-palette"></i>&nbsp; Оформления</button></div><button class="btn" style="${ghostBtn}" onclick="closeSet()">Закрыть</button>`);
+window.bbMenu=()=>sheet(`<h3 class="ff" style="font-size:20px">Block Blast</h3><div style="display:grid;gap:10px;margin:14px 0 10px"><button class="btn" onclick="closeSet();bbNew()"><i class="fa-solid fa-rotate-right"></i>&nbsp; Начать заново</button><button class="btn" style="${ghostBtn}" onclick="bbRank()"><i class="fa-solid fa-trophy"></i>&nbsp; Рейтинг</button><button class="btn" style="${ghostBtn}" onclick="bbSkins()"><i class="fa-solid fa-palette"></i>&nbsp; Оформления</button></div><button class="btn" style="${ghostBtn}" onclick="closeSet()">Закрыть</button>`);
 window.bbSkins=()=>sheet(`<h3 class="ff" style="font-size:20px">Оформления</h3><p class="xs" style="text-align:center;margin:6px 0 10px">Цвета блоков и поля</p><div class="themes">${SKINS.map(([id,n,p,bg])=>`<button class="theme ${id===curSkin?'on':''}" onclick="bbPick('${id}')"><div class="sw" style="flex-direction:row;justify-content:center;align-items:center;gap:3px;background:${bg&&bg[0]==='#'?bg:'rgba(255,255,255,.06)'}">${p.slice(0,4).map(g=>`<i style="width:16px;height:16px;border-radius:5px;background:linear-gradient(145deg,${g})"></i>`).join('')}</div>${n}${id===curSkin?' ✓':''}</button>`).join('')}</div><button class="btn" style="margin-top:12px;${ghostBtn}" onclick="bbMenu()">Назад</button>`);
 window.bbPick=id=>{setSkin(id);bbSkins()};
+/* ---------- рейтинг между партнёрами ---------- */
+function bbRankData(){const rows=bb.rows||[],me=rows.find(r=>r.user_id===S.uid)||{},pr=rows.find(r=>r.user_id!==S.uid);
+ return{me:{you:1,name:(S.me&&S.me.name)||'Ты',best:Math.max(bb.best,me.best||0),last:bb.last||me.last||0,games:Math.max(bb.games,me.games||0)},
+  pr:pr?{name:(S.pt&&S.pt.name)||'Партнёр',best:pr.best||0,last:pr.last||0,games:pr.games||0}:null}}
+function bbRankLine(){const d=bbRankData();if(!d.pr)return'';const k=d.me.best-d.pr.best;return k>0?' · ты впереди на '+k:k<0?' · '+d.pr.name+' впереди на '+(-k):' · ничья с '+d.pr.name}
+function rankDraw(){if(!bb.rankOpen)return;const d=bbRankData(),L=[d.me].concat(d.pr?[d.pr]:[]).sort((a,b)=>b.best-a.best||(b.you?1:-1)),mx=Math.max(1,...L.map(x=>x.best));
+ const row=(x,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;margin-bottom:8px;background:rgba(255,255,255,${x.you?'.12':'.07'});border:1px solid rgba(255,255,255,${x.you?'.25':'.1'})"><span style="font-size:28px;line-height:1">${i===0&&L.length>1&&L[0].best>L[1].best?'🥇':i===0&&L.length===1?'🥇':L.length>1&&L[0].best===L[1].best?'🤝':'🥈'}</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.name)}${x.you?' (ты)':''}</b><b class="ff" style="font-size:20px">${x.best}</b></div><div style="height:6px;border-radius:99px;background:rgba(255,255,255,.12);margin:6px 0;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(x.best/mx*100)}%;border-radius:99px;background:linear-gradient(90deg,#f9a8d4,#8b5cf6)"></i></div><span class="xs">Последняя: ${x.last} · Игр: ${x.games}</span></div></div>`;
+ const note=bb.err?`<p class="xs" style="text-align:center;margin:8px 0;color:#fca5a5">База не подключена: выполни blocks.sql в Supabase. Пока рекорд только на этом телефоне.</p>`:!d.pr?`<p class="xs" style="text-align:center;margin:8px 0">Партнёр ещё не играл в Block Blast</p>`:`<p class="sm" style="text-align:center;margin:8px 0">${bbRankLine().slice(3)||''}</p>`;
+ sheet(`<div id="bbRankBox"><h3 class="ff" style="font-size:20px">Рейтинг пары</h3><p class="xs" style="text-align:center;margin:6px 0 12px">Лучший счёт в Block Blast</p>${L.map(row).join('')}${note}<button class="btn" style="margin-top:6px;${ghostBtn}" onclick="bbMenu()">Назад</button></div>`);bb.rankOpen=true}
+window.bbRank=async()=>{bb.rankOpen=true;rankDraw();try{await bbLoad()}catch{}rankDraw()};
+setInterval(()=>{if(bb.rankOpen&&!document.hidden&&$('setc')&&$('setc').querySelector('#bbRankBox'))bbLoad().then(rankDraw);else if(bb.rankOpen&&!($('setc')&&$('setc').querySelector('#bbRankBox')))bb.rankOpen=false},12000);
+
 
 window.bbNew=()=>{if(bb.drag||bb.lock)return;if(bb.score>0&&!bb.over&&!confirm('Начать заново? Текущий счёт будет засчитан.'))return;if(bb.score>0&&!bb.over)finish(true);newGame()};
 function bbEnter(){if(!bb.cs)build();
