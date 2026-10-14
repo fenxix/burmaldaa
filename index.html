@@ -422,7 +422,7 @@ const FARMRX=/^_(?:an|eg|plot|inv|book|sl):/,FARMLEG=/^[^:~]+~_(?:an|eg|plot|inv
 const rmView=()=>{const k=lr.k,all=lr.all||[];
  const v=all.filter(r=>{const t=String(r.item);if(FARMRX.test(t))return true;if(FARMLEG.test(t))return false;return k==='main'?!t.includes('~'):t.startsWith(k+'~')}).map(r=>k==='main'||FARMRX.test(String(r.item))?r:{...r,item:r.item.slice(k.length+1)});
  if(k!=='main'&&!v.some(r=>String(r.item).startsWith('_theme:')))v.push({item:'_theme:'+RDEF[k],x:0,y:0,scale:1,flip:false,updated_at:''});return v};
-const lrPend=new Map(),lrPendSet=(item,row)=>lrPend.set(lr.k+'|'+item,{row,ts:Date.now()});
+const lrPend=new Map(),lrPendSet=(item,row)=>lrPend.set(lr.k+'|'+item,{row,ts:Date.now()});window.lrPendSet=lrPendSet;
 const lrMerge=v=>{const now=Date.now(),pre=lr.k+'|';lrPend.forEach((p,key)=>{if(now-p.ts>8000){lrPend.delete(key);return}if(!key.startsWith(pre))return;
  const it=key.slice(pre.length),i=v.findIndex(r=>r.item===it);
  if(p.row){if(i<0)v.push(p.row);else v[i]=p.row}else if(i>=0)v.splice(i,1)});return v};
