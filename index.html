@@ -93,7 +93,7 @@ h3.t{font-size:16px;font-weight:600;margin:20px 0 12px}
 .btn2{min-height:44px;padding:0 16px;border-radius:var(--radius-md);background:var(--glass-strong);border:1px solid var(--border);flex:1}
 .wish{display:flex;gap:12px;align-items:center;margin-top:8px;padding:12px;border-radius:var(--radius-md);background:var(--glass);border:1px solid var(--border)}
 .wish.done b{text-decoration:line-through;color:var(--text-muted)}.wish a{color:var(--pink-light);font-size:12px;text-decoration:none}
-.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:#1C1D38;border:1px solid var(--border);padding:12px 16px;border-radius:var(--radius-md);z-index:20;display:none;max-width:90%}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:#1C1D38;border:1px solid var(--border);padding:12px 16px;border-radius:var(--radius-md);z-index:9999;display:none;max-width:90%}
 .btn:disabled{opacity:.5;box-shadow:none;cursor:default}
 .gear{width:44px;height:44px;font-size:18px;color:var(--text-secondary);margin-right:-10px;flex:none}
 .sheet{max-height:85%;overflow-y:auto}
@@ -1031,7 +1031,7 @@ const SUBS={
  angry:['Злюсь','Раздражает','Бесит всё','Обиделся(лась)','Нужно остыть','Дай мне минутку','Кипит внутри','Давай поговорим']};
 let S={room:localStorage.getItem('room'),code:localStorage.getItem('code'),uid:null,me:null,pt:null,members:[],game:{level:1,score:0,blocks:1},caps:[],wishes:[],bt:null,ships:[],re:false,dis:null,saving:false},cur='welcome',ch=null;
 
-function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
+function toast(t,ms){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',ms||2600)}
 const NAVG={pet:'more',stats:'more',settings:'more',shop:'more',wishes:'more'};
 function go(s){cur=s;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id===s));
  $('nav').classList.toggle('on',['home','games','emotions','capsules','more','pet','stats','settings','shop','wishes'].includes(s));
@@ -3809,7 +3809,7 @@ const anSat=(a,now)=>Math.max(0,Math.min(100,(a.until-now)/(SPC[a.sp].H*3600)*10
 /* все изменения идут по одной очереди, поэтому быстрые тапы не создают копий */
 let anQ=Promise.resolve();const anRun=fn=>{anQ=anQ.then(()=>Promise.race([Promise.resolve().then(fn),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),20000))])).catch(e=>console.error('an-op',e));return anQ};
 const anItems=id=>lr.items.filter(i=>String(i.item).startsWith('_an:'+id+':')).map(i=>i.item);
-const anPut=async r=>{try{const {error}=await sb.from(gDB).upsert({room_id:S.room,item:r.item,x:0,y:0,scale:1,flip:false,updated_by:S.uid,updated_at:new Date().toISOString()},{onConflict:'room_id,item'});if(error){toast('Не сохранилось: '+error.message);return false}return true}catch(e){toast('Нет связи с базой');return false}};
+const anPut=async r=>{try{const {error}=await sb.from(gDB).upsert({room_id:S.room,item:r.item,x:0,y:0,scale:1,flip:false,updated_by:S.uid,updated_at:new Date().toISOString()},{onConflict:'room_id,item'});if(error){toast('Не сохранилось: '+error.message,9000);return false}return true}catch(e){toast('Нет связи с базой: '+(e&&e.message||e),9000);return false}};
 /* старые строки удаляются только после того, как новая точно сохранилась */
 async function anWrite(add,dels){let row=null;const prev=lr.items.slice();
  if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row);lrPendSet(add,row)}
@@ -3950,7 +3950,7 @@ window.anSell=()=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a
  if(ac>=3){gv.msg='Сегодня больше не получится выставить 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Впиши свою цену');
  const sr=anReal(a.sp,a.vi,anStage(a,now),d);
  if(await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+AN_EXP,sc:0,sr,dl:''}))===false){anLast='';return anSheetDraw(gsec())}
- gv.sellOn=false;gv.msg='';gv.ask=0;toast('🏷️ Выставлено за '+ask+' 🪙 · скоро придут покупатели');try{const id0=a.id,{data:chk,error:ce}=await sb.from(gDB).select('item').eq('room_id',S.room).like('item','_an:'+id0+':%');if(!ce){const ok=(chk||[]).some(r=>{const f=String(r.item).split(':');return +f[13]>0&&+f[11]>0});if(!ok)toast('⚠️ Продажа не сохранилась в базе — проверь права INSERT/DELETE в Supabase')}}catch{}anLast='';anSheetDraw(gsec())});
+ gv.sellOn=false;gv.msg='';gv.ask=0;toast('🏷️ Выставлено за '+ask+' 🪙 · скоро придут покупатели');try{const id0=a.id,{data:chk,error:ce}=await sb.from(gDB).select('item').eq('room_id',S.room).like('item','_an:'+id0+':%');if(!ce){const ok=(chk||[]).some(r=>{const f=String(r.item).split(':');return +f[13]>0&&+f[11]>0});if(!ok)toast('⚠️ Продажа не сохранилась в базе',9000)}}catch{}anLast='';anSheetDraw(gsec())});
 window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;if(await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0,sr:0,dl:''}))===false)return;toast('Снято с продажи ↩️');if(anMode==='buyers'||anMode==='chat'){anMode='sale';anSel=null;anBuy=null}anLast='';anSheetDraw(gsec())});
 /* ---- экраны: покупатели и чат ---- */
 window.anBuyers=id=>{anEnsure();anMode='buyers';anSel=id;anBuy=null;gv.apn=null;gv.acf='';anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
