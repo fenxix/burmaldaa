@@ -447,7 +447,7 @@ async function fmMig(){
    if(error)throw error;if((data||[]).length<part.length)throw new Error('часть старых строк не удалилась')}
  }catch(e){console.error('fm-mig',e);fmMigFail=1}
  finally{fmMigBusy=false;try{await lrLoad()}catch{}}}
-let lrSeq=0;lrLoad=async function(){if(!S.room||lr.drag)return;const my=++lrSeq;const {data,error}=await sb.from(T).select('*').eq('room_id',S.room);if(my!==lrSeq)return;if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}lr.all=data||[];lr.items=lrMerge(rmView());lrDraw();fmMig()};
+let lrSeq=0;lrLoad=async function(){if(!S.room||lr.drag)return;const my=++lrSeq;let data=[],error=null;for(let off=0;off<20000;off+=1000){const r=await sb.from(T).select('*').eq('room_id',S.room).order('updated_at',{ascending:true}).order('item',{ascending:true}).range(off,off+999);if(r.error){error=r.error;break}data=data.concat(r.data||[]);if((r.data||[]).length<1000)break}if(my!==lrSeq)return;if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}lr.all=data||[];lr.items=lrMerge(rmView());lrDraw();fmMig()};
 window.rmGo=async k=>{const r=RM.find(x=>x[0]===k);if(!r)return;
  if(r[2]>0&&!own('rm:'+k)){await buy('rm:'+k,r[2],()=>{});if(!own('rm:'+k))return}
  lr.k=k;try{localStorage.setItem('lrk',k)}catch{}lr.sel=null;lr.edit=false;lr.items=[];await lrLoad()};
@@ -3950,7 +3950,7 @@ window.anSell=()=>anRun(async()=>{const a=anRows().A.find(x=>x.id===anSel);if(!a
  if(ac>=3){gv.msg='Сегодня больше не получится выставить 🌙';anLast='';return anSheetDraw(now)}const ask=gv.ask;if(!(ask>0))return toast('Впиши свою цену');
  const sr=anReal(a.sp,a.vi,anStage(a,now),d);
  if(await anSave(Object.assign({},a,{ad:d,ac:ac+1,sa:ask,s0:now,se:now+AN_EXP,sc:0,sr,dl:''}))===false){anLast='';return anSheetDraw(gsec())}
- gv.sellOn=false;gv.msg='';gv.ask=0;toast('🏷️ Выставлено за '+ask+' 🪙 · скоро придут покупатели');anLast='';anSheetDraw(gsec())});
+ gv.sellOn=false;gv.msg='';gv.ask=0;toast('🏷️ Выставлено за '+ask+' 🪙 · скоро придут покупатели');try{const id0=a.id,{data:chk,error:ce}=await sb.from(gDB).select('item').eq('room_id',S.room).like('item','_an:'+id0+':%');if(!ce){const ok=(chk||[]).some(r=>{const f=String(r.item).split(':');return +f[13]>0&&+f[11]>0});if(!ok)toast('⚠️ Продажа не сохранилась в базе — проверь права INSERT/DELETE в Supabase')}}catch{}anLast='';anSheetDraw(gsec())});
 window.anUnlist=id=>anRun(async()=>{const a=anRows().A.find(x=>x.id===id);if(!a||!(a.se>0))return;if(await anSave(Object.assign({},a,{sa:0,s0:0,se:0,sc:0,sr:0,dl:''}))===false)return;toast('Снято с продажи ↩️');if(anMode==='buyers'||anMode==='chat'){anMode='sale';anSel=null;anBuy=null}anLast='';anSheetDraw(gsec())});
 /* ---- экраны: покупатели и чат ---- */
 window.anBuyers=id=>{anEnsure();anMode='buyers';anSel=id;anBuy=null;gv.apn=null;gv.acf='';anLast='';$('anSheet').classList.add('on');anSheetDraw(gsec())};
