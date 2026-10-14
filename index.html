@@ -1031,7 +1031,7 @@ const SUBS={
  angry:['Злюсь','Раздражает','Бесит всё','Обиделся(лась)','Нужно остыть','Дай мне минутку','Кипит внутри','Давай поговорим']};
 let S={room:localStorage.getItem('room'),code:localStorage.getItem('code'),uid:null,me:null,pt:null,members:[],game:{level:1,score:0,blocks:1},caps:[],wishes:[],bt:null,ships:[],re:false,dis:null,saving:false},cur='welcome',ch=null;
 
-function toast(t,ms){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',ms||2600)}
+function toast(t,ms){const e=$('toast');if(e.parentNode!==document.body)document.body.appendChild(e);e.style.cssText+=';position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);bottom:auto;z-index:2147483647;';e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',ms||2600)}
 const NAVG={pet:'more',stats:'more',settings:'more',shop:'more',wishes:'more'};
 function go(s){cur=s;document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id===s));
  $('nav').classList.toggle('on',['home','games','emotions','capsules','more','pet','stats','settings','shop','wishes'].includes(s));
