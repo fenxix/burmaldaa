@@ -447,7 +447,7 @@ async function fmMig(){
    if(error)throw error;if((data||[]).length<part.length)throw new Error('часть старых строк не удалилась')}
  }catch(e){console.error('fm-mig',e);fmMigFail=1}
  finally{fmMigBusy=false;try{await lrLoad()}catch{}}}
-let lrSeq=0;lrLoad=async function(){if(!S.room||lr.drag)return;const my=++lrSeq;let data=[],error=null;for(let off=0;off<20000;off+=1000){const r=await sb.from(T).select('*').eq('room_id',S.room).order('updated_at',{ascending:true}).order('item',{ascending:true}).range(off,off+999);if(r.error){error=r.error;break}data=data.concat(r.data||[]);if((r.data||[]).length<1000)break}if(my!==lrSeq)return;if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}lr.all=data||[];lr.items=lrMerge(rmView());lrDraw();fmMig()};
+let lrSeq=0;lrLoad=async function(){if(!S.room||lr.drag)return;const my=++lrSeq;let data=[],error=null;for(let off=0;off<20000;off+=1000){const r=await sb.from(T).select('*').eq('room_id',S.room).order('updated_at',{ascending:true}).order('item',{ascending:true}).range(off,off+999);if(r.error){error=r.error;break}data=data.concat(r.data||[]);if((r.data||[]).length<1000)break}if(my!==lrSeq)return;if(error){console.error('lrLoad',error);toast('Комната: '+error.message);lr.all=lr.all||[];lr.items=rmView();lrDraw();return}try{const sr=await sb.from('couple_farm_sales').select('*').eq('room_id',S.room);if(sr.error)toast('Продажи: '+sr.error.message,9000);else{const m={};(sr.data||[]).forEach(r=>{m[r.animal_id]={sa:+r.sa||0,s0:+r.s0||0,se:+r.se||0,sc:+r.sc||0,sr:+r.sr||0,dl:r.dl||''}});window.anSales=m}}catch(e){}if(my!==lrSeq)return;lr.all=data||[];lr.items=lrMerge(rmView());lrDraw();fmMig()};
 window.rmGo=async k=>{const r=RM.find(x=>x[0]===k);if(!r)return;
  if(r[2]>0&&!own('rm:'+k)){await buy('rm:'+k,r[2],()=>{});if(!own('rm:'+k))return}
  lr.k=k;try{localStorage.setItem('lrk',k)}catch{}lr.sel=null;lr.edit=false;lr.items=[];await lrLoad()};
@@ -3800,7 +3800,7 @@ const anRows=()=>{const best={},stale=[],E=[],es={},now=Date.now();
   if(a[0]==='_an'&&a.length>=9&&SPC[a[2]]){const o={id:a[1],sp:a[2],born:+a[3]||0,until:+a[4]||0,pen:a[5],cd:+a[6]||0,ad:+a[7]||0,ac:+a[8]||0,v:+a[9]||0,vi:Math.max(0,Math.min(4,+a[10]||0)),sa:+a[11]||0,s0:+a[12]||0,se:+a[13]||0,sc:+a[14]||0,sr:+a[15]||0,dl:a[16]||'',item:t},c=best[o.id];
    if(!c)best[o.id]=o;else if(anBetter(o,c)){stale.push(c.item);best[o.id]=o}else stale.push(o.item)}
   else if(a[0]==='_eg'&&a.length>=5&&SPC[a[2]]&&!es[a[1]]){es[a[1]]=1;E.push({id:a[1],sp:a[2],t0:+a[3]||0,pen:a[4],vi:a.length>=6&&a[5]!==''?+a[5]:-1,item:t})}});
- return{A:Object.values(best).filter(o=>!(anGone.get(o.id)>now)),E,stale}};
+ return{A:Object.values(best).filter(o=>!(anGone.get(o.id)>now)).map(o=>{const q=window.anSales&&window.anSales[o.id];return q?Object.assign(o,{sa:q.sa,s0:q.s0,se:q.se,sc:q.sc,sr:q.sr,dl:q.dl}):o}),E,stale}};
 const anRow=a=>`_an:${a.id}:${a.sp}:${a.born}:${a.until}:${a.pen}:${a.cd}:${a.ad}:${a.ac}:${a.v||0}:${a.vi||0}:${a.sa||0}:${a.s0||0}:${a.se||0}:${a.sc||0}:${a.sr||0}:${a.dl||''}`;
 const anEgRow=e=>`_eg:${e.id}:${e.sp}:${e.t0}:${e.pen}:${e.vi>=0?e.vi:''}`;
 const anEff=(a,now)=>Math.max(0,now-a.born-Math.max(0,now-a.until));
@@ -3809,12 +3809,15 @@ const anSat=(a,now)=>Math.max(0,Math.min(100,(a.until-now)/(SPC[a.sp].H*3600)*10
 /* все изменения идут по одной очереди, поэтому быстрые тапы не создают копий */
 let anQ=Promise.resolve();const anRun=fn=>{anQ=anQ.then(()=>Promise.race([Promise.resolve().then(fn),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),20000))])).catch(e=>console.error('an-op',e));return anQ};
 const anItems=id=>lr.items.filter(i=>String(i.item).startsWith('_an:'+id+':')).map(i=>i.item);
+window.anSales=window.anSales||{};
+const anSaleSync=async(id,v)=>{try{let r;if(v.se>0)r=await sb.from('couple_farm_sales').upsert({room_id:S.room,animal_id:id,sa:v.sa,s0:v.s0,se:v.se,sc:v.sc,sr:v.sr,dl:v.dl,updated_by:S.uid,updated_at:new Date().toISOString()},{onConflict:'room_id,animal_id'});else r=await sb.from('couple_farm_sales').delete().eq('room_id',S.room).eq('animal_id',id);if(r.error){toast('Не сохранилось (продажа): '+r.error.message,9000);return false}if(v.se>0)window.anSales[id]=v;else delete window.anSales[id];return true}catch(e){toast('Нет связи с базой: '+(e&&e.message||e),9000);return false}};
 const anPut=async r=>{try{const {error}=await sb.from(gDB).upsert({room_id:S.room,item:r.item,x:0,y:0,scale:1,flip:false,updated_by:S.uid,updated_at:new Date().toISOString()},{onConflict:'room_id,item'});if(error){toast('Не сохранилось: '+error.message,9000);return false}return true}catch(e){toast('Нет связи с базой: '+(e&&e.message||e),9000);return false}};
 /* старые строки удаляются только после того, как новая точно сохранилась */
 async function anWrite(add,dels){let row=null;const prev=lr.items.slice();
  if(add){row={item:add,x:0,y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==add);lr.items.push(row);lrPendSet(add,row)}
  dels.forEach(d=>{if(d!==add){lr.items=lr.items.filter(i=>i.item!==d);lrPendSet(d,null)}});
  gvRender();
+ if(add){const f=add.split(':');if(f[0]==='_an'){const id=f[1],se=+f[13]||0;if(se>0||window.anSales[id]){if(!await anSaleSync(id,{sa:+f[11]||0,s0:+f[12]||0,se,sc:+f[14]||0,sr:+f[15]||0,dl:f[16]||''})){lr.items=prev;lrPendSet(add,prev.find(i=>i.item===add)||null);dels.forEach(d=>{if(d!==add)lrPendSet(d,prev.find(i=>i.item===d)||null)});gvRender();return false}}}}
  if(row&&!await anPut(row)){lr.items=prev;lrPendSet(add,prev.find(i=>i.item===add)||null);dels.forEach(d=>{if(d!==add)lrPendSet(d,prev.find(i=>i.item===d)||null)});gvRender();return false}
  for(const d of dels)if(d!==add)await sb.from(gDB).delete().eq('room_id',S.room).eq('item',d);
  return true}
