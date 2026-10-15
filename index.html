@@ -272,6 +272,7 @@ input[type=datetime-local]{color-scheme:dark}
 <section class="screen" id="notes"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>За что я тебя люблю</h2></div>
  <div class="card" style="display:grid;gap:10px"><input id="nT" maxlength="300" placeholder="Я люблю тебя за…"><button class="btn" onclick="addNote()"><i class="fa-solid fa-heart"></i> Написать записку</button></div><div id="ntList"></div></section>
 <section class="screen" id="tasks"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Задачи</h2></div>
+ <div id="tkCats"></div>
  <div class="card row" style="gap:8px"><input id="tkT" maxlength="80" placeholder="Например, приготовить ужин вместе" onkeydown="if(event.key==='Enter')addTask()"><button class="pill on" onclick="addTask()" aria-label="Добавить"><i class="fa-solid fa-plus"></i></button></div><div id="tkList"></div></section>
 <section class="screen" id="chat"><div class="head"><button class="back" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button><h2>Чат</h2></div>
  <div id="chList"></div>
@@ -1703,11 +1704,36 @@ function heartFx(from){const o=document.createElement('div');o.className='hfx';l
  if(from)h+=`<p class="hfrom">${esc(from)} шлёт тебе любовь 💗</p>`;o.innerHTML=h;document.body.appendChild(o);try{navigator.vibrate&&from&&navigator.vibrate([30,60,30,60,60])}catch{}setTimeout(()=>o.remove(),5400)}
 function roomHTML(){return `<h3 id="roomHead" class="ff" style="font-size:20px;margin-bottom:10px">Комната ${esc(S.code)}</h3>`+(S.memHTML||'')+`<button class="btn2" style="width:100%;margin-top:8px" onclick="closeSet()">Закрыть</button>`}
 function roomModal(){$('setc').innerHTML=roomHTML();$('set').classList.add('on')}
+const tkS={cat:'*',adding:false},TKSEP='¦';
+const tkParse=t=>{const x=String(t.title||''),i=x.indexOf(TKSEP);return i>0&&i<=24?{cat:x.slice(0,i),text:x.slice(i+1)}:{cat:'',text:x}};
+const tkLoc=()=>{try{const a=JSON.parse(localStorage.getItem('tkcats')||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string'):[]}catch{return[]}};
+const tkLocSet=a=>{try{localStorage.setItem('tkcats',JSON.stringify(a))}catch{}};
+const tkCatList=()=>{const r=[];tkLoc().concat((S.tasks||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).map(t=>tkParse(t).cat)).forEach(c=>{if(c&&!r.includes(c))r.push(c)});return r};
 function drawTasks(){const T=S.tasks||[],open=T.filter(t=>!t.done).length,c=$('taskCard');
  if(c)c.innerHTML=`<span class="ico"><i class="fa-solid fa-list-check"></i></span><div class="sp"><b class="ff" style="font-size:15px">Задачи</b><p class="xs">${T.length?(open?'Осталось сделать: '+open:'Всё выполнено 🎉'):'Общие дела для вас двоих'}</p></div><i class="fa-solid fa-chevron-right sm"></i>`;
- if(cur!=='tasks')return;const L=T.slice().sort((a,b)=>a.done-b.done||new Date(b.created_at)-new Date(a.created_at));
- $('tkList').innerHTML=L.map(t=>{const m=(S.members||[]).find(x=>x.user_id===t.author_id);return `<div class="card row mt" style="padding:12px;${t.done?'opacity:.6':''}"><button class="tkc ${t.done?'on':''}" onclick="tkTog('${esc(t.id)}',${!t.done})" aria-label="Выполнено"><i class="fa-solid fa-check"></i></button><div class="sp"><p style="${t.done?'text-decoration:line-through':''}">${esc(t.title)}</p><p class="xs">${esc(m?m.name:'')} · ${new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</p></div>${t.author_id===S.uid?`<button class="pill" onclick="tkDel('${esc(t.id)}')" aria-label="Удалить"><i class="fa-regular fa-trash-can"></i></button>`:''}</div>`}).join('')||'<p class="sm" style="text-align:center;margin-top:20px">Пока нет задач — добавьте первую 💗</p>'}
-async function addTask(){const v=$('tkT').value.trim();if(!v)return;const {error}=await sb.from('couple_tasks').insert({room_id:S.room,title:v.slice(0,80),author_id:S.uid});if(error)return toast(error.message);$('tkT').value='';xLoad()}
+ if(cur!=='tasks')return;
+ const cats=tkCatList();if(tkS.cat!=='*'&&tkS.cat!==''&&!cats.includes(tkS.cat))tkS.cat='*';
+ const cnt=k=>T.filter(t=>!t.done&&(k==='*'||tkParse(t).cat===k)).length,tot=k=>T.filter(t=>k==='*'||tkParse(t).cat===k).length;
+ const chip=(on,label,fn)=>`<button class="pill${on?' on':''}" style="flex:none;white-space:nowrap" onclick="${fn}">${label}</button>`;
+ let h=chip(tkS.cat==='*','Все · '+cnt('*'),"tkSel('*')");
+ if(cats.length&&T.some(t=>!tkParse(t).cat))h+=chip(tkS.cat==='','Без категории · '+cnt(''),"tkSel('')");
+ cats.forEach(k=>{h+=chip(tkS.cat===k,esc(k)+' · '+cnt(k),"tkSel('"+encodeURIComponent(k).replace(/'/g,'%27')+"')")});
+ h+=chip(tkS.adding,'<i class="fa-solid fa-plus"></i> Категория',"tkAdding()");
+ let box='<div style="display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none">'+h+'</div>';
+ if(tkS.adding)box+='<div class="card row" style="gap:8px;margin-bottom:10px"><input id="tkCI" maxlength="20" placeholder="Название, например «Зима»" onkeydown="if(event.key===\'Enter\')tkAddCat()"><button class="pill on" onclick="tkAddCat()">Создать</button></div>';
+ if(tkS.cat!=='*'&&tkS.cat!=='')box+=`<div class="row" style="justify-content:space-between;align-items:center;margin:0 2px 10px"><p class="sm">${esc(tkS.cat)}: осталось ${cnt(tkS.cat)} из ${tot(tkS.cat)}</p><button class="pill" onclick="tkDelCat()" aria-label="Удалить категорию"><i class="fa-regular fa-trash-can"></i></button></div>`;
+ const cb=$('tkCats'),fa=document.activeElement;if(cb&&!(fa&&fa.id==='tkCI'))cb.innerHTML=box;
+ const ti=$('tkT');if(ti)ti.placeholder=tkS.cat!=='*'&&tkS.cat!==''?'Задача в «'+tkS.cat+'»…':'Например, приготовить ужин вместе';
+ const L=T.filter(t=>tkS.cat==='*'||tkParse(t).cat===tkS.cat).sort((a,b)=>a.done-b.done||new Date(b.created_at)-new Date(a.created_at));
+ $('tkList').innerHTML=L.map(t=>{const m=(S.members||[]).find(x=>x.user_id===t.author_id),P=tkParse(t);return `<div class="card row mt" style="padding:12px;${t.done?'opacity:.6':''}"><button class="tkc ${t.done?'on':''}" onclick="tkTog('${esc(t.id)}',${!t.done})" aria-label="Выполнено"><i class="fa-solid fa-check"></i></button><div class="sp"><p style="${t.done?'text-decoration:line-through':''}">${esc(P.text)}</p><p class="xs">${tkS.cat==='*'&&P.cat?'🏷 '+esc(P.cat)+' · ':''}${esc(m?m.name:'')} · ${new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</p></div>${t.author_id===S.uid?`<button class="pill" onclick="tkDel('${esc(t.id)}')" aria-label="Удалить"><i class="fa-regular fa-trash-can"></i></button>`:''}</div>`}).join('')||'<p class="sm" style="text-align:center;margin-top:20px">'+(tkS.cat==='*'?'Пока нет задач — добавьте первую 💗':'В этой категории пока пусто — добавьте первую задачу 💗')+'</p>'}
+window.tkSel=k=>{tkS.cat=decodeURIComponent(k);tkS.adding=false;drawTasks()};
+window.tkAdding=()=>{tkS.adding=!tkS.adding;drawTasks();setTimeout(()=>{const i=$('tkCI');if(i)i.focus()},60)};
+window.tkAddCat=()=>{const i=$('tkCI');const v=((i&&i.value)||'').replace(/¦/g,'').trim().slice(0,20);if(!v)return;const l=tkLoc();if(!l.includes(v)){l.push(v);tkLocSet(l)}tkS.cat=v;tkS.adding=false;drawTasks();toast('Категория «'+v+'» создана ✅')};
+window.tkDelCat=async()=>{const k=tkS.cat;if(!k||k==='*')return;if(!confirm('Удалить категорию «'+k+'» и все её задачи?'))return;
+ const ids=(S.tasks||[]).filter(t=>tkParse(t).cat===k).map(t=>t.id);tkLocSet(tkLoc().filter(x=>x!==k));
+ if(ids.length){const {error}=await sb.from('couple_tasks').delete().in('id',ids);if(error)toast(error.message)}
+ tkS.cat='*';await xLoad();drawTasks()};
+async function addTask(){const v=$('tkT').value.trim();if(!v)return;const c=tkS.cat!=='*'&&tkS.cat!==''?tkS.cat:'',title=c?c+TKSEP+v.slice(0,80-c.length-1):v.slice(0,80);const {error}=await sb.from('couple_tasks').insert({room_id:S.room,title,author_id:S.uid});if(error)return toast(error.message);$('tkT').value='';xLoad()}
 async function tkTog(id,v){const t=S.tasks.find(x=>String(x.id)===String(id));if(t){t.done=v;drawTasks()}const {error}=await sb.from('couple_tasks').update({done:v}).eq('id',id);if(error){toast(error.message);xLoad()}else if(v)toast('Готово ✅')}
 async function tkDel(id){const {error}=await sb.from('couple_tasks').delete().eq('id',id);if(error)return toast(error.message);xLoad()}
 const mdAvg=o=>{const v=Object.values(o||{}).filter(x=>x>0);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):0},mdAvgT=o=>{const a=mdAvg(o);return a?mdF(a):'—'};
@@ -3540,6 +3566,14 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
 .fm-card.fm-in{animation:fmin .38s cubic-bezier(.2,.9,.3,1)}
 .fm-row{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none}
 .fm-row::-webkit-scrollbar{display:none}
+.fm-map.off{display:none}
+.fm-map.hub{aspect-ratio:auto;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:minmax(170px,auto) minmax(130px,auto);grid-template-areas:"hb hb hb hp hp hp" "wt wt sale sale book book"}
+.fm-map.lst{aspect-ratio:auto;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(138px,auto);grid-template-areas:none}
+.fm-map.lst .fmz{grid-area:auto!important}
+.fmz-hub{background:linear-gradient(160deg,#fff6e0,#ffe7bd);border:2px dashed rgba(150,110,60,.42);gap:7px}
+.fmz-hub .fmz-ic{font-size:46px;line-height:1}.fmz-hub .fmz-n{font-size:15px}
+.fm-mini{flex:none;border-radius:16px;background:rgba(255,255,255,.92);padding:9px 12px;font-size:12px;font-weight:800;color:#5a4636;box-shadow:0 4px 10px rgba(120,90,60,.15)}
+.fm-row.fm-wrap{flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:236px;overscroll-behavior:contain}
 .fm-seed{flex:none;width:78px;padding:9px 4px;border-radius:20px;background:#fff;text-align:center;box-shadow:0 4px 10px rgba(120,90,60,.15);border:2px solid transparent;color:#5a4636}
 .fm-seed.on{border-color:#ff9ac8;box-shadow:0 0 0 3px rgba(255,154,200,.3),0 6px 14px rgba(255,120,183,.3)}
 .fm-plot{position:relative;aspect-ratio:1/1.12;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;overflow:hidden;background:#9a6a46;color:#fff;box-shadow:0 5px 12px rgba(120,80,40,.25),inset 0 2px 5px rgba(0,0,0,.2)}
@@ -3584,7 +3618,7 @@ const CROPS={carrot:{e:'🥕',n:'Морковь',g:12,w:5,p:0,s:15,m:1},berry:{e
 const GVY=2,gv={open:false,tab:'seed',seed:'carrot',feed:null,tm:0};
 const gsec=()=>Math.floor(Date.now()/1000),gDB='couple_room_decor';
 const gfmt=s=>{const m=Math.ceil(s/60);return m<=1?'<1м':m<60?m+'м':Math.floor(m/60)+'ч'+(m%60?' '+m%60+'м':'')};
-const gvSlots=()=>{const m={};lr.items.forEach(r=>{const s=String(r.item);if(!s.startsWith('_plot:'))return;const a=s.split(':');if(a.length<6||!CROPS[a[2]])return;const o={slot:+a[1],crop:a[2],eff:+a[3]||0,t:+a[4]||0,m:+a[5]||0,item:s},c=m[o.slot];if(!c||o.t>c.t||(o.t===c.t&&o.m>c.m))m[o.slot]=o});return Array.from({length:12},(_,i)=>m[i]||null)};
+const gvSlots=()=>{const m={};lr.items.forEach(r=>{const s=String(r.item);if(!s.startsWith('_plot:'))return;const a=s.split(':');if(a.length<6||!CROPS[a[2]])return;const o={slot:+a[1],crop:a[2],eff:+a[3]||0,t:+a[4]||0,m:+a[5]||0,item:s},c=m[o.slot];if(!c||o.t>c.t||(o.t===c.t&&o.m>c.m))m[o.slot]=o});return Array.from({length:40},(_,i)=>m[i]||null)};
 const gvInfo=(p,now)=>{const C=CROPS[p.crop],G=C.g*60,eff=Math.min(G,p.eff+Math.max(0,Math.min(now,p.m)-p.t)),ready=eff>=G;return{C,G,eff,ready,moist:!ready&&p.m>now,prog:eff/G,left:G-eff}};
 const gvInv=()=>{const o={};lr.items.forEach(r=>{const s=String(r.item);if(s.startsWith('_inv:')&&CROPS[s.slice(5)])o[s.slice(5)]=Math.max(0,Math.round(+r.x||0))});return o};
 const gvSetInv=(c,n)=>{const row={item:'_inv:'+c,x:Math.max(0,n),y:0,scale:1,flip:false,updated_at:new Date().toISOString()};lr.items=lr.items.filter(i=>i.item!==row.item);lr.items.push(row);lrPendSet(row.item,row);return lrSave(row)};
@@ -3601,7 +3635,7 @@ window.gvTap=async i=>{const p=gvSlots()[i],now=gsec();
  const I=gvInfo(p,now);
  if(I.ready){const inv=gvInv();gvVib();toast('+'+GVY+' '+I.C.e+' в урожай');gvPut(i,null);return gvSetInv(p.crop,(inv[p.crop]||0)+GVY)}
  if(!I.moist)return gvWater(i);toast(I.C.n+': вырастет через '+gfmt(I.left)+' 🌱')};
-window.gvWaterAll=async()=>{const sl=gvSlots();let n=0;for(let i=0;i<12;i++)if(sl[i]&&await gvWater(i,true))n++;toast(n?'Полито: '+n+' 💧':'Поливать нечего — всё влажное или пусто')};
+window.gvWaterAll=async()=>{const sl=gvSlots();let n=0;for(let i=0;i<sl.length;i++)if(sl[i]&&await gvWater(i,true))n++;toast(n?'Полито: '+n+' 💧':'Поливать нечего — всё влажное или пусто')};
 window.gvSeed=k=>{const C=CROPS[k];if(!C)return;if(C.p>0&&!own('crop:'+k))return buy('crop:'+k,C.p,()=>{gv.seed=k;gvRender()});gv.seed=k;gvRender()};
 window.gvTab=t=>{gv.tab=t;gvRender()};
 window.gvPick=k=>{gv.feed=gv.feed===k?null:k;gvRender()};
@@ -3614,7 +3648,7 @@ window.gvFeedPet=async pid=>{const c=gv.feed,C=CROPS[c];if(!C)return;const inv=g
  if(error){pt2.rows[pid]=prev;gvSetInv(c,inv[c]);gvRender();return toast('Не удалось покормить: '+error.message)}
  const pp=(window.petsOf?petsOf():[]).find(x=>x[0]===pid);toast((pp?pp[2]+': ':'')+'ням '+C.e+'  🍖+'+C.s+' 💗+'+C.m);try{petsSync();petsPanel()}catch{}};
 /* ===== Огород 2.0: карта сверху + карточка выбранной зоны (Tailwind, пастель) ===== */
-const FMZ=[['b0','Грядка 1',[0,1,2,3]],['b1','Грядка 2',[4,5,6,7]],['b2','Грядка 3',[8,9,10,11]]];
+const FMZ=Array.from({length:10},(_,i)=>['b'+i,'Огород '+(i+1),[0,1,2,3].map(j=>i*4+j)]);
 const fmAvg=a=>a.length?Math.round(a.reduce((s,v)=>s+v,0)/a.length):null;
 /* модель: всё считается из тех же _plot:* строк, что и раньше — данные не меняются */
 function fmModel(now){
@@ -3660,17 +3694,30 @@ function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
  const bed=z=>{if(!bedOwned(z.id)){const sl=gv.zone===z.id;return`<button class="fmz fmz-lock${sl?' sel':''}" style="grid-area:${z.id}" onclick="fmZone('${z.id}')" aria-label="${z.nm} закрыта"><span class="lk">🔒</span><span class="fmz-n">${z.nm}</span><span class="fmz-s">${BEDP[z.id]} 🪙</span></button>`}const C=z.top&&CROPS[z.top],sel=gv.zone===z.id;
   return`<button class="fmz fmz-bed${sel?' sel':''}" style="grid-area:${z.id}" onclick="fmZone('${z.id}')" aria-pressed="${sel}" aria-label="${z.nm}"><span class="fmz-n">${z.nm}</span><span class="fmsoil">${z.a.map(x=>x.e?'<i class="fmc e"></i>':`<i class="fmc ${x.st}">${x.em}</i>`).join('')}</span><span class="fmz-s">${C?C.e+' '+C.n:'пусто'}</span><span class="fmbar"><b ${W('m'+z.id,z.prog)}></b></span>${z.rd.length?`<span class="fmbd">✨${z.rd.length}</span>`:z.dr.length?`<span class="fmbd">💧${z.dr.length}</span>`:''}</button>`};
  const selT=gv.zone==='tank';
- set('fmMap',FMZ.map(z=>bed(M.zs[z[0]])).join('')+anMapBtns(now)
-  +`<button class="fmz fmz-tank${selT?' sel':''}" style="grid-area:wt" onclick="fmZone('tank')" aria-pressed="${selT}" aria-label="Резервуар с водой"><span class="fm-tank"><i ${H('tk',M.moist)}></i><b ${T('tkp',fmPct(M.moist))}></b></span><span class="fmz-n">Резервуар</span>${M.dry?`<span class="fmbd">💧${M.dry}</span>`:''}</button>`
-  +(()=>{const sl=anRows().A.filter(a=>a.se>0),bn=sl.reduce((t,a)=>t+anBuyCnt(a),0),bk=Object.keys(SPC).reduce((t,sp)=>{const m=bookMask(sp);let n=0;for(let i=0;i<5;i++)if(m&(1<<i))n++;return t+n},0);
+ const tankBtn=`<button class="fmz fmz-tank${selT?' sel':''}" style="grid-area:wt" onclick="fmZone('tank')" aria-pressed="${selT}" aria-label="Резервуар с водой"><span class="fm-tank"><i ${H('tk',M.moist)}></i><b ${T('tkp',fmPct(M.moist))}></b></span><span class="fmz-n">Резервуар</span>${M.dry?`<span class="fmbd">💧${M.dry}</span>`:''}</button>`,mkBtns=(()=>{const sl=anRows().A.filter(a=>a.se>0),bn=sl.reduce((t,a)=>t+anBuyCnt(a),0),bk=Object.keys(SPC).reduce((t,sp)=>{const m=bookMask(sp);let n=0;for(let i=0;i<5;i++)if(m&(1<<i))n++;return t+n},0);
    return`<button class="fmz fmz-mk" style="grid-area:sale" onclick="anSale()" aria-label="Животные на продаже"><span class="fmz-n">На продаже</span><span class="fm-pets"><i class="fm-pet">🏷️</i></span><span class="fmz-s">${sl.length?sl.length+' шт.'+(bn?' · 👤 '+bn:' · ждём'):'пока пусто'}</span>${bn?`<span class="fmbd" style="background:#ef4444;color:#fff">${bn}</span>`:sl.length?`<span class="fmbd">${sl.length}</span>`:''}</button>`
-   +`<button class="fmz fmz-mk" style="grid-area:book" onclick="anBook()" aria-label="Книга животных"><span class="fmz-n">Книга</span><span class="fm-pets"><i class="fm-pet">📖</i></span><span class="fmz-s">${bk}/30 открыто</span></button>`})());
+   +`<button class="fmz fmz-mk" style="grid-area:book" onclick="anBook()" aria-label="Книга животных"><span class="fmz-n">Книга</span><span class="fm-pets"><i class="fm-pet">📖</i></span><span class="fmz-s">${bk}/${Object.keys(SPC).length*5} открыто</span></button>`})();
+ const bedsH=FMZ.map(z=>bed(M.zs[z[0]])).join(''),pensH=anMapBtns(now),nOwnB=FMZ.filter(z=>bedOwned(z[0])).length,{A:A0}=anRows(),pAll=Object.keys(PENS),pO=pAll.filter(k=>own('pen:'+k)).length,hunA=A0.filter(a=>anSat(a,now)<25).length;
+ const hub=(ar,ic,ttl,sub,bd,fn)=>`<button class="fmz fmz-hub" style="grid-area:${ar}" onclick="${fn}" aria-label="${ttl}"><span class="fmz-ic">${ic}</span><span class="fmz-n">${ttl}</span><span class="fmz-s">${sub}</span>${bd?`<span class="fmbd">${bd}</span>`:''}</button>`;
+ const det=!!gv.det,view=gv.view||'home';
+ let mapH='';if(!det){if(view==='beds')mapH=bedsH;else if(view==='pens')mapH=pensH;
+  else mapH=hub('hb','🥕','Огороды',nOwnB+' из '+FMZ.length+' · '+(M.planted?'засеяно '+M.planted:'пусто'),M.ready?'✨'+M.ready:M.dry?'💧'+M.dry:'',"fmView('beds')")
+   +hub('hp','🐔','Загоны',pO+' из '+pAll.length+' · 🐾 '+A0.length,hunA?'🍽️'+hunA:'',"fmView('pens')")+tankBtn+mkBtns}
+ const mapEl=$('fmMap');mapEl.className='fm-map rounded-3xl shadow-lg '+(det?'off':view==='home'?'hub':'lst');set('fmMap',mapH);
+ const stEl=$('fmStats');if(stEl)stEl.style.display=(!det&&(view==='home'||view==='beds'))?'':'none';
+ const cardEl0=$('fmCard');if(cardEl0)cardEl0.style.display=det?'':'none';
+ const nav=(()=>{if(view==='home'&&!det)return'';
+  const zn=gv.zone==='tank'?'Резервуар':M.zs[gv.zone]?M.zs[gv.zone].nm:PENS[gv.zone]?PENS[gv.zone].n:'';
+  const ttl=det?zn:view==='beds'?'Огороды':'Загоны',sub=det?'':view==='beds'?'Куплено '+nOwnB+' из '+FMZ.length:'Куплено '+pO+' из '+pAll.length;
+  const ex=(!det&&view==='beds')?`<button class="fm-mini" onclick="fmDo('harvestAll')">🧺 Собрать</button><button class="fm-mini" onclick="fmDo('all')">💧 Полить</button>`:'';
+  return`<div class="flex items-center gap-2"><button class="fm-mini" onclick="gvBack()">‹ Назад</button><div class="min-w-0 flex-1"><b class="block truncate text-base font-extrabold text-stone-700">${ttl}</b>${sub?`<span class="text-[11px] font-bold text-stone-500">${sub}</span>`:''}</div>${ex}</div>`})();
+ set('fmNav',nav);
  /* карточка выбранной зоны */
  const act=(c,txt,fn,dis)=>`<button class="fm-act bg-gradient-to-r ${c}" ${dis?'disabled':''} onclick="${fn}">${txt}</button>`;
  const meter=(ic,lb,k,c,v)=>`<div><div class="mb-1 flex justify-between text-xs font-bold text-stone-500"><span>${ic} ${lb}</span><span ${T(k+'t',fmPct(v))}></span></div>${bar(k,c,v)}</div>`;
  const head=(ic,bg,ttl,chip,cc)=>`<div class="flex items-center gap-3"><div class="grid h-14 w-14 shrink-0 place-items-center rounded-3xl ${bg} text-3xl shadow-lg">${ic}</div><div class="min-w-0 flex-1"><h3 class="truncate text-lg font-extrabold text-stone-700">${ttl}</h3><span class="mt-1 inline-block rounded-full px-2.5 py-1 text-xs font-bold ${cc}">${chip}</span></div></div>`;
  let card='';
- if(M.zs[gv.zone]&&!bedOwned(gv.zone)){card=head('🔒','bg-stone-100',M.zs[gv.zone].nm,'Закрыта','bg-stone-100 text-stone-500')+`<p class="mt-3 text-xs font-semibold text-stone-500">Грядку нужно купить: на ней 4 места для посадки.</p>`+act('from-emerald-200 to-lime-200','🪙 Купить грядку · '+BEDP[gv.zone],`anBuyBed('${gv.zone}')`)}
+ if(M.zs[gv.zone]&&!bedOwned(gv.zone)){card=head('🔒','bg-stone-100',M.zs[gv.zone].nm,'Закрыта','bg-stone-100 text-stone-500')+`<p class="mt-3 text-xs font-semibold text-stone-500">Огород нужно купить: на нём 4 места для посадки.</p>`+act('from-emerald-200 to-lime-200','🪙 Купить огород · '+BEDP[gv.zone],`anBuyBed('${gv.zone}')`)}
   else if(AN_PEN[gv.zone]){card=anCard(gv.zone,now,W,T,head,act)}
   else if(M.zs[gv.zone]){const z=M.zs[gv.zone],C=z.top&&CROPS[z.top],[ch,cc]=fmChip(z);
   const plots=z.a.map(x=>x.e?`<button class="fm-plot e" data-plot="${x.i}" onclick="gvTap(${x.i})" aria-label="Пустая грядка"><span class="text-2xl leading-none">＋</span><small>посадить</small></button>`
@@ -3683,29 +3730,32 @@ function gvRender(){if(!gv.open)return;const R=$('gv');if(!R)return;
   card=head(C?C.e:'🌱','bg-amber-100',z.nm+(C?' · '+C.n:''),ch,cc)
    +`<div class="mt-4"><div class="mb-1 flex justify-between text-xs font-bold text-stone-500"><span>🌱 Прогресс роста</span><span ${T('zpt',z.prog+'%')}></span></div>${bar('zp','bg-gradient-to-r from-emerald-300 to-lime-300',z.prog)}</div>`
    +`<div class="mt-3 grid grid-cols-2 gap-3">${meter('💚','Здоровье','zh','bg-gradient-to-r from-rose-300 to-pink-300',z.health)}${meter('💧','Влажность','zm','bg-gradient-to-r from-sky-300 to-blue-300',z.moist)}</div>`
-   +`<div class="mt-4 grid grid-cols-4 gap-2">${plots}</div><p class="mb-1 mt-4 text-xs font-bold text-stone-500">Семена для посадки</p><div class="fm-row">${seeds}</div>`+a}
+   +`<div class="mt-4 grid grid-cols-4 gap-2">${plots}</div><p class="mb-1 mt-4 text-xs font-bold text-stone-500">Семена для посадки</p><div class="fm-row fm-wrap">${seeds}</div>`+a}
   else{const gw=M.wet+M.dry;
   card=head('💧','bg-sky-100','Резервуар с водой',M.dry?'Нужно полить: '+M.dry:M.planted?'Воды хватает 💙':'Грядки пока пусты',M.dry?'bg-sky-100 text-sky-800':'bg-emerald-100 text-emerald-800')
    +`<div class="mt-4">${meter('💧','Влажность грядок','tm','bg-gradient-to-r from-sky-300 to-blue-300',M.moist)}</div>`
-   +`<div class="mt-3 grid grid-cols-3 gap-2 text-center"><div class="rounded-2xl bg-sky-50 p-2 shadow-lg"><b class="block text-lg text-sky-700">${M.wet}</b><span class="text-[10px] font-bold text-stone-500">политых</span></div><div class="rounded-2xl bg-amber-50 p-2 shadow-lg"><b class="block text-lg text-amber-700">${M.dry}</b><span class="text-[10px] font-bold text-stone-500">сухих</span></div><div class="rounded-2xl bg-emerald-50 p-2 shadow-lg"><b class="block text-lg text-emerald-700">${M.planted}/12</b><span class="text-[10px] font-bold text-stone-500">засеяно</span></div></div>`
+   +`<div class="mt-3 grid grid-cols-3 gap-2 text-center"><div class="rounded-2xl bg-sky-50 p-2 shadow-lg"><b class="block text-lg text-sky-700">${M.wet}</b><span class="text-[10px] font-bold text-stone-500">политых</span></div><div class="rounded-2xl bg-amber-50 p-2 shadow-lg"><b class="block text-lg text-amber-700">${M.dry}</b><span class="text-[10px] font-bold text-stone-500">сухих</span></div><div class="rounded-2xl bg-emerald-50 p-2 shadow-lg"><b class="block text-lg text-emerald-700">${M.planted}/${FMZ.filter(z=>bedOwned(z[0])).length*4}</b><span class="text-[10px] font-bold text-stone-500">засеяно</span></div></div>`
    +act('from-sky-200 to-blue-200','💧 Полить всё'+(M.dry?' · '+M.dry:''),"fmDo('all')",!gw)}
- const ce=$('fmCard'),row=ce.querySelector('.fm-row'),sx=row?row.scrollLeft:0,same=ce._z===gv.zone;
- if(set('fmCard',card)){const r2=ce.querySelector('.fm-row');if(r2&&same)r2.scrollLeft=sx}
+ const ce=$('fmCard'),rows0=[...ce.querySelectorAll('.fm-row')].map(r=>[r.scrollLeft,r.scrollTop]),same=ce._z===gv.zone;
+ if(set('fmCard',card)){if(same)ce.querySelectorAll('.fm-row').forEach((r,k)=>{if(rows0[k]){r.scrollLeft=rows0[k][0];r.scrollTop=rows0[k][1]}})}
  ce._z=gv.zone;
  fmApply(R,live)}
-window.fmZone=z=>{if(gv.zone===z)return;gv.zone=z;gvVib();const c=$('fmCard');if(c){c.classList.remove('fm-in');void c.offsetWidth;c.classList.add('fm-in')}gvRender();
- setTimeout(()=>{try{c&&c.scrollIntoView({behavior:'smooth',block:'nearest'})}catch{}},60)};
+window.fmZone=z=>{gv.zone=z;gv.view=PENS[z]?'pens':/^b\d+$/.test(z)?'beds':'home';gv.det=true;gvVib();const c=$('fmCard');if(c){c.classList.remove('fm-in');void c.offsetWidth;c.classList.add('fm-in')}gvRender();fmTop()};
+window.fmView=v=>{gv.view=v;gv.det=false;gvVib();gvRender();fmTop()};
+window.gvBack=()=>{if(gv.det){gv.det=false;gvRender()}else if(gv.view!=='home'){gv.view='home';gvRender()}else gvClose();fmTop()};
+const fmTop=()=>{try{$('gv').querySelector('.fm-scroll').scrollTop=0}catch{}};
 window.fmPick=k=>{gv.feed=k;gvRender()};
 window.fmDo=async k=>{if(gv.busy)return;const M=fmModel(gsec()),z=M.zs[gv.zone];gv.busy=true;
  try{if(k==='all')await gvWaterAll();
+  else if(k==='harvestAll'){const rd=M.pl.filter(x=>!x.e&&x.st==='rd');if(!rd.length)toast('Собирать пока нечего');for(const x of rd)await gvTap(x.i)}
   else if(!z)return;
   else if(k==='harvest'){for(const x of z.rd)await gvTap(x.i)}
   else if(k==='water'){let n=0;for(const x of z.dr)if(await gvWater(x.i,true))n++;toast(n?'Полито: '+n+' 💧':'Поливать нечего')}
   else if(k==='plant'){const C=CROPS[gv.seed];if(!C)return;if(C.p>0&&!own('crop:'+gv.seed))return toast('Сначала открой эти семена 🔒');for(const x of z.emp)await gvTap(x.i)}
  }catch(e){console.error('farm-act',e)}finally{gv.busy=false;gvRender()}};
 function gvOpen(){let R=$('gv');if(!R){R=document.createElement('div');R.id='gv';R.className='gv';R.setAttribute('role','dialog');R.setAttribute('aria-label','Огород');
-  R.innerHTML=`<div class="mx-auto flex h-full w-full max-w-[430px] flex-col"><div class="flex items-center gap-3 px-4 pb-2 pt-3"><button class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/85 text-stone-600 shadow-lg" onclick="gvClose()" aria-label="Закрыть"><i class="fa-solid fa-arrow-left"></i></button><div class="min-w-0 flex-1"><p id="fmHi" class="truncate text-[15px] font-extrabold text-stone-700"></p><p id="fmFarm" class="truncate text-xs font-bold text-stone-500"></p></div><span id="gvCoins" class="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-700 shadow-lg"></span></div><div class="fm-scroll flex-1 space-y-3 overflow-y-auto px-4 pb-8 pt-1"><div id="fmStats" class="grid grid-cols-4 gap-2"></div><div id="fmMap" class="fm-map rounded-3xl shadow-lg"></div><div id="fmCard" class="fm-card rounded-3xl bg-white/85 p-4 shadow-lg"></div></div></div>`;document.body.appendChild(R)}
- gv.open=true;if(!gv.zone)gv.zone='b0';R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);try{anOpened()}catch{}gvRender()}
+  R.innerHTML=`<div class="mx-auto flex h-full w-full max-w-[430px] flex-col"><div class="flex items-center gap-3 px-4 pb-2 pt-3"><button class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/85 text-stone-600 shadow-lg" onclick="gvBack()" aria-label="Назад"><i class="fa-solid fa-arrow-left"></i></button><div class="min-w-0 flex-1"><p id="fmHi" class="truncate text-[15px] font-extrabold text-stone-700"></p><p id="fmFarm" class="truncate text-xs font-bold text-stone-500"></p></div><span id="gvCoins" class="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-700 shadow-lg"></span></div><div class="fm-scroll flex-1 space-y-3 overflow-y-auto px-4 pb-8 pt-1"><div id="fmNav"></div><div id="fmStats" class="grid grid-cols-4 gap-2"></div><div id="fmMap" class="fm-map rounded-3xl shadow-lg"></div><div id="fmCard" class="fm-card rounded-3xl bg-white/85 p-4 shadow-lg"></div></div></div>`;document.body.appendChild(R)}
+ gv.open=true;gv.view='home';gv.det=false;if(!gv.zone)gv.zone='b0';R.classList.add('on');clearInterval(gv.tm);gv.tm=setInterval(gvRender,1000);try{anOpened()}catch{}gvRender()}
 window.gvClose=()=>{try{anClose()}catch{}gv.open=false;clearInterval(gv.tm);const R=$('gv');if(R)R.classList.remove('on');gvBadge()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gv.open)gvClose()});
 document.addEventListener('click',e=>{if(lr.edit||gv.open)return;const el=e.target.closest&&e.target.closest('#lrStage .lri[data-k="gvbed"]');if(el){e.stopPropagation();gvOpen()}});
@@ -3769,7 +3819,13 @@ Object.assign(CROPS,{
  sunflower:{e:'🌻',n:'Подсолнух',g:50,w:16,p:120,s:12,m:8},mushroom:{e:'🍄',n:'Грибы',g:55,w:18,p:140,s:18,m:5},cherry:{e:'🍒',n:'Вишня',g:65,w:20,p:170,s:12,m:9},
  grapes:{e:'🍇',n:'Виноград',g:70,w:22,p:180,s:18,m:7},pear:{e:'🍐',n:'Груша',g:70,w:22,p:180,s:20,m:6},peach:{e:'🍑',n:'Персик',g:75,w:24,p:190,s:20,m:7},
  lemon:{e:'🍋',n:'Лимон',g:80,w:26,p:210,s:10,m:4},banana:{e:'🍌',n:'Банан',g:95,w:30,p:240,s:28,m:6},pineapple:{e:'🍍',n:'Ананас',g:110,w:36,p:280,s:26,m:8}});
-const BEDP={b0:60,b1:150,b2:300};
+const BEDP={b0:60,b1:150,b2:300,b3:450,b4:650,b5:900,b6:1200,b7:1600,b8:2100,b9:2800};
+Object.assign(CROPS,{
+ bellpepper:{e:'🫑',n:'Паприка',g:42,w:13,p:130,s:16,m:3},beans:{e:'🫘',n:'Фасоль',g:30,w:10,p:90,s:18,m:2},sweetpotato:{e:'🍠',n:'Батат',g:52,w:16,p:150,s:24,m:3},
+ herbs:{e:'🌿',n:'Зелень',g:14,w:5,p:45,s:8,m:2},apple:{e:'🍎',n:'Яблоко',g:60,w:20,p:170,s:18,m:5},orange:{e:'🍊',n:'Апельсин',g:72,w:24,p:200,s:20,m:6},
+ blueberry:{e:'🫐',n:'Черника',g:48,w:15,p:160,s:14,m:8},kiwi:{e:'🥝',n:'Киви',g:76,w:24,p:220,s:20,m:6},mango:{e:'🥭',n:'Манго',g:100,w:32,p:300,s:26,m:9},
+ avocado:{e:'🥑',n:'Авокадо',g:105,w:34,p:320,s:30,m:7},coconut:{e:'🥥',n:'Кокос',g:120,w:40,p:380,s:34,m:8},cantaloupe:{e:'🍈',n:'Дыня',g:85,w:28,p:240,s:28,m:7},
+ chestnut:{e:'🌰',n:'Каштан',g:58,w:18,p:190,s:22,m:4},olive:{e:'🫒',n:'Оливки',g:66,w:22,p:210,s:16,m:4}});
 const bedOwned=id=>{if(own('bed:'+id))return true;const z=FMZ.find(q=>q[0]===id);if(!z)return false;const sl=gvSlots();return z[2].some(i=>sl[i])};
 window.anBuyBed=id=>buy('bed:'+id,BEDP[id],()=>{gvRender()});
 window.anBuyPen=id=>buy('pen:'+id,PENS[id].price,()=>{gvRender()});
@@ -3777,15 +3833,27 @@ const rid=()=>Math.random().toString(36).slice(2,8);
 const SPC={
  chicken:{e:'🐔',n:'Курица',egg:25,top:80,hat:15,gr:[30,90],H:6,cool:30},duck:{e:'🦆',n:'Утка',egg:35,top:110,hat:20,gr:[40,110],H:6,cool:40},
  rabbit:{e:'🐰',n:'Кролик',egg:45,top:140,hat:20,gr:[40,120],H:8,cool:40},sheep:{e:'🐑',n:'Овца',egg:80,top:260,hat:30,gr:[60,180],H:10,cool:60},
- pig:{e:'🐖',n:'Свинья',egg:120,top:380,hat:40,gr:[90,240],H:10,cool:80},cow:{e:'🐄',n:'Корова',egg:200,top:650,hat:60,gr:[120,360],H:12,cool:120}};
+ pig:{e:'🐖',n:'Свинья',egg:120,top:380,hat:40,gr:[90,240],H:10,cool:80},cow:{e:'🐄',n:'Корова',egg:200,top:650,hat:60,gr:[120,360],H:12,cool:120},
+ turkey:{e:'🦃',n:'Индейка',egg:60,top:170,hat:25,gr:[50,140],H:8,cool:50},peacock:{e:'🦚',n:'Павлин',egg:110,top:320,hat:35,gr:[70,200],H:9,cool:70},
+ goat:{e:'🐐',n:'Коза',egg:90,top:280,hat:30,gr:[60,170],H:9,cool:60},llama:{e:'🦙',n:'Лама',egg:150,top:480,hat:45,gr:[90,260],H:10,cool:90},
+ swan:{e:'🦢',n:'Лебедь',egg:130,top:420,hat:40,gr:[80,220],H:8,cool:80},flamingo:{e:'🦩',n:'Фламинго',egg:170,top:520,hat:50,gr:[90,250],H:8,cool:100},
+ horse:{e:'🐴',n:'Лошадь',egg:260,top:800,hat:70,gr:[140,400],H:12,cool:140},camel:{e:'🐫',n:'Верблюд',egg:300,top:950,hat:80,gr:[150,420],H:12,cool:150},
+ deer:{e:'🦌',n:'Олень',egg:340,top:1100,hat:90,gr:[160,440],H:12,cool:160},buffalo:{e:'🐃',n:'Буйвол',egg:400,top:1300,hat:100,gr:[180,480],H:14,cool:180}};
 const TIER=[{n:'Обычная',c:'#94a3b8',m:1},{n:'Необычная',c:'#10b981',m:1.4},{n:'Редкая',c:'#3b82f6',m:1.9},{n:'Легендарная',c:'#f59e0b',m:3}];
 const VFX=['','sepia(.55) saturate(1.8)','hue-rotate(95deg) saturate(1.25)','grayscale(1) brightness(.6)','sepia(1) saturate(4) hue-rotate(-8deg) drop-shadow(0 0 5px #fbbf24)'];
 const VT=[0,0,1,2,3],VW=[40,30,15,10,5];
 const VN={chicken:['Белая','Рыжая','Изумрудная','Ночная','Золотая'],duck:['Полевая','Медная','Малахитовая','Ночная','Золотая'],rabbit:['Снежный','Рыжий','Мятный','Лунный','Золотой'],
- sheep:['Облачная','Карамельная','Мятная','Грозовая','Золотая'],pig:['Розовая','Рыжая','Мятная','Угольная','Золотая'],cow:['Пёстрая','Бурая','Мятная','Шоколадная','Золотая']};
+ sheep:['Облачная','Карамельная','Мятная','Грозовая','Золотая'],pig:['Розовая','Рыжая','Мятная','Угольная','Золотая'],cow:['Пёстрая','Бурая','Мятная','Шоколадная','Золотая'],
+ turkey:['Бронзовая','Белая','Изумрудная','Ночная','Золотая'],peacock:['Синий','Белый','Мятный','Лунный','Золотой'],goat:['Белая','Пятнистая','Мятная','Грозовая','Золотая'],
+ llama:['Кремовая','Рыжая','Мятная','Лунная','Золотая'],swan:['Белый','Серый','Мятный','Чёрный','Золотой'],flamingo:['Розовый','Алый','Мятный','Лунный','Золотой'],
+ horse:['Гнедая','Серая','Мятная','Вороная','Золотая'],camel:['Песчаный','Рыжий','Мятный','Ночной','Золотой'],deer:['Лесной','Пятнистый','Мятный','Серебряный','Золотой'],
+ buffalo:['Бурый','Тёмный','Мятный','Угольный','Золотой']};
 const vEm=(sp,vi,px)=>`<span style="display:inline-block;font-size:${px}px;line-height:1;filter:${VFX[vi]||'none'}">${SPC[sp].e}</span>`;
 const vTitle=(sp,vi)=>VN[sp][vi]+' '+SPC[sp].n.toLowerCase();
-const PENS={p0:{n:'Курятник',e:'🐔',price:120,cap:5,sp:['chicken','duck']},p1:{n:'Загон',e:'🐑',price:260,cap:4,sp:['rabbit','sheep']},p2:{n:'Хлев',e:'🐄',price:480,cap:3,sp:['pig','cow']}};
+const PENS={p0:{n:'Курятник',e:'🐔',price:120,cap:5,sp:['chicken','duck']},p1:{n:'Загон',e:'🐑',price:260,cap:4,sp:['rabbit','sheep']},p2:{n:'Хлев',e:'🐄',price:480,cap:3,sp:['pig','cow']},
+ p3:{n:'Птичий двор',e:'🦃',price:650,cap:5,sp:['turkey','peacock']},p4:{n:'Козий двор',e:'🐐',price:900,cap:4,sp:['goat','llama']},
+ p5:{n:'Пруд',e:'🦢',price:1300,cap:4,sp:['swan','flamingo']},p6:{n:'Конюшня',e:'🐴',price:1800,cap:3,sp:['horse','camel']},
+ p7:{n:'Заповедник',e:'🦌',price:2600,cap:3,sp:['deer','buffalo']}};
 const AN_PEN=PENS,STF=[.3,.6,1],STN=['Малыш','Подросток','Взрослый'];
 const anDay=()=>Math.floor(Date.now()/864e5);
 const anHash=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return(h>>>0)/4294967295};
@@ -3847,11 +3915,18 @@ window.anBuyEgg=sp=>anRun(async()=>{const C=SPC[sp],pid=Object.keys(PENS).find(k
  if(!await fmSpend(C.egg,'egg'))return;await anWrite(anEgRow({id:rid(),sp,t0:gsec(),pen:pid,vi:-1}),[]);toast('Яйцо 🥚 в загоне — вылупится через '+C.hat+' мин')});
 async function anFeedOne(id,quiet){const a=anRows().A.find(x=>x.id===id),c=gv.feed;if(!a)return false;if(!CROPS[c]){if(!quiet)toast('Выбери еду из урожая 🧺');return false}
  const inv=gvInv();if(!(inv[c]>0)){if(!quiet)toast('Такого урожая нет');return false}const now=gsec(),H=SPC[a.sp].H*3600;
- if(anSat(a,now)>=95){if(!quiet)toast('Уже сытый 😌');return false}
+ if(anSat(a,now)>=99.5){if(!quiet)toast('Уже сытый 😌');return false}
  const n=Object.assign({},a);if(n.until<now){n.born+=now-n.until;n.until=now}n.until=Math.min(now+H,n.until+Math.round(CROPS[c].s/100*H*2));
  if(await anSave(n)===false)return false;await gvSetInv(c,inv[c]-1);return true}
 window.anFeed=id=>anRun(()=>anFeedOne(id));
-window.anFeedAll=pid=>anRun(async()=>{let n=0;for(const a of anRows().A.filter(x=>x.pen===pid&&anSat(x,gsec())<80)){if(await anFeedOne(a.id,true))n++;else break}toast(n?'Накормлено: '+n+' 🍽️':'Кормить некого или нет урожая')});
+window.anFeedAll=pid=>anRun(async()=>{let fed=0,out=false;
+ for(const a of anRows().A.filter(x=>x.pen===pid&&anSat(x,gsec())<99.5)){let k=0;
+  while(k<8){const cur=anRows().A.find(x=>x.id===a.id);if(!cur||anSat(cur,gsec())>=99.5)break;
+   if(!gv.feed||!(gvInv()[gv.feed]>0)){out=true;break}
+   if(!await anFeedOne(a.id,true))break;k++}
+  if(k)fed++;if(out)break}
+ const left=gv.feed&&gvInv()[gv.feed]>0;
+ toast(fed?'Накормлено: '+fed+' 🍽️'+(out?' · урожай закончился':''):(out||!left)?'Нет урожая для корма 🧺':'Все уже сытые 😌')});
 window.anPickFeed=k=>{gv.feed=k;anLast='';gvRender()};
 window.anBreed=pid=>anRun(async()=>{const now=gsec(),{A}=anRows();if(anCount(pid)>=PENS[pid].cap)return toast('В загоне нет места');
  const by={};A.filter(a=>a.pen===pid&&anStage(a,now)===2&&a.cd<=now&&anSat(a,now)>0&&!(a.se>0)).forEach(a=>(by[a.sp]=by[a.sp]||[]).push(a));
@@ -4070,9 +4145,9 @@ function anCard(pid,now,W,T,head,act){const P=PENS[pid];
  const egl=eggs.map(e=>{const C=SPC[e.sp],left=e.t0+C.hat*60-now;return`<div class="flex items-center gap-3 rounded-3xl bg-amber-50 p-3 shadow-lg"><span class="text-2xl">🥚</span><span class="flex-1 text-xs font-bold text-stone-600">Яйцо: ${C.n.toLowerCase()}</span><span class="text-xs font-bold text-stone-500" ${T('eg'+e.id,left>0?gfmt(left):'вылупляется…')}></span></div>`}).join('');
  return head(P.e,'bg-amber-100',P.n,cnt?(hungry?'Кто-то голоден 🥺':'Все сыты 😌'):'Пока пусто',hungry?'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800')
   +`<p class="mb-1 mt-4 text-xs font-bold text-stone-500">Купить яйцо · мест ${cnt}/${P.cap}</p><div class="fm-row">${eggBtns}</div>`
-  +`<p class="mb-1 mt-2 text-xs font-bold text-stone-500">Чем кормим</p><div class="fm-row">${food}</div>`
+  +`<p class="mb-1 mt-2 text-xs font-bold text-stone-500">Чем кормим</p><div class="fm-row fm-wrap">${food}</div>`
   +`<div class="mt-2 grid grid-cols-2 gap-2"><button class="rounded-2xl bg-gradient-to-r from-orange-200 to-amber-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anFeedAll('${pid}')">🍽️ Накормить всех</button><button class="rounded-2xl bg-gradient-to-r from-pink-200 to-rose-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBreed('${pid}')">💞 Развести</button></div>`
-  +`<div class="mt-2 grid grid-cols-2 gap-2"><button class="rounded-2xl bg-gradient-to-r from-violet-200 to-sky-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBook()">📖 Книга · ${gotAll}/30</button><button class="rounded-2xl bg-gradient-to-r from-orange-200 to-amber-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anSale()">🏷️ На продаже · ${A.filter(x=>x.se>0).length}</button></div>`
+  +`<div class="mt-2 grid grid-cols-2 gap-2"><button class="rounded-2xl bg-gradient-to-r from-violet-200 to-sky-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anBook()">📖 Книга · ${gotAll}/${Object.keys(SPC).length*5}</button><button class="rounded-2xl bg-gradient-to-r from-orange-200 to-amber-200 px-3 py-3 text-xs font-extrabold text-stone-700 shadow" onclick="anSale()">🏷️ На продаже · ${A.filter(x=>x.se>0).length}</button></div>`
   +`<div class="mt-3 space-y-2">${list}${egl}</div>`}
 }catch(e){console.error('room-v2',e)}})();
 
