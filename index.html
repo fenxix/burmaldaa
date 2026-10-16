@@ -5001,7 +5001,8 @@ const CLO=[
 window.CLO=CLO;
 const SLOT=[['head','Голова'],['face','Лицо'],['neck','Шея'],['body','Одежда']],ORD=['body','neck','face','head'];
 const eq=()=>LSg('wd_eq',{}),ownK=id=>{try{return own('clo:'+id)||LSg('wd_own',[]).includes(id)}catch{return false}};
-window.cloHTML=function(pid){const e=eq()[pid];if(!e)return '';const s=ORD.map(k=>{const it=CLO.find(x=>x[0]===e[k]);return it&&ownK(it[0])?it[4]:''}).join('');return s?`<svg class="pclo" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none">${s}</svg>`:''};
+const outfitOf=pid=>{let r=null;try{r=pt2.rows[pid]}catch{}if(r&&r.outfit!=null){let o=r.outfit;if(typeof o==='string'){try{o=JSON.parse(o)}catch{o=null}}if(o&&typeof o==='object')return {o,srv:1}}return {o:eq()[pid]||{},srv:0}};
+window.cloHTML=function(pid){const {o:e,srv}=outfitOf(pid);if(!e)return '';const s=ORD.map(k=>{const it=CLO.find(x=>x[0]===e[k]);return it&&(srv||ownK(it[0]))?it[4]:''}).join('');return s?`<svg class="pclo" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none">${s}</svg>`:''};
 css(`#wdCard .wp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0}
 #wdCard .wp button,#wdCard .wg button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);border-radius:14px;color:inherit;padding:6px 10px;font:inherit}
 #wdCard .wp button.on,#wdCard .wg button.on{border-color:var(--pink,#ff86c0);background:rgba(255,134,192,.2)}
@@ -5014,19 +5015,27 @@ css(`#wdCard .wp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;marg
 let wdP=null,wdT='head';
 const pets=()=>{try{const a=window.petsOf&&petsOf();return Array.isArray(a)&&a.length?a:PETS}catch{return PETS}};
 function wdDraw(){const c=g$('wdCard');if(!c)return;const L=pets();if(!wdP||!L.some(p=>p[0]===wdP))wdP=(S.game&&S.game.pet&&L.some(p=>p[0]===S.game.pet))?S.game.pet:L[0][0];
- const pet=L.find(p=>p[0]===wdP),e=eq()[wdP]||{},items=CLO.filter(x=>x[2]===wdT),vb={head:'14 -30 72 66',face:'10 28 80 30',neck:'14 64 72 46',body:'0 66 100 60'}[wdT];
+ const pet=L.find(p=>p[0]===wdP),e=outfitOf(wdP).o,items=CLO.filter(x=>x[2]===wdT),vb={head:'14 -30 72 66',face:'10 28 80 30',neck:'14 64 72 46',body:'0 66 100 60'}[wdT];
  c.innerHTML=`<b class="ff" style="font-size:16px"><i class="fa-solid fa-shirt"></i> Гардероб</b><div class="wp">${L.map(p=>`<button class="${p[0]===wdP?'on':''}" onclick="wdPet('${p[0]}')" aria-label="${p[2]}"><span class="pet" data-wa="${p[0]}" data-e="${p[1]}">${p[1]}</span><b class="xs">${p[2]}</b></button>`).join('')}</div>
  <div style="text-align:center"><span class="wv"><span class="pw"><span class="pet" data-wa="${pet[0]}" data-e="${pet[1]}">${pet[1]}</span>${cloHTML(wdP)}</span></span></div>
  <div class="tabs">${SLOT.map(([k,n])=>`<button class="${wdT===k?'on':''}" onclick="wdTab('${k}')">${n}</button>`).join('')}</div>
  <div class="wg">${e[wdT]?`<button onclick="wdItem('${wdT}','')"><i class="fa-solid fa-xmark" style="font-size:22px;line-height:46px"></i><b class="xs">Снять</b></button>`:''}${items.map(x=>{const o=ownK(x[0]),on=e[wdT]===x[0];return `<button class="${on?'on':''}" onclick="wdItem('${x[0]}')"><svg viewBox="${vb}" width="58" height="46" style="overflow:hidden">${x[4]}</svg><b class="xs">${x[1]}</b><span class="xs">${on?'надето ✓':o?'надеть':x[3]+' 🪙'}</span></button>`}).join('')}</div>`;
  c.querySelectorAll('[data-wa]').forEach(el=>{try{petArt(el,{0:el.dataset.wa,1:el.dataset.e})}catch{}})}
 window.wdPet=id=>{wdP=id;wdDraw()};window.wdTab=t=>{wdT=t;wdDraw()};
-window.wdItem=function(a,b){if(b!==undefined&&b===''){const m=eq();(m[wdP]=m[wdP]||{})[a]=null;LSs('wd_eq',m);return wdAfter()}
- const it=CLO.find(x=>x[0]===a);if(!it)return;const put=()=>{const m=eq();(m[wdP]=m[wdP]||{})[it[2]]=it[0];LSs('wd_eq',m);const w=LSg('wd_own',[]);if(!w.includes(it[0])){w.push(it[0]);LSs('wd_own',w)}wdAfter()};
- if(((eq()[wdP]||{})[it[2]])===it[0]&&ownK(it[0])){const m=eq();m[wdP][it[2]]=null;LSs('wd_eq',m);return wdAfter()}
+let wdWarned=0;
+function wdSet(pid,slot,val){const cur=Object.assign({},outfitOf(pid).o);cur[slot]=val||null;
+ const m=eq();m[pid]=cur;LSs('wd_eq',m);
+ try{pt2.rows[pid]=Object.assign(pt2.rows[pid]||{pet:pid},{outfit:cur})}catch{}
+ try{sb.from('couple_pets').upsert({room_id:S.room,pet:pid,outfit:cur},{onConflict:'room_id,pet'}).then(({error})=>{if(error){console.warn('outfit',error.message);if(!wdWarned){wdWarned=1;toast('Одежда видна только тебе: выполни SQL «alter table couple_pets add column outfit jsonb»')}}})}catch(e){console.warn(e)}}
+window.wdItem=function(a,b){if(b!==undefined&&b===''){wdSet(wdP,a,null);return wdAfter()}
+ const it=CLO.find(x=>x[0]===a);if(!it)return;const put=()=>{wdSet(wdP,it[2],it[0]);const w=LSg('wd_own',[]);if(!w.includes(it[0])){w.push(it[0]);LSs('wd_own',w)}wdAfter()};
+ if(((outfitOf(wdP).o)[it[2]])===it[0]&&ownK(it[0])){wdSet(wdP,it[2],null);return wdAfter()}
  if(ownK(it[0]))return put();buy('clo:'+it[0],it[3],put)};
 function wdAfter(){wdDraw();try{drawPet()}catch{}try{render()}catch{}try{petsSync()}catch{}}
 function wdMount(){const b=g$('ptBody');if(!b)return;let c=g$('wdCard');if(!c){c=document.createElement('div');c.id='wdCard';c.className='card mt'}b.appendChild(c);wdDraw()}
+let wdSig='';
+function wdSyncUp(){const m=eq();Object.keys(m).forEach(pid=>{const r=pt2.rows[pid];if(r&&('outfit' in r)&&r.outfit==null&&Object.values(m[pid]||{}).some(Boolean)){r.outfit=m[pid];sb.from('couple_pets').upsert({room_id:S.room,pet:pid,outfit:m[pid]},{onConflict:'room_id,pet'}).then(()=>{})}})}
+const pl0=window.petsLoad;if(typeof pl0==='function')window.petsLoad=async function(){const r=await pl0.apply(this,arguments);try{wdSyncUp();const sg=JSON.stringify(Object.keys(pt2.rows).sort().map(k=>[k,pt2.rows[k].outfit||null]));if(sg!==wdSig){const first=wdSig==='';wdSig=sg;if(!first){if(g$('wdCard'))wdDraw();if(document.querySelector('#pet.on'))drawPet()}}}catch(e){console.warn(e)}return r};
 const dp0=window.drawPet;window.drawPet=function(){const r=dp0.apply(this,arguments);try{wdMount()}catch(e){console.warn(e)}return r};
 })();
 </script>
