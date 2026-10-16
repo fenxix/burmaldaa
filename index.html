@@ -1048,7 +1048,7 @@ applyDeco();
 const REACT={love:['😍','{n} млеет: {p} сейчас в любви'],joy:['🎉','{n} прыгает от радости вместе с {p}'],tender:['🥰','{n} мурлычет: у {p} нежное настроение'],play:['😜','{n} машет лапками: {p} в игривом настроении'],energy:['⚡','{n} носится кругами: у {p} полно сил'],proud:['🏆','{n} гордо выпятил грудь: {p} чем-то гордится'],thanks:['🙏','{n} кланяется: {p} чувствует благодарность'],surprised:['😲','{n} вытаращил глаза: {p} удивлён(а)'],shy:['😳','{n} прячет мордочку: {p} смущается'],calm:['😌','{n} уютно свернулся: у {p} спокойствие'],tired:['😴','{n} сопит рядом: у {p} нет сил'],bored:['🥱','{n} зевает и ждёт затей: {p} скучает'],sad:['🥺','{n} хочет обнять {p}: сейчас грустно'],anxious:['😰','{n} дрожит рядом: {p} тревожится'],angry:['😤','{n} ворчит и сопит: {p} злится, дай остыть']};
 function petName(x){return (S.game.pet_name||'').trim()||x[2]}
 function petEmo(){const p=S.pt;if(!p||!p.emotion||!REACT[p.emotion])return null;if(p.emotion_at&&Date.now()-new Date(p.emotion_at)>864e5)return null;return p.emotion}
-function petHTML(x,fs){const e=petEmo();return `<span class="pw"><span class="pet ${e?'r-'+e:''}" style="${fs?'font-size:'+fs+'px':''}" onclick="petTap(this)">${x[1]}</span>${accHTML()}${e?`<span class="pb">${REACT[e][0]}</span>`:''}</span>`}
+function petHTML(x,fs){const e=petEmo();return `<span class="pw"><span class="pet ${e?'r-'+e:''}" style="${fs?'font-size:'+fs+'px':''}" onclick="petTap(this)">${x[1]}</span>${accHTML()}${window.cloHTML?cloHTML(x[0]):''}${e?`<span class="pb">${REACT[e][0]}</span>`:''}</span>`}
 function petLine(x){const e=petEmo(),n=petName(x),p=S.pt;if(!p)return n+' ждёт, когда в комнату придёт партнёр';if(!e)return n+' ждёт, какое у '+p.name+' настроение';return REACT[e][1].replace('{n}',n).replace('{p}',p.name)+(p.emotion_at?' · '+ago(p.emotion_at):'')}
 function saveName(){const v=$('petName').value.trim().slice(0,16);saveGame({pet_name:v||null});toast(v?'Имя сохранено':'Имя сброшено')}
 function petOf(){const k=S.game&&S.game.pet;return PETS.concat(window.PETS2||[]).find(x=>x[0]===k)||null}
@@ -1208,7 +1208,7 @@ const sy=i=>TW.H-GR-(i+1)*BH+TW.cam;
 function bcol(t,i){const h=S.fxT==='rainbow'?(i*22+performance.now()/25)%360:t.h[0]+(t.h[1]-t.h[0])*(.5+.5*Math.sin(i*.5));return[`hsl(${h},${t.s}%,${t.l}%)`,`hsl(${h+t.dh},${t.s}%,${t.l-10}%)`]}
 function rr(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function applyTheme(){const t=TH[thm];$('tower').style.background=`linear-gradient(180deg,${t.bg[0]},${t.bg[1]})`;document.querySelectorAll('#sky i').forEach(i=>i.style.background=t.star)}
-function twSize(){const cv=$('cv'),st=$('stack'),w=Math.max(200,st.clientWidth),h=Math.max(300,st.clientHeight),d=Math.min(window.devicePixelRatio||1,3);
+function twSize(){const cv=$('cv'),st=$('stack'),w=Math.max(200,st.clientWidth),h=Math.max(300,st.clientHeight),d=Math.min(window.devicePixelRatio||1,2);
  TW.top=$('twTop').offsetHeight;cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.style.height=h+'px';TW.W=w;TW.H=h;TW.cx=cv.getContext('2d');TW.cx.setTransform(d,0,0,d,0,0);TW.K=Math.max(3,Math.floor((h-GR-HV-TW.top-24)/BH)-1)}
 function twReset(){TW.blocks=[{x:(TW.W-SW)/2,w:SW}];TW.score=0;TW.combo=0;TW.cam=0;TW.deb=[];TW.pops=[];TW.state='swing';TW.mv={w:SW,cx:TW.W/2,fall:0,vy:0};twHud()}
 function twHud(){try{$('twBal').textContent=cn()}catch{}$('hgt').textContent=TW.blocks.length;$('scr').textContent=TW.score;$('rec').textContent=S.game.blocks;{const b=$('twCash');if(b)b.innerHTML='<i class="fa-solid fa-coins"></i> Забрать монеты и завершить · +'+twCoins();b.disabled=TW.state!=='swing';b.style.opacity=TW.state==='fall'?'.35':'1';b.style.visibility=(TW.state==='miss'||TW.state==='over')?'hidden':'visible'}}
@@ -1260,7 +1260,7 @@ function twDraw(){const c=TW.cx;if(!c)return;const W=TW.W,H=TW.H,t=TH[thm],n=TW.
   c.fillStyle='#B8B2C8';c.font='500 14px Inter,sans-serif';c.fillText(`Рекорд: ${S.game.blocks}`,W/2,H/2+28);
   if(twCoins()>0){c.fillStyle='#FF86C0';c.font='600 14px Inter,sans-serif';c.fillText(`Башня упала — ${twCoins()} 🪙 потеряно`,W/2,H/2+50)}
   if(performance.now()-TW.overAt>700){c.globalAlpha=.6+.4*Math.sin(performance.now()/300);c.fillStyle='#FF86C0';c.font='600 14px Inter,sans-serif';c.fillText('Нажми, чтобы начать заново',W/2,H/2+80);c.globalAlpha=1}}}
-function twFrame(t){TW.raf=requestAnimationFrame(twFrame);const dt=Math.min(.05,(t-(TW.last||t))/1000);TW.last=t;if(!TW.paused)twUpdate(dt);twDraw()}
+function twFrame(t){TW.raf=requestAnimationFrame(twFrame);if(TW.last&&t-TW.last<15)return;const dt=Math.min(.05,(t-(TW.last||t))/1000);TW.last=t;if(!TW.paused)twUpdate(dt);twDraw()}
 function startSwing(){stopSwing();TW.paused=false;$('set').classList.remove('on');applyTheme();twSize();twReset();TW.last=0;TW.raf=requestAnimationFrame(twFrame)}
 function stopSwing(){cancelAnimationFrame(TW.raf)}
 $('cv').addEventListener('pointerdown',e=>{e.preventDefault();twTap()});
@@ -4908,5 +4908,119 @@ function bbLeave(){if(bb.drag){bb.drag.g.remove();bb.drag=null}if(bb.best>bb.syn
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur==='blocks'&&bb.best>bb.synced)bbSync()});
 hud();
 }catch(e){console.error('blocks',e)}})();
+</script>
+<script id="pack36">
+/* ===== v36: быстрая башня · плоды дерева · новые деревья · гардероб питомцев ===== */
+(()=>{
+const css=t=>document.head.appendChild(Object.assign(document.createElement('style'),{id:'pack36-css',textContent:t}));
+const LSg=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},LSs=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const g$=id=>document.getElementById(id);
+
+/* ---------- 1. Башня: меньше нагрузки на GPU ---------- */
+css(`#tower .twtop,#tower .tws,#twBalP{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#tower .tws,#twBalP{background:rgba(20,14,40,.55)!important;border-color:rgba(255,255,255,.18)!important;box-shadow:none!important}
+#twBg .tx *{animation:none!important}
+#twBg .bx-p s:nth-child(even){display:none}
+#app:has(#tower.on) #bgx{display:none}`);
+const ts0=window.twSize;
+window.twSize=function(){ts0.apply(this,arguments);const c=TW.cx;if(c&&!c.__sb){c.__sb=1;const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowBlur');Object.defineProperty(c,'shadowBlur',{configurable:true,get(){return d.get.call(c)},set(v){d.set.call(c,Math.min(v*.4,6))}})}};
+
+/* ---------- 2. Дерево: «плоды любви» ---------- */
+css(`#tfBox{margin-top:10px;text-align:center}
+#tfOv{position:absolute;left:50%;top:0;width:min(200px,100%);aspect-ratio:200/170;transform:translateX(-50%);pointer-events:none}
+#tfOv button{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;background:none;pointer-events:auto;touch-action:manipulation}
+#tfOv .rp{animation:tfB 1.6s ease-in-out infinite;filter:drop-shadow(0 0 6px #ff5c9a)}
+#tfOv .un{opacity:.55;transform:scale(.55)}
+@keyframes tfB{50%{transform:scale(1.18)}}
+#tfOv i.lf{position:absolute;top:10%;width:9px;height:14px;border-radius:0 100% 0 100%;background:#6fc27a;animation:tfF 1.6s ease-in forwards}
+@keyframes tfF{to{transform:translate(var(--dx),150px) rotate(220deg);opacity:0}}
+#tfOv i.pp{position:absolute;font:700 14px Comfortaa,sans-serif;color:#fff;animation:tfP 1s ease-out forwards}
+@keyframes tfP{to{transform:translateY(-40px);opacity:0}}`);
+const HR=3*36e5,SH=20*6e4,SL=[[62,70],[100,52],[138,70],[80,98],[122,100]];
+const heart=(on)=>`<svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 21C3 14 2 8 6 5.5 9 4 11 5.5 12 7.5 13 5.5 15 4 18 5.5 22 8 21 14 12 21Z" fill="${on?'#FF5C9A':'#9AA7B8'}"/>${on?'<path d="M8 8.5Q9 7 10.5 8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>':''}</svg>`;
+const grown=()=>{try{return treePts()>=TS[TS.length-1][2]}catch{return false}};
+const slots=()=>{let s=LSg('tf_s',null);if(!Array.isArray(s)||s.length!==5)s=[0,0,0,0,0];return s};
+function tfPick(i){const s=slots(),now=Date.now();if(now-s[i]<HR)return;s[i]=now;LSs('tf_s',s);const n=5+Math.floor(Math.random()*8);tfPop(SL[i],'+'+n);try{coinAdd(n,'с дерева любви')}catch{}tfDraw()}
+function tfPop(p,t){const o=g$('tfOv');if(!o)return;const e=document.createElement('i');e.className='pp';e.textContent=t;e.style.left=p[0]/2+'%';e.style.top=p[1]/1.7+'%';o.appendChild(e);setTimeout(()=>e.remove(),1000)}
+function tfShake(){const o=g$('tfOv'),t=+LSg('tf_sh',0),now=Date.now();if(now-t<SH)return toast('Ветки ещё качаются 🍃 Загляни через '+Math.ceil((SH-(now-t))/6e4)+' мин');LSs('tf_sh',now);
+ if(o)for(let k=0;k<12;k++){const l=document.createElement('i');l.className='lf';l.style.left=(25+Math.random()*50)+'%';l.style.setProperty('--dx',(Math.random()*60-30)+'px');l.style.animationDelay=(k*.06)+'s';o.appendChild(l);setTimeout(()=>l.remove(),2200)}
+ try{navigator.vibrate&&navigator.vibrate(15)}catch{}
+ if(Math.random()<.4){const n=2+Math.floor(Math.random()*3);setTimeout(()=>{try{coinAdd(n,'упал плод с ветки')}catch{}},700)}else setTimeout(()=>toast('Посыпались листья ✨'),500)}
+function tfDraw(){const a=g$('treeArt'),card=g$('treeCard');if(!a||!card||!grown())return;let o=g$('tfOv');if(!o){o=document.createElement('div');o.id='tfOv';a.appendChild(o)}
+ const s=slots(),now=Date.now();o.querySelectorAll('button').forEach(b=>b.remove());
+ SL.forEach((p,i)=>{const r=now-s[i]>=HR,b=document.createElement('button');b.className=r?'rp':'un';b.style.left=p[0]/2+'%';b.style.top=p[1]/1.7+'%';b.innerHTML=heart(r);b.setAttribute('aria-label','Плод любви');b.onclick=()=>r?tfPick(i):toast('Плод ещё зреет');o.appendChild(b)});
+ let bx=g$('tfBox');if(!bx){bx=document.createElement('div');bx.id='tfBox';card.appendChild(bx)}
+ const rd=s.filter(x=>now-x>=HR).length,nx=Math.min(...s.filter(x=>now-x<HR).map(x=>HR-(now-x)),Infinity),m=Math.ceil(nx/6e4);
+ bx.innerHTML=`<p class="xs">Плоды любви: ${rd} из 5 созрело${rd<5?' · следующий через '+(m>=60?Math.floor(m/60)+' ч '+(m%60)+' м':m+' м'):''}</p><button class="btn2 mt" onclick="tfShake()"><i class="fa-solid fa-leaf"></i> Потрясти ветки</button><p class="xs" style="margin-top:6px">Тапай по созревшим сердечкам — они дают монеты</p>`}
+window.tfShake=tfShake;
+const dt0=window.drawTree;window.drawTree=function(){const r=dt0.apply(this,arguments);try{tfDraw()}catch(e){console.warn(e)}return r};
+setInterval(()=>{if(g$('tfOv'))try{tfDraw()}catch{}},30000);
+
+/* ---------- 3. Ещё 12 видов деревьев ---------- */
+try{const G='<ellipse cx="100" cy="158" rx="50" ry="6" fill="rgba(0,0,0,.22)"/>',
+tr=(c,w,h)=>`<rect x="${100-w/2}" y="${158-h}" width="${w}" height="${h}" rx="${w/3}" fill="${c}"/>`,
+ci=(x,y,r,f)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}"/>`,
+an=(a,v,d)=>`<animate attributeName="${a}" values="${v}" dur="${d}s" repeatCount="indefinite"/>`,
+dots=(a,c,r,anim)=>a.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}">${anim?an('opacity','1;.15;1',1.4+i%4*.4):''}</circle>`).join('');
+[
+['sp_apple','Яблоня',360,'c',()=>G+tr('#7a4f2e',14,64)+ci(100,68,38,'#3fa65a')+ci(70,88,24,'#4fbf6b')+ci(130,88,24,'#4fbf6b')+dots([[78,64],[112,52],[124,86],[88,92],[62,96]],'#ff4f4f',5)],
+['sp_orange','Апельсиновое дерево',380,'c',()=>G+tr('#7a4f2e',14,62)+ci(100,70,38,'#2f8f4a')+ci(70,90,24,'#3fa65a')+ci(130,90,24,'#3fa65a')+dots([[82,60],[116,56],[128,88],[92,92],[66,98]],'#ffa21f',6)],
+['sp_sunflower','Подсолнух-великан',340,'c',()=>G+'<rect x="96" y="60" width="8" height="98" rx="4" fill="#4fa84e"/><path d="M96 124Q70 120 62 98Q88 100 96 118ZM104 108Q130 104 138 82Q112 84 104 102Z" fill="#59b843"/>'+[0,1,2,3,4,5,6,7,8,9].map(i=>`<ellipse cx="100" cy="30" rx="8" ry="20" fill="#ffd23f" transform="rotate(${i*36} 100 58)"/>`).join('')+ci(100,58,17,'#7a4a1e')],
+['sp_wisteria','Глициния',720,'r',()=>G+tr('#6b4a2e',12,66)+ci(100,62,36,'#7fc27a')+[58,72,86,100,114,128,142].map((x,i)=>`<path d="M${x} 66q-4 ${24+i%3*10} 0 ${44+i%3*8}" stroke="#a78bfa" stroke-width="7" stroke-linecap="round" fill="none" opacity=".92"/>`).join('')],
+['sp_pumpkin','Тыквенное дерево',800,'r',()=>G+tr('#4a2f20',14,70)+ci(100,62,34,'#2a1a30')+[[70,112,14],[100,126,17],[132,114,13]].map(([x,y,r])=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*.8}" fill="#ff8a1f"/><path d="M${x} ${y-r*.8}v-6" stroke="#4a8f2f" stroke-width="3"/>`).join('')+dots([[84,56],[116,50],[100,70]],'#ffd23f',3,1)],
+['sp_xmas','Новогодняя ёлка',900,'r',()=>G+tr('#6b4428',10,16)+'<polygon points="100,12 70,60 130,60" fill="#2f9a55"/><polygon points="100,34 60,92 140,92" fill="#27864a"/><polygon points="100,62 48,136 152,136" fill="#1f7a40"/><path d="M82 52Q100 60 118 52M72 84Q100 96 128 84M62 120Q100 134 138 120" stroke="#ffd23f" stroke-width="2" fill="none"/>'+dots([[88,48],[112,50],[80,80],[120,82],[66,114],[100,124],[134,114]],'#ff4f6a',3.5,1)+'<path d="M100 2l4 9 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="#ffd23f"/>'],
+['sp_candy','Леденцовое дерево',1000,'r',()=>G+'<rect x="97" y="76" width="6" height="82" rx="3" fill="#f6ead2"/>'+ci(100,52,38,'#ff7ab8')+'<path d="M100 52m0 0a6 6 0 1 1 8 4a14 14 0 1 1-18-12a22 22 0 1 1 28 22a30 30 0 1 1-38-30" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>'+'<rect x="60" y="116" width="4" height="40" rx="2" fill="#f6ead2"/>'+ci(62,110,13,'#5dc8ff')+'<rect x="136" y="124" width="4" height="32" rx="2" fill="#f6ead2"/>'+ci(138,118,11,'#ffd23f')],
+['sp_bubble','Пузырьковое дерево',1100,'r',()=>G+tr('#5a7fb0',12,66)+[[100,52,26],[72,70,18],[130,72,19],[88,36,11],[116,34,9],[60,96,10],[144,98,11]].map(([x,y,r],i)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#9be8ff" fill-opacity=".35" stroke="#d9f6ff" stroke-width="2">${an('cy',`${y};${y-6};${y}`,2.4+i*.3)}</circle>`).join('')],
+['sp_firefly','Дерево светлячков',1400,'e',()=>G+tr('#3a2a20',14,66)+ci(100,64,38,'#12281c')+ci(70,86,24,'#16331f')+ci(130,86,24,'#16331f')+dots([[70,70],[110,50],[132,82],[90,96],[56,100],[100,72],[124,108]],'#fff27a',2.6,1)],
+['sp_ice','Ледяное дерево',1250,'e',()=>G+'<g style="filter:drop-shadow(0 0 7px #bfe8ff)"><path d="M100 158V70" stroke="#cfeeff" stroke-width="9" stroke-linecap="round"/><path d="M100 120L70 92M100 106L132 80M100 90L80 62M100 78L120 50M100 128L132 106" stroke="#bfe8ff" stroke-width="6" stroke-linecap="round"/></g>'+[[70,90],[132,78],[80,60],[120,48],[100,66],[134,104]].map(([x,y])=>`<path d="M${x} ${y-7}L${x+4} ${y}L${x} ${y+7}L${x-4} ${y}Z" fill="#fff"/>`).join('')],
+['sp_gold','Золотое дерево',1500,'e',()=>G+tr('#b8860b',14,66)+'<g style="filter:drop-shadow(0 0 8px #ffd23f)">'+ci(100,64,38,'#f6c744')+ci(70,86,24,'#ffd966')+ci(130,86,24,'#e8b02a')+ci(100,46,22,'#ffe38a')+'</g>'+dots([[80,60],[118,54],[126,88],[88,92]],'#fff',2.4,1)],
+['sp_twohearts','Дерево двух сердец',1800,'l',()=>G+tr('#7a4f2e',12,60)+'<path d="M82 94C34 66 46 24 72 30C80 32 84 38 84 44C84 38 90 32 98 30C124 24 130 66 82 94Z" fill="#ff5c9a" style="filter:drop-shadow(0 0 6px #ff5c9a)"/><path d="M122 100C80 76 90 38 112 44C119 46 122 50 122 56C122 50 128 46 134 44C156 38 164 76 122 100Z" fill="#b57bff" style="filter:drop-shadow(0 0 6px #b57bff)"/>'+dots([[60,50],[140,60],[100,34]],'#fff',2.4,1)]
+].forEach(([id,n,p,t,fn])=>{if(TSP.some(x=>x[0]===id))return;TSP.push([id,n,p,fn]);(window.RAR=window.RAR||{})['tree:'+id]=t;(window.PRC=window.PRC||{})['tree:'+id]=p})}catch(e){console.warn('pack36 trees',e)}
+
+/* ---------- 4. Гардероб питомцев ---------- */
+const P=(c,d,x)=>`<path d="${d}" fill="${c}"${x||''}/>`;
+const CLO=[
+['beanie','Вязаная шапка','head',120,P('#ff5c7a','M26 30Q26 2 50 2Q74 2 74 30Z')+'<rect x="24" y="26" width="52" height="9" rx="4" fill="#e03a5c"/><circle cx="50" cy="1" r="6" fill="#fff"/>'],
+['wizard','Колпак волшебника','head',260,P('#7c5cff','M28 34L50 -26L72 34Z')+'<rect x="22" y="30" width="56" height="7" rx="3" fill="#5a3fd0"/><path d="M50 4l2 5 5 .5-4 3 1.5 5-4.5-3-4.5 3 1.5-5-4-3 5-.5Z" fill="#ffd23f"/>'],
+['beret','Берет','head',150,'<ellipse cx="46" cy="18" rx="30" ry="12" fill="#c0392b"/><circle cx="46" cy="5" r="3.5" fill="#8e2a20"/>'],
+['flowers','Ободок с цветами','head',180,'<path d="M22 28Q50 6 78 28" stroke="#6fc27a" stroke-width="4" fill="none"/>'+[[30,20,'#ff9ec4'],[50,10,'#ffd23f'],[70,20,'#ff9ec4']].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="6" fill="${c}"/><circle cx="${x}" cy="${y}" r="2.4" fill="#fff"/>`).join('')],
+['party','Праздничный колпак','head',140,P('#5dc8ff','M34 28L54 -14L68 28Z')+'<path d="M40 18l22-6M44 8l16-5" stroke="#ff7ab8" stroke-width="3"/><circle cx="54" cy="-14" r="4" fill="#ffd23f"/>'],
+['santa','Шапка Санты','head',200,P('#e5252a','M24 30Q30 -6 62 8Q70 14 66 30Z')+'<rect x="20" y="26" width="54" height="9" rx="4.5" fill="#fff"/><circle cx="66" cy="8" r="6" fill="#fff"/>'],
+['heartglass','Очки-сердечки','face',160,'<path d="M20 42C10 34 18 28 26 32Q30 34 32 38Q34 34 38 32C46 28 52 34 42 42L32 52Z" fill="#ff5c9a" transform="translate(0 0)"/><path d="M58 42C48 34 56 28 64 32Q68 34 70 38Q72 34 76 32C84 28 90 34 80 42L70 52Z" fill="#ff5c9a"/><path d="M42 40H58" stroke="#c0305e" stroke-width="3"/>'],
+['round','Круглые очки','face',120,'<circle cx="32" cy="44" r="12" fill="rgba(255,255,255,.25)" stroke="#2b2b2b" stroke-width="3"/><circle cx="68" cy="44" r="12" fill="rgba(255,255,255,.25)" stroke="#2b2b2b" stroke-width="3"/><path d="M44 44H56" stroke="#2b2b2b" stroke-width="3"/>'],
+['blush','Румяна','face',80,'<ellipse cx="24" cy="56" rx="8" ry="5" fill="#ff7a9c" opacity=".55"/><ellipse cx="76" cy="56" rx="8" ry="5" fill="#ff7a9c" opacity=".55"/>'],
+['tie','Бабочка','neck',100,P('#e5252a','M50 78L32 68V88ZM50 78L68 68V88Z')+'<circle cx="50" cy="78" r="5" fill="#a81a1f"/>'],
+['scarf2','Полосатый шарф','neck',140,'<rect x="22" y="72" width="56" height="12" rx="6" fill="#ff7a45"/><path d="M34 72v12M48 72v12M62 72v12" stroke="#fff" stroke-width="4"/><rect x="60" y="80" width="10" height="26" rx="4" fill="#ff7a45"/><path d="M60 90h10M60 98h10" stroke="#fff" stroke-width="3"/>'],
+['sweater','Свитер','body',220,'<path d="M24 82Q50 72 76 82L84 112H16Z" fill="#7c9cff"/><path d="M18 100H82M20 108H80" stroke="#fff" stroke-width="3" opacity=".7"/><rect x="38" y="76" width="24" height="8" rx="4" fill="#5a7ae0"/>'],
+['dress','Платье','body',260,'<path d="M34 80Q50 74 66 80L92 120H8Z" fill="#ff8fc0"/>'+[[30,106],[50,112],[70,106],[40,94],[60,94]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3" fill="#fff"/>`).join('')+'<rect x="34" y="82" width="32" height="5" fill="#e0558f"/>'],
+['overall','Комбинезон','body',300,'<path d="M26 82Q50 76 74 82L80 114H20Z" fill="#4a90e2"/><rect x="34" y="72" width="6" height="14" fill="#2f6fbf"/><rect x="60" y="72" width="6" height="14" fill="#2f6fbf"/><rect x="40" y="94" width="20" height="12" rx="3" fill="#2f6fbf"/><circle cx="37" cy="86" r="2.4" fill="#ffd23f"/><circle cx="63" cy="86" r="2.4" fill="#ffd23f"/>'],
+['cape','Накидка героя','body',280,'<path d="M20 78Q50 68 80 78L96 120H4Z" fill="#e5252a"/><circle cx="50" cy="80" r="6" fill="#ffd23f"/>']
+];
+window.CLO=CLO;
+const SLOT=[['head','Голова'],['face','Лицо'],['neck','Шея'],['body','Одежда']],ORD=['body','neck','face','head'];
+const eq=()=>LSg('wd_eq',{}),ownK=id=>{try{return own('clo:'+id)}catch{return false}};
+window.cloHTML=function(pid){const e=eq()[pid];if(!e)return '';const s=ORD.map(k=>{const it=CLO.find(x=>x[0]===e[k]);return it&&ownK(it[0])?it[4]:''}).join('');return s?`<svg class="pclo" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none">${s}</svg>`:''};
+css(`#wdCard .wp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+#wdCard .wp button,#wdCard .wg button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);border-radius:14px;color:inherit;padding:6px 10px;font:inherit}
+#wdCard .wp button.on,#wdCard .wg button.on{border-color:var(--pink,#ff86c0);background:rgba(255,134,192,.2)}
+#wdCard .wg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+#wdCard .wg button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px}
+#wdCard .wv{position:relative;display:inline-block;font-size:72px;line-height:1.1;margin:14px 0 22px}`);
+let wdP=null,wdT='head';
+const pets=()=>{try{const a=window.petsOf&&petsOf();return Array.isArray(a)&&a.length?a:PETS}catch{return PETS}};
+function wdDraw(){const c=g$('wdCard');if(!c)return;const L=pets();if(!wdP||!L.some(p=>p[0]===wdP))wdP=(S.game&&S.game.pet&&L.some(p=>p[0]===S.game.pet))?S.game.pet:L[0][0];
+ const pet=L.find(p=>p[0]===wdP),e=eq()[wdP]||{},items=CLO.filter(x=>x[2]===wdT),vb={head:'14 -30 72 66',face:'10 28 80 30',neck:'14 64 72 46',body:'0 66 100 60'}[wdT];
+ c.innerHTML=`<b class="ff" style="font-size:16px"><i class="fa-solid fa-shirt"></i> Гардероб</b><div class="wp">${L.map(p=>`<button class="${p[0]===wdP?'on':''}" onclick="wdPet('${p[0]}')">${p[1]}</button>`).join('')}</div>
+ <div style="text-align:center"><span class="wv">${pet[1]}${cloHTML(wdP)}</span></div>
+ <div class="tabs">${SLOT.map(([k,n])=>`<button class="${wdT===k?'on':''}" onclick="wdTab('${k}')">${n}</button>`).join('')}</div>
+ <div class="wg">${e[wdT]?`<button onclick="wdItem('${wdT}','')"><span style="font-size:22px">✖</span><b class="xs">Снять</b></button>`:''}${items.map(x=>{const o=ownK(x[0]),on=e[wdT]===x[0];return `<button class="${on?'on':''}" onclick="wdItem('${x[0]}')"><svg viewBox="${vb}" width="58" height="46" style="overflow:hidden">${x[4]}</svg><b class="xs">${x[1]}</b><span class="xs">${on?'надето ✓':o?'надеть':x[3]+' 🪙'}</span></button>`}).join('')}</div>`}
+window.wdPet=id=>{wdP=id;wdDraw()};window.wdTab=t=>{wdT=t;wdDraw()};
+window.wdItem=function(a,b){if(b!==undefined&&b===''){const m=eq();(m[wdP]=m[wdP]||{})[a]=null;LSs('wd_eq',m);return wdAfter()}
+ const it=CLO.find(x=>x[0]===a);if(!it)return;const put=()=>{const m=eq();(m[wdP]=m[wdP]||{})[it[2]]=it[0];LSs('wd_eq',m);wdAfter()};
+ if(ownK(it[0]))return put();buy('clo:'+it[0],it[3],put)};
+function wdAfter(){wdDraw();try{drawPet()}catch{}try{render()}catch{}}
+function wdMount(){const b=g$('ptBody');if(!b)return;let c=g$('wdCard');if(!c){c=document.createElement('div');c.id='wdCard';c.className='card mt'}b.appendChild(c);wdDraw()}
+const dp0=window.drawPet;window.drawPet=function(){const r=dp0.apply(this,arguments);try{wdMount()}catch(e){console.warn(e)}return r};
+})();
 </script>
 </body></html>
