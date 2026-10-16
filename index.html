@@ -602,7 +602,7 @@ function petState(p,now,i){i=i||0;const row=pt2.rows[p[0]]||{},ms=+now,xp=row.xp
  const bub=sleep?'💤':rest?'🥱':hun>=1?(hun>1?'🥺':'🍖'):act?(isBed(act)?'😴':ACT[act]||''):'';
  return {...pos,act,lie,sleep,rest,hun,sg,xp,bub}}
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:`.lrp2{position:absolute;line-height:1;transform:translate(-50%,-50%);transition:left 2.4s ease-in-out,top 2.4s ease-in-out;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
-.lrp2 .pe{display:inline-block;transition:transform .5s}.lrp2.lie .pe{transform:rotate(-82deg)}.lrp2.walk .pe{animation:lrb .5s infinite}.lrp2.jmp .pe{animation:ptj .45s 2}
+.lrp2 .pe{display:inline-block;position:relative;transition:transform .5s}.lrp2.lie .pe{transform:rotate(-82deg)}.lrp2.walk .pe{animation:lrb .5s infinite}.lrp2.jmp .pe{animation:ptj .45s 2}
 .lrp2 .pb{position:absolute;left:62%;top:-38%;font-size:.42em;font-style:normal;white-space:nowrap}.lrp2.slp .pb{animation:ptz 2.4s infinite}
 .lrp2.drag{transition:none;transform:translate(-50%,-66%) scale(1.15);filter:drop-shadow(0 8px 8px rgba(0,0,0,.45))}
 @keyframes ptj{50%{transform:translateY(-.4em)}}@keyframes ptz{50%{transform:translateY(-.25em);opacity:.5}}
@@ -618,9 +618,9 @@ function petsSync(){const pts=allPets();
    if(pt2.drag&&pt2.drag.id===p[0])return;
    const k=s.x.toFixed(1)+'/'+s.y.toFixed(1);if(el._k&&el._k!==k){el.classList.add('walk');clearTimeout(el._w);el._w=setTimeout(()=>el.classList.remove('walk'),2500)}el._k=k;
    el.style.left=s.x+'%';el.style.top=s.y+'%';el.style.zIndex=Math.round(s.y)+20;el.style.fontSize=(13*s.sg[2]).toFixed(1)+'cqw';el.style.pointerEvents=lr.edit?'none':'';
-   petArt(el.firstChild,p);el.classList.toggle('lie',s.lie);el.classList.toggle('slp',s.sleep);const sy=pt2.say[p[0]];petBub(el.lastChild,sy&&sy.t>Date.now()?sy.x:s.bub)});
+   petArt(el.firstChild,p);try{const pe=el.firstChild,o=pe.querySelector(':scope>.pclo');if(o)o.remove();const cl=window.cloHTML?cloHTML(p[0]):'';if(cl)pe.insertAdjacentHTML('beforeend',cl)}catch{}el.classList.toggle('lie',s.lie);el.classList.toggle('slp',s.sleep);const sy=pt2.say[p[0]];petBub(el.lastChild,sy&&sy.t>Date.now()?sy.x:s.bub)});
   st.querySelectorAll('.lrp2').forEach(e=>{if(!keep.has(e.dataset.p))e.remove()})})}
-const pArt=(p,px)=>{const h=document.createElement('span');try{petArt(h,p)}catch{h.textContent=p[1]}return `<span style="display:inline-block;flex:none;width:1em;height:1em;font-size:${px}px;line-height:1">${h.innerHTML}</span>`};
+const pArt=(p,px)=>{const h=document.createElement('span');try{petArt(h,p)}catch{h.textContent=p[1]}let c='';try{c=window.cloHTML?cloHTML(p[0]):''}catch{}return `<span style="display:inline-block;position:relative;flex:none;width:1em;height:1em;font-size:${px}px;line-height:1">${h.innerHTML}${c}</span>`};
 function lrPickDraw(){const h=$('lrPick');if(!h)return;const sel=lrSelIds(),av=lrAvail(),t=$('lrPickT');
  if(t)t.textContent='Питомцы в комнате · '+sel.length+' из '+LR_MAXP;
  const html=av.map(p=>{const on=sel.includes(p[0]);return `<button class="lrt ${on?'on':''}" style="width:auto;flex:none;min-width:84px;padding:8px 12px" aria-pressed="${on}" onclick="lrPick('${p[0]}')">${pArt(p,34)}<b>${p[2]}</b><span class="xs">${on?'в комнате ✓':sel.length>=LR_MAXP?'мест нет':'добавить'}</span></button>`}).join('');
@@ -4926,7 +4926,8 @@ const ts0=window.twSize;
 window.twSize=function(){ts0.apply(this,arguments);const c=TW.cx;if(c&&!c.__sb){c.__sb=1;const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowBlur');Object.defineProperty(c,'shadowBlur',{configurable:true,get(){return d.get.call(c)},set(v){d.set.call(c,Math.min(v*.4,6))}})}};
 
 /* ---------- 2. Дерево: «плоды любви» ---------- */
-css(`#tfBox{margin-top:10px;text-align:center}
+css(`#treeArt>svg{display:block;margin:0 auto}
+#tfBox{margin-top:10px;text-align:center}
 #tfOv{position:absolute;left:50%;top:0;width:min(200px,100%);aspect-ratio:200/170;transform:translateX(-50%);pointer-events:none}
 #tfOv button{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border:0;background:none;pointer-events:auto;touch-action:manipulation}
 #tfOv .rp{animation:tfB 1.6s ease-in-out infinite;filter:drop-shadow(0 0 6px #ff5c9a)}
@@ -4936,7 +4937,8 @@ css(`#tfBox{margin-top:10px;text-align:center}
 @keyframes tfF{to{transform:translate(var(--dx),150px) rotate(220deg);opacity:0}}
 #tfOv i.pp{position:absolute;font:700 14px Comfortaa,sans-serif;color:#fff;animation:tfP 1s ease-out forwards}
 @keyframes tfP{to{transform:translateY(-40px);opacity:0}}`);
-const HR=3*36e5,SH=20*6e4,SL=[[62,70],[100,52],[138,70],[80,98],[122,100]];
+const HR=3*36e5,SH=20*6e4,SL0=[[62,70],[100,52],[138,70],[80,98],[122,100]];let SL=SL0;
+function tfPts(){try{const g=document.querySelector('#treeArt svg g.tg'),b=g&&g.getBBox();if(b&&b.width>20&&b.height>20){const h=b.height*.6;return [[.2,.5],[.5,.1],[.8,.5],[.34,.85],[.68,.9]].map(([fx,fy])=>[b.x+fx*b.width,b.y+fy*h])}}catch{}return SL0}
 const heart=(on)=>`<svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 21C3 14 2 8 6 5.5 9 4 11 5.5 12 7.5 13 5.5 15 4 18 5.5 22 8 21 14 12 21Z" fill="${on?'#FF5C9A':'#9AA7B8'}"/>${on?'<path d="M8 8.5Q9 7 10.5 8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>':''}</svg>`;
 const grown=()=>{try{return treePts()>=TS[TS.length-1][2]}catch{return false}};
 const slots=()=>{let s=LSg('tf_s',null);if(!Array.isArray(s)||s.length!==5)s=[0,0,0,0,0];return s};
@@ -4947,7 +4949,7 @@ function tfShake(){const o=g$('tfOv'),t=+LSg('tf_sh',0),now=Date.now();if(now-t<
  try{navigator.vibrate&&navigator.vibrate(15)}catch{}
  if(Math.random()<.4){const n=2+Math.floor(Math.random()*3);setTimeout(()=>{try{coinAdd(n,'упал плод с ветки')}catch{}},700)}else setTimeout(()=>toast('Посыпались листья ✨'),500)}
 function tfDraw(){const a=g$('treeArt'),card=g$('treeCard');if(!a||!card||!grown())return;let o=g$('tfOv');if(!o){o=document.createElement('div');o.id='tfOv';a.appendChild(o)}
- const s=slots(),now=Date.now();o.querySelectorAll('button').forEach(b=>b.remove());
+ const s=slots(),now=Date.now();o.querySelectorAll('button').forEach(b=>b.remove());SL=tfPts();
  SL.forEach((p,i)=>{const r=now-s[i]>=HR,b=document.createElement('button');b.className=r?'rp':'un';b.style.left=p[0]/2+'%';b.style.top=p[1]/1.7+'%';b.innerHTML=heart(r);b.setAttribute('aria-label','Плод любви');b.onclick=()=>r?tfPick(i):toast('Плод ещё зреет');o.appendChild(b)});
  let bx=g$('tfBox');if(!bx){bx=document.createElement('div');bx.id='tfBox';card.appendChild(bx)}
  const rd=s.filter(x=>now-x>=HR).length,nx=Math.min(...s.filter(x=>now-x<HR).map(x=>HR-(now-x)),Infinity),m=Math.ceil(nx/6e4);
@@ -4998,27 +5000,32 @@ const CLO=[
 ];
 window.CLO=CLO;
 const SLOT=[['head','Голова'],['face','Лицо'],['neck','Шея'],['body','Одежда']],ORD=['body','neck','face','head'];
-const eq=()=>LSg('wd_eq',{}),ownK=id=>{try{return own('clo:'+id)}catch{return false}};
+const eq=()=>LSg('wd_eq',{}),ownK=id=>{try{return own('clo:'+id)||LSg('wd_own',[]).includes(id)}catch{return false}};
 window.cloHTML=function(pid){const e=eq()[pid];if(!e)return '';const s=ORD.map(k=>{const it=CLO.find(x=>x[0]===e[k]);return it&&ownK(it[0])?it[4]:''}).join('');return s?`<svg class="pclo" viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none">${s}</svg>`:''};
 css(`#wdCard .wp{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0}
 #wdCard .wp button,#wdCard .wg button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);border-radius:14px;color:inherit;padding:6px 10px;font:inherit}
 #wdCard .wp button.on,#wdCard .wg button.on{border-color:var(--pink,#ff86c0);background:rgba(255,134,192,.2)}
 #wdCard .wg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 #wdCard .wg button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px}
-#wdCard .wv{position:relative;display:inline-block;font-size:72px;line-height:1.1;margin:14px 0 22px}`);
+#wdCard .wv{display:inline-block;margin:30px 0 14px}
+#wdCard .wv .pet{font-size:84px}
+#wdCard .wp button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px}
+#wdCard .wp .pet{font-size:34px;filter:none;animation:none}`);
 let wdP=null,wdT='head';
 const pets=()=>{try{const a=window.petsOf&&petsOf();return Array.isArray(a)&&a.length?a:PETS}catch{return PETS}};
 function wdDraw(){const c=g$('wdCard');if(!c)return;const L=pets();if(!wdP||!L.some(p=>p[0]===wdP))wdP=(S.game&&S.game.pet&&L.some(p=>p[0]===S.game.pet))?S.game.pet:L[0][0];
  const pet=L.find(p=>p[0]===wdP),e=eq()[wdP]||{},items=CLO.filter(x=>x[2]===wdT),vb={head:'14 -30 72 66',face:'10 28 80 30',neck:'14 64 72 46',body:'0 66 100 60'}[wdT];
- c.innerHTML=`<b class="ff" style="font-size:16px"><i class="fa-solid fa-shirt"></i> Гардероб</b><div class="wp">${L.map(p=>`<button class="${p[0]===wdP?'on':''}" onclick="wdPet('${p[0]}')">${p[1]}</button>`).join('')}</div>
- <div style="text-align:center"><span class="wv">${pet[1]}${cloHTML(wdP)}</span></div>
+ c.innerHTML=`<b class="ff" style="font-size:16px"><i class="fa-solid fa-shirt"></i> Гардероб</b><div class="wp">${L.map(p=>`<button class="${p[0]===wdP?'on':''}" onclick="wdPet('${p[0]}')" aria-label="${p[2]}"><span class="pet" data-wa="${p[0]}" data-e="${p[1]}">${p[1]}</span><b class="xs">${p[2]}</b></button>`).join('')}</div>
+ <div style="text-align:center"><span class="wv"><span class="pw"><span class="pet" data-wa="${pet[0]}" data-e="${pet[1]}">${pet[1]}</span>${cloHTML(wdP)}</span></span></div>
  <div class="tabs">${SLOT.map(([k,n])=>`<button class="${wdT===k?'on':''}" onclick="wdTab('${k}')">${n}</button>`).join('')}</div>
- <div class="wg">${e[wdT]?`<button onclick="wdItem('${wdT}','')"><span style="font-size:22px">✖</span><b class="xs">Снять</b></button>`:''}${items.map(x=>{const o=ownK(x[0]),on=e[wdT]===x[0];return `<button class="${on?'on':''}" onclick="wdItem('${x[0]}')"><svg viewBox="${vb}" width="58" height="46" style="overflow:hidden">${x[4]}</svg><b class="xs">${x[1]}</b><span class="xs">${on?'надето ✓':o?'надеть':x[3]+' 🪙'}</span></button>`}).join('')}</div>`}
+ <div class="wg">${e[wdT]?`<button onclick="wdItem('${wdT}','')"><i class="fa-solid fa-xmark" style="font-size:22px;line-height:46px"></i><b class="xs">Снять</b></button>`:''}${items.map(x=>{const o=ownK(x[0]),on=e[wdT]===x[0];return `<button class="${on?'on':''}" onclick="wdItem('${x[0]}')"><svg viewBox="${vb}" width="58" height="46" style="overflow:hidden">${x[4]}</svg><b class="xs">${x[1]}</b><span class="xs">${on?'надето ✓':o?'надеть':x[3]+' 🪙'}</span></button>`}).join('')}</div>`;
+ c.querySelectorAll('[data-wa]').forEach(el=>{try{petArt(el,{0:el.dataset.wa,1:el.dataset.e})}catch{}})}
 window.wdPet=id=>{wdP=id;wdDraw()};window.wdTab=t=>{wdT=t;wdDraw()};
 window.wdItem=function(a,b){if(b!==undefined&&b===''){const m=eq();(m[wdP]=m[wdP]||{})[a]=null;LSs('wd_eq',m);return wdAfter()}
- const it=CLO.find(x=>x[0]===a);if(!it)return;const put=()=>{const m=eq();(m[wdP]=m[wdP]||{})[it[2]]=it[0];LSs('wd_eq',m);wdAfter()};
+ const it=CLO.find(x=>x[0]===a);if(!it)return;const put=()=>{const m=eq();(m[wdP]=m[wdP]||{})[it[2]]=it[0];LSs('wd_eq',m);const w=LSg('wd_own',[]);if(!w.includes(it[0])){w.push(it[0]);LSs('wd_own',w)}wdAfter()};
+ if(((eq()[wdP]||{})[it[2]])===it[0]&&ownK(it[0])){const m=eq();m[wdP][it[2]]=null;LSs('wd_eq',m);return wdAfter()}
  if(ownK(it[0]))return put();buy('clo:'+it[0],it[3],put)};
-function wdAfter(){wdDraw();try{drawPet()}catch{}try{render()}catch{}}
+function wdAfter(){wdDraw();try{drawPet()}catch{}try{render()}catch{}try{petsSync()}catch{}}
 function wdMount(){const b=g$('ptBody');if(!b)return;let c=g$('wdCard');if(!c){c=document.createElement('div');c.id='wdCard';c.className='card mt'}b.appendChild(c);wdDraw()}
 const dp0=window.drawPet;window.drawPet=function(){const r=dp0.apply(this,arguments);try{wdMount()}catch(e){console.warn(e)}return r};
 })();
