@@ -4909,6 +4909,16 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur==='blo
 hud();
 }catch(e){console.error('blocks',e)}})();
 </script>
+<script id="cd-bridge">
+/* Мост для Cat Defense: внутри модуля имя S занято помощником фильмов, поэтому к кошельку Бурмалды модуль ходит через этот объект */
+window.CDB={
+ room(){try{return S.room||null}catch{return null}},
+ coins(){try{return cn()}catch{return 0}},
+ owned(k){try{return((S.wal||{}).owned||[]).includes(k)}catch{return false}},
+ async buy(item,price){try{const{data,error}=await sb.rpc('couple_shop_buy',{p_room:S.room,p_item:item,p_price:price});if(error)return{ok:false,err:error.message};S.wal.coins=data.coins;S.wal.owned=data.owned;try{drawX()}catch{}return{ok:true}}catch(e){return{ok:false,err:String(e&&e.message||e)}}},
+ async earn(n){try{let left=Math.round(n),last=null;while(left>0){const k=Math.min(500,left),{data,error}=await sb.rpc('couple_coin_add',{p_room:S.room,p_amount:k});if(error)break;last=data;left-=k}if(last!=null){S.wal.coins=last;try{drawX()}catch{}}return left<=0}catch{return false}}
+};
+</script>
 <script id="burmalda-catdefense">
 /* ===== Cat Defense: Tower Defense с котиками. Вся графика — SVG, звуки — Web Audio, без внешних файлов.
    Отдельный модуль: добавляет карточку в «Игры» и экран #catdef; остальной код приложения не меняется. ===== */
@@ -4957,6 +4967,15 @@ const TW={ // cost — цена в бою (рыбки), pr — цена в ма�
  knight:{n:'Сэр Мурлот',role:'Рыцарь',cost:125,pr:310,range:60,cd:.8,dmg:5,melee:1,bg:'#e2e8f0',inf:'Бьёт мечом по всем рядом и замедляет врагов',st:'Вырос на сказках о рыцарях. Шлем у него из кастрюли, а клятва настоящая.'},
  jelly:{n:'Мармелад',role:'Желе',cost:105,pr:230,range:90,cd:1.5,dmg:1.5,aoe:44,slow:.5,bg:'#fce7f3',pj:'gel',sp:210,snd:'nip',inf:'Липкие шарики: урон и замедление по площади',st:'Живёт в кондитерской и очень добрый. Зомби застревают в нём, как в варенье.'},
  fairy:{n:'Искорка',role:'Фея',cost:100,pr:240,range:112,cd:.55,dmg:2.6,bg:'#fae8ff',pj:'star',sp:380,inf:'Часто стреляет звёздочками на средней дальности',st:'Маленькая фея-кошка. Хочет вернуть небу погасшие звёзды.'}};
+/* ---------- Новая эпоха: котики эпохи динозавров (в магазине появляются после открытия эпохи) ---------- */
+Object.assign(TW,{
+ rex:{n:'Рекс-Мурр',role:'Ящер',ep:'dino',melee:1,cost:130,pr:400,range:64,cd:.85,dmg:7,bg:'#dcfce7',inf:'Бьёт хвостом по всем рядом: огромный урон и замедление',st:'Кот в костюме тираннозавра. Лапки у него маленькие, зато характер огромный.'},
+ ptero:{n:'Птеро',role:'Небесный стрелок',ep:'dino',cost:125,pr:360,range:160,cd:.8,dmg:5,bg:'#ffedd5',pj:'feather',sp:460,inf:'Метает перья на огромную дальность',st:'Кошка с крыльями птеродактиля. Видит всю поляну сверху и почти не промахивается.'},
+ ugg:{n:'Угг',role:'Пещерный',ep:'dino',cost:135,pr:330,range:104,cd:2.1,dmg:8,aoe:52,bg:'#fef3c7',pj:'rock',sp:200,snd:'nip',inf:'Швыряет валуны: тяжёлый урон по площади',st:'Первый кот, который придумал колесо. Колесо не прижилось, зато камни летят отлично.'},
+ stego:{n:'Стегоша',role:'Фермер',ep:'dino',range:0,cd:9,gain:90,cost:130,pr:420,bg:'#d1fae5',inf:'Не стреляет: каждую волну выращивает +90 рыбных консервов',st:'Под спинными пластинами у него огород: папоротники, ягоды и ловля рыбы в болоте.'},
+ amber:{n:'Янтарь',role:'Смола',ep:'dino',cost:110,pr:300,range:94,cd:1.4,dmg:1.6,aoe:42,slow:.35,bg:'#fef9c3',pj:'amberb',sp:220,snd:'nip',inf:'Липкая смола: замедляет врагов на 65% по площади',st:'Миллионы лет проспал в капле янтаря. Проснулся голодным, но в отличном настроении.'}
+});
+
 const EN={mouse:{hp:6,sp:54,r:11,gold:5,dmg:1},rat:{hp:24,sp:28,r:15,gold:9,dmg:2},surf:{hp:9,sp:84,r:12,gold:7,dmg:1},zcat:{hp:5,sp:62,r:10,gold:2,dmg:1},
  dog:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog2:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog3:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog4:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog5:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1}};
 const WORLDS=[
@@ -5017,6 +5036,19 @@ SYM.flame=cat('#f87171','#991b1b','<path d="M-6-19Q0-36 6-19Q3-23 0-30Q-3-23-6-1
 SYM.knight=cat('#cbd5e1','#64748b','<path d="M-15-10Q-15-27 0-27T15-10Z" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/><rect x="-2" y="-31" width="4" height="8" fill="#ef4444"/><path d="M18 18L28 4" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/>');
 SYM.jelly=cat('#f9a8d4','#be185d','<path d="M-14-12Q0-30 14-12Q8-16 0-14Q-8-16-14-12Z" fill="#fce7f3"/><circle cx="-8" cy="14" r="3" fill="#c084fc"/><circle cx="8" cy="16" r="2.4" fill="#67e8f9"/>');
 SYM.fairy=cat('#e9d5ff','#a855f7','<path d="M-14 6Q-36-8-24 10Q-30 22-14 14ZM14 6Q36-8 24 10Q30 22 14 14Z" fill="#f5d0fe" fill-opacity=".85"/><path d="M16 16L26-2" stroke="#a16207" stroke-width="2"/><path d="M26-2l2-5 2 5 5 2-5 2-2 5-2-5-5-2z" fill="#fde047"/>');
+/* спрайты эпохи динозавров */
+SYM.rex=cat('#4ade80','#166534','<path d="M-13-17l3-9 4 8 3-10 4 9 4-8 3 10" fill="none" stroke="#15803d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M-5 5l1.5 3.4L-2 5M2 5l1.5 3.4L5 5" fill="#fff"/><path d="M15 17Q25 16 27 7" stroke="#22c55e" stroke-width="5" fill="none" stroke-linecap="round"/>');
+SYM.ptero=cat('#fdba74','#9a3412','<path d="M-14 4Q-27-10-26 12-21 6-14 13ZM14 4Q27-10 26 12 21 6 14 13Z" fill="#fb923c" stroke="#c2410c" stroke-width="1.3"/><path d="M-3-17Q-10-36-24-30Q-12-26-7-15Z" fill="#ea580c"/><path d="M-4 3h8L0 9Z" fill="#fbbf24"/>');
+SYM.ugg=cat('#d6b48a','#78350f','<path d="M-14 7L-7 20 0 10 7 20 14 7Z" fill="#92400e"/><path d="M-2-19L9-27" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/><circle cx="-3" cy="-19" r="2.6" fill="#fef3c7"/><circle cx="10" cy="-27" r="2.6" fill="#fef3c7"/><path d="M-17-8L-9-12M-17-4L-9-8" stroke="#78350f" stroke-width="1.6" stroke-linecap="round"/><path d="M16 20L23 3" stroke="#92400e" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="0" r="4.5" fill="#a16207"/>');
+SYM.stego=cat('#a7f3d0','#047857','<path d="M-14-13L-10-27-5-15-1-30 4-15 9-28 12-13Z" fill="#f59e0b" stroke="#b45309" stroke-width="1.2" stroke-linejoin="round"/><path d="M15 18L27 13 23 22 17 23Z" fill="#16a34a"/><path d="M20 15l5-6M24 17l3-4" stroke="#fef3c7" stroke-width="1.6" stroke-linecap="round"/>');
+SYM.amber=cat('#fbbf24','#b45309','<path d="M-11-14L-5-30 5-30 11-14Z" fill="#fde68a" fill-opacity=".85" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/><ellipse cx="0" cy="-22" rx="2.4" ry="1.4" fill="#92400e"/>');
+SYM.rock='<path d="M-7-2L-3-7 4-6 8 0 4 6-4 5Z" fill="#78716c" stroke="#44403c" stroke-width="1.2" stroke-linejoin="round"/><path d="M-3-2l4 1" stroke="#a8a29e" stroke-width="1.4" stroke-linecap="round"/>';
+SYM.feather='<path d="M-10 0Q0-6 10 0Q0 6-10 0Z" fill="#fb923c"/><path d="M-10 0H9" stroke="#fff7ed" stroke-width="1.2"/>';
+SYM.amberb='<circle r="6.5" fill="#f59e0b" fill-opacity=".9"/><circle cx="-2" cy="-2" r="2" fill="#fef3c7"/>';
+SYM.egg='<ellipse cy="14" rx="17" ry="4" fill="#0000003a"/><path d="M0-20C11-20 17-6 17 4 17 14 9 18 0 18S-17 14-17 4C-17-6-11-20 0-20Z" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><path d="M-12-2l5 5 5-7 5 7 5-6 5 6" fill="none" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/><circle cx="-6" cy="9" r="2" fill="#84cc16"/><circle cx="6" cy="-10" r="2.4" fill="#84cc16"/>';
+SYM.tmach='<ellipse cy="16" rx="24" ry="5" fill="#0000003a"/><rect x="-17" y="-14" width="34" height="28" rx="9" fill="#6366f1" stroke="#c7d2fe" stroke-width="2"/><circle cy="0" r="10" fill="#0b1220" stroke="#22d3ee" stroke-width="2.4"/><path d="M0 0V-7M0 0l5 3" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"/><rect x="-6" y="-21" width="12" height="7" rx="3" fill="#f43f5e"/><path d="M-14 14v5M14 14v5" stroke="#c7d2fe" stroke-width="3" stroke-linecap="round"/>';
+SYM.bronto='<ellipse cy="10" rx="34" ry="17" fill="#65a30d"/><path d="M20 4Q40 0 38-34Q36-44 46-44" stroke="#65a30d" stroke-width="12" fill="none" stroke-linecap="round"/><ellipse cx="48" cy="-44" rx="9" ry="6" fill="#65a30d"/><circle cx="51" cy="-46" r="1.8" fill="#1f2937"/><path d="M-30 10Q-44 12-48 24" stroke="#65a30d" stroke-width="9" fill="none" stroke-linecap="round"/><rect x="-22" y="22" width="9" height="14" rx="3" fill="#4d7c0f"/><rect x="10" y="22" width="9" height="14" rx="3" fill="#4d7c0f"/><circle cx="-8" cy="2" r="3" fill="#84cc16"/><circle cx="6" cy="-2" r="3" fill="#84cc16"/>';
+SYM.ptd='<path d="M0 0Q-20-22-44-14-26-8-18 6ZM0 0Q20-22 44-14 26-8 18 6Z" fill="#7c3aed" stroke="#4c1d95" stroke-width="1.5"/><ellipse rx="9" ry="6" fill="#a78bfa"/><path d="M8-2l16-3-14 7Z" fill="#fbbf24"/><circle cx="4" cy="-2" r="1.4" fill="#1f2937"/><path d="M-7-3L-18-10" stroke="#7c3aed" stroke-width="4" stroke-linecap="round"/>';
 const IC={
  back:'<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
  snd:'<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
@@ -5035,7 +5067,7 @@ const ic=(n,c)=>`<svg class="ci ${c||''}" viewBox="0 0 24 24" aria-hidden="true"
 const fi=k=>`<svg class="fi" viewBox="-12 -9 28 18" aria-hidden="true"><use href="#cd-${k||'fish'}"/></svg>`;
 
 /* ---------- звук (Web Audio, без файлов; уважает настройки звука приложения) ---------- */
-let AC=null,mg=null,nb=null,SA=null,mute=lg('cd_mute')==='1',AUTO=lg('cd_auto')!=='0';const lastS={};
+let AC=null,mg=null,nb=null,SA=null,mute=lg('cd_mute')==='1',AUTO=lg('cd_auto2')==='1';const lastS={};
 const sOn=()=>!mute&&(window.BSFX?window.BSFX.on:lg('bm_snd')!=='0');
 const volume=()=>{const v=lg('bm_vol');return(v===null?60:+v)/100*3};
 function unlock(){try{
@@ -5174,6 +5206,18 @@ const st3=document.createElement('style');st3.textContent=`
 .cd-cap:empty{display:none}.cd-pbar{width:100%;max-width:398px;height:4px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden;margin-bottom:8px}.cd-pbar i{display:block;height:100%;width:0;background:#fb923c}#cdFN{margin-top:2px}.cd-t small.cd-n{font-size:10px;font-weight:800;color:#64748b}
 `;document.head.appendChild(st3);
 
+const st4=document.createElement('style');st4.textContent=`
+.cw.ep{background:linear-gradient(160deg,rgba(132,204,22,.18),rgba(255,255,255,.07));border-color:rgba(132,204,22,.5)}
+.cw.ep.cl0{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+.ep-row{display:flex;gap:8px}.ep-row .cd-btn{flex:1;padding:0 8px}
+.ep-hint{font-size:11px;line-height:1.35;color:#cbd5e1}
+.inf-row{display:flex;flex-wrap:wrap;gap:7px}
+.inf-b{flex:1 1 calc(50% - 7px);min-height:46px;padding:6px 8px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;font-weight:800;line-height:1.2;color:#e9d5ff;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.16)}
+.inf-b small{font-size:10px;font-weight:700;color:#fde68a}
+.inf-b span{display:flex;align-items:center;gap:5px}
+.inf-b.on{color:#fff;background:rgba(251,146,60,.22);border-color:#fb923c}
+`;document.head.appendChild(st4);
+
 /* ---------- разметка: спрайты, экран (меню / игра / фильм), карточка в «Играх» ---------- */
 $('app').insertAdjacentHTML('beforeend',`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.keys(SYM).map(k=>`<g id="cd-${k}">${SYM[k]}</g>`).join('')}</defs></svg>
 <section class="screen" id="catdef">
@@ -5191,9 +5235,10 @@ const card=()=>{const gl=$('gamesList');if(gl&&!$('cdCard'))gl.insertAdjacentHTM
 try{Object.assign(PL,{catdef:'🐱 в Cat Defense'})}catch{}
 
 /* ---------- сохранение прогресса ---------- */
-const defSV=()=>({g:20,own:['murzik','barsik'],team:['murzik','barsik'],wu:[],lv:{}});
+const defSV=()=>({g:20,own:['murzik','barsik'],team:['murzik','barsik'],wu:[],lv:{},ep:[],inf:{best:0,r:'fish',w:0}});
 let SV=(()=>{try{return Object.assign(defSV(),JSON.parse(lg('cd_save')||'{}'))}catch{return defSV()}})();
 const svs=()=>ls('cd_save',JSON.stringify(SV));
+if(!Array.isArray(SV.ep))SV.ep=[];SV.inf=Object.assign({best:0,r:'fish',w:0},SV.inf||{});
 if(!Array.isArray(SV.team)||!SV.team.length)SV.team=SV.own.slice(0,TMAX);SV.team=SV.team.filter(k=>TW[k]&&SV.own.includes(k)).slice(0,TMAX);
 const done=w=>[0,1,2,3,4].every(l=>(SV.lv[w+'-'+l]||0)>0),lvOpen=(w,l)=>SV.wu.includes(w)&&(l===0||(SV.lv[w+'-'+(l-1)]||0)>0);
 function badge(){const b=$('cdBadge');if(!b)return;const n=Object.values(SV.lv).filter(v=>v>0).length;b.textContent=n?`Пройдено уровней: ${n}/25`:'Новая игра'}
@@ -5219,7 +5264,7 @@ const L={tw:$('cdTw'),en:$('cdEn'),pr:$('cdPr'),fx:$('cdFx')};
 let G;
 function reset(){G={paused:false,hp:10,fish:LV.fish,wave:0,state:'idle',cd:0,wt:0,q:[],en:[],tw:[],pr:[],fx:[],sel:null,pick:null,tm:0,kills:0,shake:0};
  [L.tw,L.en,L.pr,L.fx].forEach(g=>g.innerHTML='');select(null);grid()}
-const queue=i=>{const q=[];WAVES[i].forEach(([k,n,gap,off])=>{for(let j=0;j<n;j++)q.push({t:(off||0)+j*gap,k})});return q.sort((a,b)=>a.t-b.t)};
+const queue=i=>{const q=[];(LV.inf?infWave(i):WAVES[i]).forEach(([k,n,gap,off])=>{for(let j=0;j<n;j++)q.push({t:(off||0)+j*gap,k})});return q.sort((a,b)=>a.t-b.t)};
 
 /* ---------- эффекты ---------- */
 function addFx(e,life,u){G.fx.push({e,t:0,life,u});u(0)}
@@ -5242,16 +5287,16 @@ function swipe(t){sfx('paw');ring(t.x,t.y,t.cf.range,'#f9a8d4');const p=mk('g',{
 function boom(p){sfx('boom');ring(p.x,p.y,p.aoe,'#4ade80');puff(p.x,p.y,'#86efac',7);G.en.forEach(e=>{if(!e.dead&&dist(e,p)<=p.aoe+e.r){dmg(e,p.dmg);if(p.slow){e.slow=1.8;e.sf=p.slow}}})}
 
 /* ---------- игровая логика (шаг симуляции) ---------- */
-function nextWave(early){if(G.state!=='break')return;if(early&&AUTO)G.fish+=Math.ceil(G.cd);G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;G.fish+=t.cf.gain;pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
+function nextWave(early){if(G.state!=='break')return;if(early&&!AUTO&&G.cd>0)G.fish+=Math.ceil(G.cd);G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(LV.inf?(G.wave%10===0?'Босс-волна '+G.wave+'!':'Волна '+G.wave):G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;G.fish+=t.cf.gain;pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
 function step(dt){
- if(G.state==='break'){if(AUTO)G.cd-=dt;if(G.cd<=0)nextWave()}
- else if(G.state==='wave'){G.wt+=dt;while(G.q.length&&G.q[0].t<=G.wt)G.en.push(mkEn(G.q.shift().k,1+LV.hm*(G.wave-1)+LV.hb))}
+ if(G.state==='break'){if(AUTO){if(G.wave===0)G.cd-=dt;else G.cd=0}else G.cd-=dt;if(G.cd<=0)nextWave()}
+ else if(G.state==='wave'){G.wt+=dt;while(G.q.length&&G.q[0].t<=G.wt)G.en.push(mkEn(G.q.shift().k,hmul()))}
  else return;
  /* враги идут по дороге; дошёл до миски — отнимает молоко */
  G.en.forEach(e=>{if(e.dead)return;e.d+=e.c.sp*(e.slow>0?(e.sf||.5):1)*dt;e.slow-=dt;e.fl-=dt;const p=pos(e.d);e.x=p[0];e.y=p[1];
   if(e.d>=TOT){e.dead=true;e.g.remove();G.hp=Math.max(0,G.hp-e.c.dmg);G.shake=.4;sfx('leak');vib(60);pop(e.x,e.y-14,'-'+e.c.dmg,0,'#ef4444');const c=$('cdHpC');c.classList.remove('hit');void c.offsetWidth;c.classList.add('hit')}});
- G.en.forEach(e=>{if(e.dead||!e.c.sum)return;e.sc=(e.sc||0)+dt;if(e.sc>=10){e.sc=0;for(let i=0;i<4;i++){const z=mkEn('zcat',1+LV.hm*(G.wave-1)+LV.hb);z.d=Math.max(0,e.d-16*(i+1));const p=pos(z.d);z.x=p[0];z.y=p[1];G.en.push(z)}ring(e.x,e.y,50,'#a855f7');ban('Пёс зовёт зомби-кошек!');sfx('wave')}});
- if(G.hp<=0)return finish(false);
+ G.en.forEach(e=>{if(e.dead||!e.c.sum)return;e.sc=(e.sc||0)+dt;if(e.sc>=10){e.sc=0;for(let i=0;i<4;i++){const z=mkEn('zcat',hmul());z.d=Math.max(0,e.d-16*(i+1));const p=pos(z.d);z.x=p[0];z.y=p[1];G.en.push(z)}ring(e.x,e.y,50,'#a855f7');ban('Пёс зовёт зомби-кошек!');sfx('wave')}});
+ if(G.hp<=0)return LV.inf?finishInf():finish(false);
  /* котики: ищут самого дальнего врага в радиусе и атакуют */
  G.tw.forEach(t=>{t.cd-=dt;if(t.cd>0)return;const cf=t.cf;
    if(cf.gain){t.cd=9;return}
@@ -5270,10 +5315,37 @@ function step(dt){
   else{p.rot+=dt*420;p.g.setAttribute('transform',`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${p.rot.toFixed(0)})`)}});
  G.pr=G.pr.filter(p=>!p.done);G.en=G.en.filter(e=>!e.dead);
  /* волна отбита */
- if(G.state==='wave'&&!G.q.length&&!G.en.length){const b=20+10*G.wave;G.fish+=b;pop(W/2+10,40,'+'+b,1);sfx('coin');
+ if(G.state==='wave'&&!G.q.length&&!G.en.length){const b=LV.inf?Math.min(140,20+4*G.wave):20+10*G.wave;G.fish+=b;pop(W/2+10,40,'+'+b,1);sfx('coin');
   if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=9;ban('Волна отбита! ✨')}}}
 function finish(win){G.state='over';let n=0,gold=0;if(win){n=G.hp>=8?3:G.hp>=5?2:1;const k=LV.w+'-'+LV.l,o=SV.lv[k]||0;gold=o?(n>o?10*(n-o)+8+4*LV.w:8+4*LV.w):14+8*n+5*LV.w;SV.lv[k]=Math.max(o,n);SV.g+=gold;svs()}G.gold=gold;badge();
  sfx(win?'win':'lose');vib(win?[40,40,80]:[120,60,120]);const g=G;setTimeout(()=>{if(G===g&&G.state==='over')showOv(win?'win':'lose',n)},700)}
+
+/* ---------- бесконечный режим: волны генерируются на лету ---------- */
+const INF={coin:3,fish:4};
+const infWave=i=>{const w=LV.w,k=1+w*.35+i*.22,x=[['mouse',Math.min(45,Math.round(6+4*k)),Math.max(.34,1.15-.12*k)]];
+ if(k>1.5)x.push(['rat',Math.min(26,Math.round((k-1.4)*2.2)),Math.max(.7,2.2-.2*k),2]);
+ if(w>0&&k>1.3)x.push(['surf',Math.min(30,Math.round((k-1)*(1+w))),Math.max(.45,1.1-.1*k),1]);
+ if(i>=4&&i%3===0)x.push(['zcat',Math.min(24,4+i),.5,3]);
+ if(i%10===9)x.push([DOGS[w],1+((i/20)|0),2,12]);
+ return x};
+const hmul=()=>1+LV.hm*(G.wave-1)+LV.hb+(LV.inf?Math.pow(Math.max(0,G.wave-12),1.5)*.07:0);
+const mw=()=>isFinite(MAXW)?'/'+MAXW:'';
+const infDone=()=>Math.max(0,G.state==='wave'?G.wave-1:G.wave);
+function startInf(){const ws=SV.wu;if(!ws.length)return say('Сначала открой хотя бы один мир');const w=ws.includes(SV.inf.w)?SV.inf.w:ws[0];
+ if(SV.inf.r==='coin'&&!CDB.room()){sfx('deny');return say('Монеты Бурмалды доступны только в общей комнате')}
+ LV={w,l:0,fish:190+w*30,hm:.12+w*.02,hb:w*.3,boss:false,inf:true,r:SV.inf.r==='coin'?'coin':'fish'};WAVES=[];MAXW=Infinity;sfx('click');
+ setPath(ROUTES[MAPS[w][(Math.random()*5)|0]]);buildMap(w);buildBar();spdUi();reset();$('cdLT').textContent='∞ · '+WORLDS[w].n;view('play');ui();showOv('start')}
+function finishInf(){if(G.state==='over')return;const done=infDone(),r=LV.r==='coin'?'coin':'fish',amt=done>0?done*INF[r]+((done/10)|0)*(r==='coin'?10:15):0,rec=done>(SV.inf.best||0);
+ G.state='over';if(rec)SV.inf.best=done;SV.inf.runs=(SV.inf.runs||0)+1;const i=G.inf={done,amt,r,rec,paid:true};
+ if(r==='fish'&&amt>0)SV.g+=amt;svs();badge();sfx(rec?'win':'lose');vib(rec?[40,40,80]:[120,60,120]);const g=G;
+ (async()=>{if(r==='coin'&&amt>0)i.paid=await CDB.earn(amt);setTimeout(()=>{if(G===g&&G.state==='over')showOv('inf')},500)})()}
+const infStartH=()=>`<div class="cd-card"><svg viewBox="-28 -46 56 66" width="58" height="68"><use href="#cd-murzik"/></svg><h3>∞ ${WORLDS[LV.w].n}</h3><p>Волны не кончаются и становятся всё сильнее, каждые 10 волн приходит босс. Награда за каждую пережитую волну: <b>${LV.r==='coin'?'🪙 монеты Бурмалды':'золотые рыбки'}</b>.<br>Выбери котика внизу и поставь на свободную клетку (до 3 одного вида).</p><button class="cd-btn" data-a="go">В бой!</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+const infQuitH=()=>`<div class="cd-card"><h3>Закончить забег?</h3><p>Пережито волн: ${infDone()}. Награду за них можно забрать сейчас.</p><button class="cd-btn" data-a="resume">Продолжить</button><button class="cd-btn g" data-a="endrun">Закончить и забрать награду</button></div>`;
+function infEndH(){const i=G.inf||{done:0,amt:0,r:'fish'};let rw;
+ if(i.amt<=0)rw='Переживи хотя бы одну волну, чтобы получить награду';
+ else if(i.r==='coin')rw=i.paid?`<b style="color:#b45309">+${i.amt} 🪙 монет Бурмалды</b>`:'Монеты не удалось начислить, проверь интернет';
+ else rw=`<b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${i.amt} ${fi('gfish')} золотых рыбок</b>`;
+ return `<div class="cd-card"><h3>${i.rec?'Новый рекорд!':'Забег окончен'}</h3><div class="st">∞</div><p>Волн пережито: <b>${i.done}</b> · Рекорд: ${SV.inf.best||0}<br>${rw}</p><button class="cd-btn" data-a="menu">В меню</button></div>`}
 
 /* ---------- отрисовка кадра: анимация ходьбы, дыхания, отдачи ---------- */
 function draw(dt){
@@ -5284,8 +5356,8 @@ function draw(dt){
  G.shake=Math.max(0,G.shake-dt);$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}
 const N={hp:$('cdHp'),fish:$('cdFish'),wave:$('cdWave'),wt:$('cdWT')};
 function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel)$('cdUp').style.opacity=G.sel.lv>=3||G.fish>=upc(G.sel)?1:.55;
- if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW} · ${AUTO?Math.ceil(G.cd):'▶'}`;go=1}
- else if(G.state==='wave')t=`Волна ${G.wave}/${MAXW} · ${G.q.length+G.en.length}`;else t=`Волна ${G.wave}/${MAXW}`;
+ if(G.state==='break'){t=`Волна ${G.wave+1}${mw()} · ${AUTO&&G.wave>0?'▶':'▶ '+Math.ceil(G.cd)}`;go=1}
+ else if(G.state==='wave')t=`Волна ${G.wave}${mw()} · ${G.q.length+G.en.length}`;else t=`Волна ${G.wave}${mw()}`;
  sT(N.wt,t);N.wave.classList.toggle('go',!!go);
  document.querySelectorAll('#cdBar .cd-t').forEach(b=>{const k=b.dataset.k;const n=G.tw.filter(t=>t.k===k).length;b.classList.toggle('no',G.fish<TW[k].cost||n>=MAXT);b.classList.toggle('sel',G.pick===k);sT(b.lastChild,n+'/'+MAXT)})}
 let raf=0,last=0;
@@ -5319,27 +5391,47 @@ document.querySelectorAll('.cd-snd').forEach(b=>b.addEventListener('click',()=>{
 
 /* ---------- меню: миры и магазин ---------- */
 const view=v=>{VIEW=v;[['Menu','menu'],['Play','play'],['Film','film']].forEach(([n,k])=>$('cd'+n).classList.toggle('on',k===v));if(v==='play'){last=performance.now();if(!raf)raf=requestAnimationFrame(frame)}};
-function menu(){sT($('cdGold'),SV.g);document.querySelectorAll('#cdTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===TAB));$('cdBody').innerHTML=({w:worldsH,t:teamH,s:shopH,c:setH})[TAB]()}
+function menu(){sT($('cdGold'),SV.g);document.querySelectorAll('#cdTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===TAB));const bd=$('cdBody'),sc=bd.scrollTop,pt=bd.dataset.t;bd.innerHTML=({w:worldsH,t:teamH,s:shopH,c:setH})[TAB]();bd.scrollTop=pt===TAB?sc:0;bd.dataset.t=TAB}
 function teamH(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k)),cd=(k,c)=>`<button class="tm-s ${c}" style="--bg:${TW[k].bg}" data-a="tm" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${TW[k].role} · ${TW[k].cost}</span></button>`;
- return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — убрать</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).length} · тап — взять в отряд</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`}
+ return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — убрать</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).filter(k=>!TW[k].ep||epOpen(TW[k].ep)).length} · тап — взять в отряд</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`}
 function setH(){const row=(a,t,d,on)=>`<button class="cd-set" data-a="${a}"><span><b>${t}</b><small>${d}</small></span><i class="cd-sw${on?' on':''}"></i></button>`;
- return row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Следующая волна начинается сама. Выключи — и запускай волны кнопкой в бою',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
+ return row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Включено: следующая волна идёт сразу, как только её можно начать. Выключено: волна начнётся по таймеру или когда сам нажмёшь кнопку волны (раньше срока даёт бонус рыбок)',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
 function worldsH(){return WORLDS.map((w,i)=>{const op=SV.wu.includes(i);let b;
  if(op)b=`<div class="cl-row">${[0,1,2,3,4].map(l=>{const s=SV.lv[i+'-'+l]||0,o=lvOpen(i,l);return `<button class="cl${s?' ok':''}${l===4?' boss':''}" data-a="lvl" data-w="${i}" data-l="${l}" ${o?'':'disabled'}>${o?(l===4?`<svg viewBox="-36 -38 72 70"><use href="#cd-${DOGS[i]}"/></svg>`:`<b>${l+1}</b>`):ic('lock')}<span>${s?'★'.repeat(s)+'☆'.repeat(3-s):''}</span></button>`}).join('')}</div><button class="cd-btn g sm" data-a="film">${ic('film')}История мира</button>`.replace('data-a="film"',`data-a="film" data-w="${i}"`);
  else if(i===0||done(i-1))b=`<button class="cd-btn sm go" data-a="unlock" data-w="${i}">${ic('film')}Разблокировать</button>`;
  else b=`<div class="cw-lock">${ic('lock')}Пройди все уровни мира ${i}, чтобы открыть</div>`;
- return `<div class="cw${op?'':' cl0'}" style="--c:${w.c}"><div class="cw-h"><div class="cw-t"><svg viewBox="${i===1?'-12 -9 28 18':'-24 -22 48 40'}"><use href="#cd-${['bowl','fish','srv','igl','bowl'][i]}"/></svg></div><div><b>Мир ${i+1} · ${w.n}</b><small>${w.s}</small></div></div><p>${w.d}</p>${b}</div>`}).join('')}
-function shopH(){return `<div class="ck-grid">${Object.keys(TW).map(k=>{const t=TW[k],own=SV.own.includes(k);return `<div class="ck" style="--bg:${t.bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${t.n}</b><em>${t.role}</em><p>${t.inf}</p><small>${t.st}</small><div class="ck-c">В бою: ${fi()}${t.cost}</div>${own?`<div class="ck-ok">${ic('star')}Куплен</div>${CF[k]?`<button class="cd-btn g sm" data-a="cf" data-k="${k}">${ic('film')}История</button>`:''}`:`<button class="cd-btn sm" data-a="buy" data-k="${k}">${fi('gfish')}${t.pr}</button>`}</div>`}).join('')}</div>`}
+ return `<div class="cw${op?'':' cl0'}" style="--c:${w.c}"><div class="cw-h"><div class="cw-t"><svg viewBox="${i===1?'-12 -9 28 18':'-24 -22 48 40'}"><use href="#cd-${['bowl','fish','srv','igl','bowl'][i]}"/></svg></div><div><b>Мир ${i+1} · ${w.n}</b><small>${w.s}</small></div></div><p>${w.d}</p>${b}</div>`}).join('')+infH()+epochH()}
+/* ---------- карточки на вкладке «Миры»: бесконечный режим и новая эпоха ---------- */
+function infH(){const ws=SV.wu.slice().sort(),ico='<div class="cw-t"><svg viewBox="-24 -22 48 40"><use href="#cd-bowl"/></svg></div>';
+ if(!ws.length)return `<div class="cw cl0" style="--c:#f59e0b"><div class="cw-h">${ico}<div><b>∞ Бесконечный режим</b><small>Без конца</small></div></div><div class="cw-lock">${ic('lock')}Открой хотя бы один мир</div></div>`;
+ const w=ws.includes(SV.inf.w)?SV.inf.w:ws[0],r=SV.inf.r==='coin'?'coin':'fish';
+ return `<div class="cw" style="--c:#f59e0b"><div class="cw-h">${ico}<div><b>∞ Бесконечный режим</b><small>Рекорд: ${SV.inf.best||0} волн</small></div></div><p>Волны не кончаются и с каждой становятся сильнее. Держись как можно дольше: за каждую пережитую волну идёт награда, каждые 10 волн приходит босс.</p><p class="tm-h" style="margin:0">Карта</p><div class="inf-row">${ws.map(i=>`<button class="inf-b${i===w?' on':''}" data-a="infw" data-w="${i}">${i+1}. ${WORLDS[i].n}</button>`).join('')}</div><p class="tm-h" style="margin:0">Награда за волны</p><div class="inf-row"><button class="inf-b${r==='coin'?' on':''}" data-a="infr" data-r="coin">🪙 Монеты Бурмалды<small>+${INF.coin} за волну</small></button><button class="inf-b${r==='fish'?' on':''}" data-a="infr" data-r="fish"><span>${fi('gfish')} Золотые рыбки</span><small>+${INF.fish} за волну</small></button></div><button class="cd-btn sm go" data-a="infgo">∞ В бесконечность</button></div>`}
+function epochH(){return EPOCHS.map(e=>{const op=epOpen(e.id),all=epAll(),n=SV.wu.length,cats=Object.keys(TW).filter(k=>TW[k].ep===e.id).length;let b;
+ if(op)b=`<div class="ck-ok">${ic('star')}Эпоха открыта</div><p>Первый мир этой эпохи ещё строится. <b>Продолжение следует…</b> А пока в магазине ждут новые котики: ${cats}.</p><div class="ep-row"><button class="cd-btn g sm" data-a="eparr" data-id="${e.id}">${ic('film')}Прибытие</button><button class="cd-btn g sm" data-a="epfin" data-id="${e.id}">${ic('film')}Финал эпохи</button></div>`;
+ else if(all)b=`<p><b>Все миры открыты.</b> Старая история подошла к концу, а в Лавовой Пещере мерцает Машина Времени.</p><button class="cd-btn g sm" data-a="epfin" data-id="${e.id}">${ic('film')}Финал эпохи</button><div class="ep-row"><button class="cd-btn sm" data-a="epbuy" data-id="${e.id}" data-p="coin">🪙 ${e.coin}</button><button class="cd-btn sm" data-a="epbuy" data-id="${e.id}" data-p="fish">${fi('gfish')}${e.fish}</button></div><small class="ep-hint">Разблокировать эпоху можно монетами Бурмалды или золотыми рыбками. Откроются фильм о прибытии и ${cats} новых котиков в магазине.</small>`;
+ else b=`<div class="cw-lock">${ic('lock')}Открой все 5 миров, чтобы шагнуть в новую эпоху (открыто ${n}/5)</div>`;
+ const rev=all||op;
+ return `<div class="cw ep${op?'':' cl0'}" style="--c:${e.c}"><div class="cw-h"><div class="cw-t"><svg viewBox="-22 -26 44 48"><use href="#cd-egg"/></svg></div><div><b>Новая эпоха · ${rev?e.n:'???'}</b><small>${rev?e.s:'Скоро'}</small></div></div>${rev?`<p>${e.d}</p>`:''}${b}</div>`}).join('')}
+function shopH(){const base=Object.keys(TW).filter(k=>!TW[k].ep);
+ return shopGrid(base)+EPOCHS.map(e=>{const ks=Object.keys(TW).filter(k=>TW[k].ep===e.id);
+  return epOpen(e.id)?`<p class="tm-h" style="margin-top:16px">${e.n} · новые котики</p>${shopGrid(ks)}`:`<div class="cw cl0" style="--c:${e.c};margin-top:14px"><div class="cw-lock">${ic('lock')}Ещё ${ks.length} котиков ждут в «${e.n}». Откроются вместе с эпохой: смотри внизу вкладки «Миры»</div></div>`}).join('')}
+function shopGrid(keys){return `<div class="ck-grid">${keys.map(k=>{const t=TW[k],own=SV.own.includes(k);return `<div class="ck" style="--bg:${t.bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${t.n}</b><em>${t.role}</em><p>${t.inf}</p><small>${t.st}</small><div class="ck-c">В бою: ${fi()}${t.cost}</div>${own?`<div class="ck-ok">${ic('star')}Куплен</div>${CF[k]?`<button class="cd-btn g sm" data-a="cf" data-k="${k}">${ic('film')}История</button>`:''}`:`<button class="cd-btn sm" data-a="buy" data-k="${k}">${fi('gfish')}${t.pr}</button>`}</div>`}).join('')}</div>`}
 $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a],[data-t]');if(!b)return;unlock();const d=b.dataset;
  if(d.t){TAB=d.t;sfx('click');return menu()}
  if(d.a==='exit'){sfx('click');return go('games')}
  if(d.a==='unlock'){const w=+d.w;return film(w,()=>{if(!SV.wu.includes(w)){SV.wu.push(w);svs()}})}
  if(d.a==='film')return film(+d.w,null);
+  if(d.a==='epfin'){sfx('click');return playF('Финал эпохи',EPF[d.id].fin,null)}
+  if(d.a==='eparr'){sfx('click');return playF(EPOCHS.find(x=>x.id===d.id).n+' · прибытие',EPF[d.id].arr,null)}
+  if(d.a==='epbuy')return epBuy(d.id,d.p);
+  if(d.a==='infw'){SV.inf.w=+d.w;svs();sfx('click');return menu()}
+  if(d.a==='infr'){SV.inf.r=d.r==='coin'?'coin':'fish';svs();sfx('click');return menu()}
+  if(d.a==='infgo')return startInf();
  if(d.a==='lvl'){sfx('click');return startLevel(+d.w,+d.l)}
   if(d.a==='cf'){sfx('click');return cfilm(d.k)}
   if(d.a==='tm'){const i=SV.team.indexOf(d.k);if(i>=0){if(SV.team.length<2){sfx('deny');return say('В отряде нужен хотя бы один котик')}SV.team.splice(i,1)}else{if(SV.team.length>=TMAX){sfx('deny');return say('Отряд полон — сначала убери кого-нибудь')}SV.team.push(d.k)}svs();sfx('click');return menu()}
   if(d.a==='sset'){if(mute&&window.BSFX&&!window.BSFX.on)return say('Звук выключен в настройках приложения');mute=!mute;ls('cd_mute',mute?'1':'0');sndIcon();sfx('click');return menu()}
-  if(d.a==='sauto'){AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');return menu()}
+  if(d.a==='sauto'){AUTO=!AUTO;ls('cd_auto2',AUTO?'1':'0');sfx('click');return menu()}
   if(d.a==='sx2'){SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click');return menu()}
   if(d.a==='reset'){if(confirm('Сбросить весь прогресс Cat Defense: уровни, котиков и золото?')){SV=defSV();svs();badge();sfx('lose');menu()}return}
  if(d.a==='buy'){const t=TW[d.k];if(SV.g<t.pr){sfx('deny');return say('Не хватает золотых рыбок')}SV.g-=t.pr;SV.own.push(d.k);if(SV.team.length<TMAX)SV.team.push(d.k);svs();sfx('win');say(t.n+' теперь в твоей команде!');if(CF[d.k])return cfilm(d.k);menu()}});
@@ -5397,6 +5489,8 @@ const DEC={
  snow:bgS('#bae6fd','#f0f9ff')+tws(22,'#fff')+'<path d="M-10 480V350L90 240 170 340 260 220 370 350V480Z" fill="#e2e8f0"/><ellipse cx="180" cy="490" rx="260" ry="90" fill="#fff"/>',
  lab:bgS('#1e293b','#334155')+'<rect y="390" width="360" height="90" fill="#475569"/><circle cx="70" cy="240" r="46" fill="none" stroke="#94a3b8" stroke-width="10" class="a-spin"/><rect x="250" y="230" width="80" height="160" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="3"/><circle cx="290" cy="280" r="12" fill="#4ade80" class="a-tw"/>',
  night:bgS('#1e1b4b','#3b0764')+tws(28,'#fef9c3')+'<circle cx="80" cy="190" r="30" fill="#fef9c3"/><path d="M-10 480V390H70V350H140V400H220V330H300V380H370V480Z" fill="#0f172a"/>'};
+DEC.dino=bgS('#fef9c3','#86efac')+'<circle cx="290" cy="90" r="34" fill="#fde047"/><path d="M-10 480V370L100 310 150 250 200 310 370 360V480Z" fill="#a8a29e"/><ellipse cx="180" cy="500" rx="280" ry="110" fill="#65a30d"/><path d="M40 480Q30 400 80 360M330 480Q340 410 290 370" stroke="#166534" stroke-width="9" fill="none" stroke-linecap="round"/>';
+DEC.cave=bgS('#44403c','#1c1917')+'<path d="M0 480V200Q60 90 180 100T360 200V480Z" fill="#292524"/><ellipse cx="180" cy="490" rx="260" ry="80" fill="#57534e"/><circle cx="60" cy="300" r="14" fill="#f97316" class="a-tw"/><path d="M60 314v40" stroke="#78350f" stroke-width="6"/>';
 const S=(t,d,...sp)=>({t,a:DEC[d]+sp.map(p=>spr(p[0],p[1],p[2],p[3],p[4],p[5])).join('')});
 const Z=[['mouse',0,430,1.8,'a-march'],['rat',0,390,1.8,'a-march',1.6]];
 const CF={
@@ -5415,6 +5509,49 @@ const CF={
  knight:[S('Сэр Мурлот вырос на сказках о рыцарях и тренировался деревянным мечом на подушках.','home',['knight',180,360,2.6,'a-bob']),S('Когда пришла беда, он надел шлем из кастрюли и поклялся защищать миски. Меч уже настоящий.','street',['knight',230,360,2.4,'a-bob'],...Z)],
  jelly:[S('Мармелад жил в кондитерской и ел только сладкое. От этого стал липким и очень добрым.','home',['jelly',180,360,2.6,'a-bob'],['gel',90,420,3,'a-bob']),S('Зомби застревают в его шариках, как в варенье. Мармелад извиняется, но стреляет дальше.','street',['jelly',230,360,2.4,'a-bob'],...Z)],
  fairy:[S('Искорка — маленькая фея-кошка. Она зажигала звёзды на ночном небе, пока зомби не погасили все огни.','night',['fairy',180,360,2.6,'a-bob']),S('Теперь она стреляет звёздами по зомби, чтобы вернуть небу свет. Тех, кого заденет, она потом прощает.','night',['fairy',130,360,2.4,'a-bob'],['star',270,300,3,'a-spin'])]};
+
+/* ---------- Новая эпоха: данные, фильмы, покупка ---------- */
+const EPOCHS=[{id:'dino',n:'Эпоха динозавров',s:'Dino-Meow',c:'#84cc16',coin:300,fish:500,d:'Машина времени уносит Мяу-Гвард на миллионы лет назад: к папоротникам выше дома, летающим ящерам и самой первой разбитой миске. В магазине откроются новые котики.'}];
+const TBC='<text x="180" y="458" text-anchor="middle" font-family="Comfortaa,sans-serif" font-weight="800" font-size="24" fill="#fff" stroke="#7c3aed" stroke-width="5" paint-order="stroke" class="a-tw">Продолжение следует…</text>';
+const EPF={dino:{
+ fin:[
+  {t:'Доктор Пёс повержен, миски снова полны молока. Но в Лавовой Пещере Лилу заметила странный люк, а под ним мерцающую Машину Времени.',
+   a:bgS('#1c0a05','#7f1d1d')+tws(18,'#fb923c')+'<circle cx="180" cy="240" r="96" fill="#6366f1" opacity=".22" class="a-tw"/><path d="M0 410Q90 385 180 425T360 405V480H0Z" fill="#f97316" class="a-wav"/>'+spr('tmach',180,320,3.2,'a-bob')+spr('lila',80,415,1.5,'a-bob')+spr('murzik',290,425,1.4,'a-bob',.4)},
+  {t:'Из машины выпал потрёпанный дневник: «Зомби появились не из ниоткуда. Первая разбитая миска упала в эпоху динозавров, миллионы лет назад». Мяу-Гвард переглянулся.',
+   a:bgS('#1e1b4b','#312e81')+tws(24,'#a5f3fc')+'<rect y="400" width="360" height="80" fill="#0f172a"/><g class="a-bob"><rect x="110" y="225" width="140" height="96" rx="9" fill="#92400e" stroke="#fde68a" stroke-width="4"/><path d="M180 225v96" stroke="#fde68a" stroke-width="3"/><path d="M124 250h42M124 268h42M124 286h34M194 250h42M194 268h42M194 286h30" stroke="#fef3c7" stroke-width="3" stroke-linecap="round"/></g>'+spr('murzik',50,425,1.3,'a-bob')+spr('barsik',115,430,1.3,'a-bob',.3)+spr('murka',180,430,1.3,'a-bob',.6)+spr('pushok',245,430,1.3,'a-bob',.9)+spr('tmach',315,380,1.3,'a-bob',.5)},
+  {t:'Мурзик нажал красную кнопку, Барсик вцепился когтями в пол, Мурка шепнула заклинание, а Пушок закрутил последнюю гайку. Всё закружилось!',
+   a:bgS('#312e81','#7e22ce')+tws(26,'#fff')+'<circle cx="180" cy="240" r="150" fill="none" stroke="#22d3ee" stroke-width="10" stroke-dasharray="36 18" class="a-spin"/><circle cx="180" cy="240" r="108" fill="none" stroke="#f0abfc" stroke-width="8" stroke-dasharray="24 14" class="a-spin" style="animation-direction:reverse"/><circle cx="180" cy="240" r="68" fill="none" stroke="#fde047" stroke-width="6" stroke-dasharray="14 10" class="a-spin"/><circle cx="180" cy="240" r="34" fill="#fff" opacity=".6" class="a-tw"/>'+spr('tmach',180,240,1.7,'a-bob')+spr('murzik',180,120,1,'a-spin')+spr('barsik',80,300,1.1,'a-spin')+spr('murka',280,300,1.1,'a-spin')+spr('pushok',180,380,1.1,'a-spin')},
+  {t:'Вспышка! Небо позеленело, земля задрожала, а над головой пролетела огромная крылатая тень. Эпоха динозавров ждёт Мяу-Гвард.',
+   a:bgS('#fef9c3','#86efac')+'<circle cx="290" cy="90" r="38" fill="#fde047"/><path d="M-10 480V370L100 310 150 240 200 310 370 360V480Z" fill="#78716c"/><path d="M130 262L150 240 170 262Q150 280 130 262Z" fill="#f97316" class="a-tw"/><ellipse cx="180" cy="500" rx="280" ry="110" fill="#65a30d"/>'+spr('ptd',90,130,1.2,'a-wav')+spr('ptd',270,190,.8,'a-wav',1.2)+spr('bronto',250,400,.9,'a-bob')+TBC}
+ ],
+ arr:[
+  {t:'Они приземлились мягко, прямо на спину спящему бронтозавру. Папоротники были выше дома, а воздух тёплый, как суп.',
+   a:bgS('#bef264','#4ade80')+'<circle cx="300" cy="80" r="36" fill="#fde047"/><path d="M30 480Q20 380 70 330M30 480Q50 390 20 340M330 480Q340 390 290 340M330 480Q310 400 340 350" stroke="#166534" stroke-width="10" fill="none" stroke-linecap="round"/><ellipse cx="180" cy="500" rx="280" ry="90" fill="#4d7c0f"/>'+spr('bronto',140,380,2.4,'a-bob')+spr('murzik',100,330,1.1,'a-bob',.2)+spr('barsik',150,326,1.1,'a-bob',.5)+spr('murka',205,330,1.1,'a-bob',.8)},
+  {t:'Над болотом кружили птеродактили, вдалеке дымился вулкан. «Это точно не Молочные Сады», пробормотал Барсик.',
+   a:bgS('#fde68a','#fb923c')+'<path d="M-10 480V380L110 320 170 190 230 320 370 360V480Z" fill="#78350f"/><path d="M150 215L170 190 190 215Q170 235 150 215Z" fill="#f97316" class="a-tw"/><circle cx="170" cy="160" r="22" fill="#9ca3af" opacity=".6" class="a-bob"/><circle cx="190" cy="125" r="28" fill="#9ca3af" opacity=".45" class="a-bob" style="animation-delay:.5s"/>'+spr('ptd',80,110,1,'a-wav')+spr('ptd',280,170,.8,'a-wav',1.2)+'<path d="M0 430Q120 410 240 430T360 425V480H0Z" fill="#65a30d"/>'+spr('barsik',120,430,1.5,'a-bob')+spr('murzik',60,435,1.3,'a-bob',.3)},
+  {t:'Первое, что они нашли, была гигантская яичная скорлупа, а внутри полная миска молока. Значит, местные хранители здесь тоже есть.',
+   a:bgS('#d9f99d','#a3e635')+'<ellipse cx="180" cy="490" rx="260" ry="100" fill="#4d7c0f"/>'+spr('egg',180,330,4.2,'a-bob')+spr('bowl',180,395,1.8)+spr('pushok',65,425,1.3,'a-bob')+spr('murka',295,425,1.3,'a-bob',.5)},
+  {t:'И тут из папоротников вышли пятеро местных котиков: Рекс-Мурр, Птеро, Угг, Стегоша и Янтарь. «Добро пожаловать в Эпоху динозавров!» Новые котики уже ждут в магазине.',
+   a:bgS('#fef08a','#4ade80')+'<circle cx="300" cy="80" r="34" fill="#fde047"/><ellipse cx="180" cy="500" rx="280" ry="110" fill="#65a30d"/>'+spr('rex',50,380,1.4,'a-bob')+spr('ptero',115,375,1.4,'a-bob',.2)+spr('ugg',180,380,1.4,'a-bob',.4)+spr('stego',245,380,1.4,'a-bob',.6)+spr('amber',310,380,1.4,'a-bob',.8)+TBC}
+ ]}};
+Object.assign(CF,{
+ rex:[S('Рекс-Мурр родился в семье, где у всех были большие планы, а лапки у него оказались маленькие. Он решил, что костюм тираннозавра всё исправит.','dino',['rex',180,360,2.6,'a-bob']),S('Когда Мяу-Гвард пришёл в эпоху динозавров, Рекс-Мурр шагнул к ним первым. Теперь он рычит на зомби, а хвост бьёт без промаха.','dino',['rex',130,360,2.4,'a-bob'],['murzik',280,380,1.6,'a-bob',.4])],
+ ptero:[S('Птеро с детства мечтала летать. Крылья у неё настоящие, а вот с посадкой было хуже: однажды она села прямо на вулкан.','dino',['ptero',180,330,2.6,'a-jump']),S('Теперь она кружит над полем боя и метает перья издалека. Говорит, что зомби внизу похожи на муравьёв, только злее.','dino',['ptero',230,330,2.4,'a-bob'],...Z)],
+ ugg:[S('Угг первым в племени придумал колесо. Колесо вышло квадратным, и его никто не оценил.','cave',['ugg',180,360,2.6,'a-bob']),S('Зато камни у него летят отлично. Угг швыряет валуны в зомби и гордится: «Это тоже технологии».','dino',['ugg',130,360,2.4,'a-jump'],['rock',290,330,3,'a-spin'])],
+ stego:[S('Под спинными пластинами Стегоши спрятан маленький огород: папоротники, ягоды и банка рыбных консервов про запас.','dino',['stego',180,360,2.6,'a-bob']),S('Когда Мяу-Гвард попросил помощи, Стегоша отдал им урожай. «Хорошо воюет тот, кто хорошо поел», сказал он и ушёл поливать грядку.','dino',['stego',130,360,2.4,'a-bob'],['fish',280,360,3,'a-jump'])],
+ amber:[S('Янтарь миллионы лет проспал в капле смолы. Проснулся голодным, но в отличном настроении: ему приснился вкусный сон.','cave',['amber',180,360,2.6,'a-bob']),S('Теперь он стреляет липкой смолой, и зомби застревают в ней, как мухи. Янтарь извиняется, но не слишком.','dino',['amber',130,360,2.4,'a-bob'],['amberb',280,330,3,'a-bob'],...Z)]
+});
+const epOpen=id=>SV.ep.includes(id)||CDB.owned('cdep:'+id);
+const epAll=()=>[0,1,2,3,4].every(i=>SV.wu.includes(i));
+function playF(title,f,cb){FP={f,i:0,cb,to:0,full:false};$('cdFT').textContent=title;view('film');scene()}
+let epBusy=0;
+async function epBuy(id,p){if(epBusy)return;const e=EPOCHS.find(x=>x.id===id);if(!e||epOpen(id))return;if(!epAll()){sfx('deny');return say('Сначала открой все миры')}
+ epBusy=1;try{
+  if(p==='fish'){if(SV.g<e.fish){sfx('deny');return say('Не хватает золотых рыбок')}if(!confirm('Открыть «'+e.n+'» за '+e.fish+' золотых рыбок?'))return;SV.g-=e.fish}
+  else{if(!CDB.room()){sfx('deny');return say('Монеты Бурмалды доступны только в общей комнате')}if(CDB.coins()<e.coin){sfx('deny');return say('Не хватает монет 🪙')}if(!confirm('Открыть «'+e.n+'» за '+e.coin+' 🪙?'))return;
+   const r=await CDB.buy('cdep:'+id,e.coin);if(!r.ok){sfx('deny');return say(r.err==='poor'?'Не хватает монет 🪙':'Не получилось: '+r.err)}}
+  SV.ep.push(id);svs();sfx('win');vib([40,40,80]);playF(e.n+' · прибытие',EPF[id].arr,null)
+ }finally{epBusy=0}}
 let FP=null,FT=0;
 function film(w,cb){FP={f:FILMS[w],i:0,cb,to:0,full:false};$('cdFT').textContent=`Мир ${w+1} · ${WORLDS[w].n}`;view('film');scene()}
 function cfilm(k){if(!CF[k])return menu();FP={f:CF[k],i:0,cb:null,to:0,full:false};$('cdFT').textContent='Знакомьтесь: '+TW[k].n;view('film');scene()}
@@ -5431,18 +5568,20 @@ $('cdFilm').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if
 
 /* ---------- экраны поверх игры: старт уровня / пауза / победа / поражение ---------- */
 function showOv(k,n){const o=$('cdOv'),W0=WORLDS[LV.w];let h;
- if(k==='start')h=`<div class="cd-card"><svg viewBox="-28 -46 56 66" width="58" height="68"><use href="#cd-murzik"/></svg><h3>${LV.w+1}-${LV.l+1}</h3><p><b>${W0.lv[LV.l]}</b><br>Волн: ${MAXW}${LV.boss?' · в конце — Босс, Доктор Пёс':''}.<br>Выбери котика внизу и поставь на свободную клетку (до 3 одного вида). Зомби идут к ${LV.w===2?'серверу':'миске'}!</p><button class="cd-btn" data-a="go">В бой!</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
- else if(k==='quit')h=`<div class="cd-card"><h3>Выйти?</h3><p>Прогресс этого уровня не сохранится.</p><button class="cd-btn" data-a="resume">Продолжить</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
- else if(k==='win'){const nx=LV.l<4,wd=LV.l===4&&done(LV.w);
-  h=`<div class="cd-conf">${Array.from({length:22},()=>`<i style="left:${rnd(2,96)|0}%;background:${['#fb923c','#a78bfa','#6ee7b7','#f472b6','#fde047'][(rnd(0,5))|0]};animation-delay:${rnd(0,2.4).toFixed(1)}s"></i>`).join('')}</div><div class="cd-card"><h3>Победа!</h3><div class="st">${'★'.repeat(n)}${'☆'.repeat(3-n)}</div><p>Молоко спасено: ${G.hp}/10 · Зомби побеждено: ${G.kills}<br><b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${G.gold} ${fi('gfish')} золотых рыбок</b>${wd?(LV.w<4?'<br>Мир пройден! В меню ждёт следующий мир.':'<br>Мир пройден! Продолжение истории — скоро...'):''}</p>${nx?'<button class="cd-btn" data-a="next">Следующий уровень</button>':''}<button class="cd-btn ${nx?'g':''}" data-a="menu">В меню</button><button class="cd-btn g" data-a="retry">Заново</button></div>`}
+ if(k==='start'&&LV.inf)h=infStartH();else if(k==='start')h=`<div class="cd-card"><svg viewBox="-28 -46 56 66" width="58" height="68"><use href="#cd-murzik"/></svg><h3>${LV.w+1}-${LV.l+1}</h3><p><b>${W0.lv[LV.l]}</b><br>Волн: ${MAXW}${LV.boss?' · в конце — Босс, Доктор Пёс':''}.<br>Выбери котика внизу и поставь на свободную клетку (до 3 одного вида). Зомби идут к ${LV.w===2?'серверу':'миске'}!</p><button class="cd-btn" data-a="go">В бой!</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+ else if(k==='quit'&&LV.inf)h=infQuitH();else if(k==='quit')h=`<div class="cd-card"><h3>Выйти?</h3><p>Прогресс этого уровня не сохранится.</p><button class="cd-btn" data-a="resume">Продолжить</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+ else if(k==='inf')h=infEndH();else if(k==='win'){const nx=LV.l<4,wd=LV.l===4&&done(LV.w);
+  h=`<div class="cd-conf">${Array.from({length:22},()=>`<i style="left:${rnd(2,96)|0}%;background:${['#fb923c','#a78bfa','#6ee7b7','#f472b6','#fde047'][(rnd(0,5))|0]};animation-delay:${rnd(0,2.4).toFixed(1)}s"></i>`).join('')}</div><div class="cd-card"><h3>Победа!</h3><div class="st">${'★'.repeat(n)}${'☆'.repeat(3-n)}</div><p>Молоко спасено: ${G.hp}/10 · Зомби побеждено: ${G.kills}<br><b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${G.gold} ${fi('gfish')} золотых рыбок</b>${wd?(LV.w<4?'<br>Мир пройден! В меню ждёт следующий мир.':'<br>Мир пройден! Все миры открыты: внизу вкладки «Миры» ждёт Новая эпоха.'):''}</p>${wd&&LV.w===4?'<button class="cd-btn" data-a="epfinal">Финал эпохи</button>':''}${nx?'<button class="cd-btn" data-a="next">Следующий уровень</button>':''}<button class="cd-btn ${nx?'g':''}" data-a="menu">В меню</button><button class="cd-btn g" data-a="retry">Заново</button></div>`}
  else h=`<div class="cd-card"><h3>Молоко разлито</h3><p>Зомби прорвались на волне ${G.wave} из ${MAXW}.<br>Побеждено зомби: ${G.kills}. Попробуй ещё раз!</p><button class="cd-btn" data-a="retry">Ещё раз</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
  o.innerHTML=h;o.classList.add('on')}
 $('cdOv').addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;unlock();const k=a.dataset.a;
  if(k==='menu'){$('cdOv').classList.remove('on');G.state='idle';G.paused=false;view('menu');menu();sfx('click');return}
  if(k==='resume'){G.paused=false;$('cdOv').classList.remove('on');return}
+ if(k==='endrun'){G.paused=false;$('cdOv').classList.remove('on');return finishInf()}
+ if(k==='epfinal'){$('cdOv').classList.remove('on');G.state='idle';G.paused=false;return playF('Финал эпохи',EPF.dino.fin,null)}
  if(k==='next')return startLevel(LV.w,LV.l+1);
  if(k==='retry')return startLevel(LV.w,LV.l);
- if(k==='go'){$('cdOv').classList.remove('on');G.state='break';G.cd=12;sfx('click');ban('Расставляй котиков!')}});
+ if(k==='go'){$('cdOv').classList.remove('on');G.state='break';G.cd=AUTO?4:12;sfx('click');ban('Расставляй котиков!')}});
 $('cdQuit').addEventListener('click',()=>{unlock();sfx('click');if(G.state==='idle'||G.state==='over'){view('menu');menu();return}G.paused=true;showOv('quit')});
 const spdUi=()=>{const b=$('cdX2');b.classList.toggle('on',SPD===2);b.lastChild.textContent='x'+SPD};
 $('cdX2').addEventListener('click',()=>{unlock();SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click')});
