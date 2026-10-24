@@ -4384,6 +4384,16 @@ let ctx=null,out=null,nbuf=null,lastPtr=0;const last={};
 const nv=navigator.vibrate?navigator.vibrate.bind(navigator):null;
 if(nv)try{navigator.vibrate=p=>vibOn?nv(p):false}catch{}
 
+/* ---- iOS: звук при включённом беззвучном режиме (iOS 16.4+) + тихий <audio> для старых iOS ---- */
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch{}
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let muteEl=null,silentUrl=null;
+const silentWav=()=>{if(silentUrl)return silentUrl;try{const n=4000,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+ w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+ silentUrl=URL.createObjectURL(new Blob([b],{type:'audio/wav'}))}catch{}return silentUrl};
+const iosUnmute=()=>{if(!IOS||navigator.audioSession||!sndOn)return;try{if(!muteEl){const u=silentWav();if(!u)return;muteEl=new Audio(u);muteEl.loop=true;muteEl.setAttribute('playsinline','');muteEl.setAttribute('webkit-playsinline','')}
+ if(muteEl.paused){const q=muteEl.play();q&&q.catch&&q.catch(()=>{})}}catch{}};
+
 /* ---- движок ---- */
 const unlock=()=>{
  if(!ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
@@ -4391,7 +4401,8 @@ const unlock=()=>{
   out=ctx.createGain();out.gain.value=vol/100*3;
   const cp=ctx.createDynamicsCompressor();cp.threshold.value=-16;cp.ratio.value=5;cp.attack.value=.002;cp.release.value=.12;
   out.connect(cp);cp.connect(ctx.destination)}
- if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+ if(ctx.state!=='running'){try{const p=ctx.resume();p&&p.catch&&p.catch(()=>{})}catch{}}/* iOS: бывает 'interrupted', а не только 'suspended' */
+ iosUnmute();
  return ctx};
 const ready=()=>sndOn&&ctx&&ctx.state==='running'&&!document.hidden;
 const env=(g,t,a,d,pk)=>{g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(pk,.0002),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)};
@@ -4432,10 +4443,14 @@ const SND={
 };
 const play=(n,a)=>{try{if(!ready())return;const t=performance.now();if(last[n]&&t-last[n]<35)return;last[n]=t;SND[n]&&SND[n](a)}catch(e){}};
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch{}};
-window.BSFX={play,vib,unlock,get on(){return sndOn},get vibOn(){return vibOn}};
+window.BSFX={play,vib,unlock,silentUrl:silentWav,get on(){return sndOn},get vibOn(){return vibOn}};
 
 /* ---- разблокировка аудио первым жестом (iOS/Chrome) ---- */
 ['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,unlock,{capture:true,passive:true}));
+/* iOS: после блокировки экрана / звонка / сворачивания контекст уходит в 'interrupted' — будим при возврате */
+{const rsm=()=>{if(ctx&&ctx.state!=='running'&&!document.hidden){try{const p=ctx.resume();p&&p.catch&&p.catch(()=>{})}catch{}}};
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){try{muteEl&&muteEl.pause()}catch{}}else rsm()});
+ window.addEventListener('pageshow',rsm);window.addEventListener('focus',rsm)}
 
 /* ---- звук любого нажатия по интерфейсу ---- */
 document.addEventListener('pointerdown',e=>{
@@ -5067,6 +5082,7 @@ const ic=(n,c)=>`<svg class="ci ${c||''}" viewBox="0 0 24 24" aria-hidden="true"
 const fi=k=>`<svg class="fi" viewBox="-12 -9 28 18" aria-hidden="true"><use href="#cd-${k||'fish'}"/></svg>`;
 
 /* ---------- звук (Web Audio, без файлов; уважает настройки звука приложения) ---------- */
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch{}
 let AC=null,mg=null,nb=null,SA=null,mute=lg('cd_mute')==='1',AUTO=lg('cd_auto2')==='1';const lastS={};
 const sOn=()=>!mute&&(window.BSFX?window.BSFX.on:lg('bm_snd')!=='0');
 const volume=()=>{const v=lg('bm_vol');return(v===null?60:+v)/100*3};
@@ -5075,7 +5091,7 @@ function unlock(){try{
  if(AC.state!=='running'){/* iOS: resume + тихий буфер строго внутри жеста; 'interrupted' тоже лечится resume */
   try{const p=AC.resume();p&&p.catch&&p.catch(()=>{})}catch{}
   try{const b=AC.createBuffer(1,1,22050),n=AC.createBufferSource();n.buffer=b;n.connect(AC.destination);n.start(0)}catch{}
-  try{if(!SA)SA=new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');SA.currentTime=0;const q=SA.play();q&&q.catch&&q.catch(()=>{})}catch{}}
+  try{if(!SA)SA=new Audio((window.BSFX&&window.BSFX.silentUrl&&window.BSFX.silentUrl())||'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');SA.currentTime=0;const q=SA.play();q&&q.catch&&q.catch(()=>{})}catch{}}
 }catch{}}
 const tn=(f,d,o={})=>{const t=AC.currentTime+(o.at||0),os=AC.createOscillator(),g=AC.createGain();os.type=o.w||'sine';os.frequency.setValueAtTime(f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.v||.1,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g);g.connect(mg);os.start(t);os.stop(t+d+.05)};
 const nz=(d,f,to,v,ft)=>{if(!nb){nb=AC.createBuffer(1,AC.sampleRate>>1,AC.sampleRate);const a=nb.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}const t=AC.currentTime,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;fl.type=ft||'bandpass';fl.frequency.setValueAtTime(f,t);fl.frequency.exponentialRampToValueAtTime(to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(g);g.connect(mg);s.start(t);s.stop(t+d+.05)};
@@ -5721,5 +5737,109 @@ function wdSyncUp(){const m=eq();Object.keys(m).forEach(pid=>{const r=pt2.rows[p
 const pl0=window.petsLoad;if(typeof pl0==='function')window.petsLoad=async function(){const r=await pl0.apply(this,arguments);try{wdSyncUp();const sg=JSON.stringify(Object.keys(pt2.rows).sort().map(k=>[k,pt2.rows[k].outfit||null]));if(sg!==wdSig){const first=wdSig==='';wdSig=sg;if(!first){if(g$('wdCard'))wdDraw();if(document.querySelector('#pet.on'))drawPet()}}}catch(e){console.warn(e)}return r};
 const dp0=window.drawPet;window.drawPet=function(){const r=dp0.apply(this,arguments);try{wdMount()}catch(e){console.warn(e)}return r};
 })();
+</script>
+<script id="cloudSync">
+/* ===== Облачное сохранение прогресса (Supabase: couple_user_state) =====
+   Зеркалит нужные ключи localStorage в облако: пишет при изменении, подтягивает при входе
+   (в т.ч. на новом телефоне). Настройки устройства (звук, громкость, вибро, room/code) остаются локальными. */
+(()=>{
+'use strict';
+const URL_='https://vgtblpiksjynbtsxecrk.supabase.co',KEY_='sb_publishable_N3LaRs9NlMwLquUtKKjUPg_R88gNLEV',TBL='couple_user_state';
+const EX=new Set(['bm_opened','pinNote','lrk','tth','tbs','mdpal','sel_mfx','sel_bfx','sel_tsc','sel_cmod','sel_house','tkcats','bw','bm_dlr','bm_slseen','tf_s','tf_sh','cd_save','cd_spd','cd_auto2','pst','twbf','twbs','twruns','twbg','twpt','twpf','twpb','mdstk','mdstkb','btp']);
+const PRE=['mdd_','mddp_','qp'];
+const MAXK=new Set(['twbf','twbs','twruns','mdstkb']),UNI=new Set(['bm_opened','bm_slseen','tkcats']);
+const ok=k=>typeof k==='string'&&(EX.has(k)||PRE.some(p=>k.startsWith(p)));
+
+const ls=localStorage,_get=Storage.prototype.getItem,_set=Storage.prototype.setItem,_rm=Storage.prototype.removeItem;
+let TS={};try{TS=JSON.parse(_get.call(ls,'cs_ts'))||{}}catch{}
+const saveTS=()=>{try{_set.call(ls,'cs_ts',JSON.stringify(TS))}catch{}};
+let dirty={},hydrated=false,applying=false,busy=false,tm=null,lastSig='',hyd=false,nextTry=0,TOK=null;
+
+const ready=()=>{try{return typeof S!=='undefined'&&!!S&&!!S.room&&!!S.uid&&typeof sb!=='undefined'}catch{return false}};
+const schedule=ms=>{clearTimeout(tm);tm=setTimeout(flush,ms)};
+
+function mark(k,v){
+  if(applying||!hydrated)return;           /* до первой сверки с облаком ничего не отслеживаем — иначе значения по умолчанию затрут прогресс */
+  TS[k]=Date.now();saveTS();dirty[k]=v;schedule(1500)}
+
+Storage.prototype.setItem=function(k,v){const r=_set.apply(this,arguments);try{if(this===ls&&ok(k))mark(k,String(v))}catch{}return r};
+Storage.prototype.removeItem=function(k){const r=_rm.apply(this,arguments);try{if(this===ls&&ok(k))mark(k,null)}catch{}return r};
+
+async function flush(){
+  if(!ready()||!hydrated||busy)return;
+  const ks=Object.keys(dirty);if(!ks.length)return;
+  busy=true;const snap=dirty;dirty={};const room=S.room,uid=S.uid,up=[],del=[];
+  ks.forEach(k=>snap[k]===null?del.push(k):up.push({room_id:room,user_id:uid,key:k,value:snap[k],updated_at:new Date(TS[k]||Date.now()).toISOString()}));
+  try{
+    if(up.length){const {error}=await sb.from(TBL).upsert(up,{onConflict:'room_id,user_id,key'});if(error)throw error}
+    if(del.length){const {error}=await sb.from(TBL).delete().eq('room_id',room).eq('user_id',uid).in('key',del);if(error)throw error}
+  }catch(e){
+    ks.forEach(k=>{if(!(k in dirty))dirty[k]=snap[k]});console.warn('cloud sync:',e&&e.message||e);busy=false;return schedule(8000)}
+  busy=false;if(Object.keys(dirty).length)schedule(1500)}
+
+/* при сворачивании/закрытии — последняя отправка через keepalive-запрос */
+function beacon(){
+  if(!hydrated||!ready()||!TOK)return;
+  const ks=Object.keys(dirty).filter(k=>dirty[k]!==null);if(!ks.length)return;
+  const rows=ks.map(k=>({room_id:S.room,user_id:S.uid,key:k,value:dirty[k],updated_at:new Date(TS[k]||Date.now()).toISOString()}));
+  const body=JSON.stringify(rows);if(body.length>60000)return;
+  try{fetch(URL_+'/rest/v1/'+TBL+'?on_conflict=room_id,user_id,key',{method:'POST',keepalive:true,headers:{apikey:KEY_,Authorization:'Bearer '+TOK,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body});ks.forEach(k=>delete dirty[k])}catch{}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)beacon()});
+window.addEventListener('pagehide',beacon);
+try{sb.auth.getSession().then(r=>{TOK=r&&r.data&&r.data.session?r.data.session.access_token:null});sb.auth.onAuthStateChange((_e,s)=>{TOK=s&&s.access_token||null})}catch{}
+
+const merge=(k,l,s)=>{
+  if(MAXK.has(k)){const a=+l,b=+s;if(isFinite(a)&&isFinite(b))return String(Math.max(a,b))}
+  if(UNI.has(k)){try{const a=JSON.parse(l),b=JSON.parse(s);
+    if(Array.isArray(a)&&Array.isArray(b))return JSON.stringify([...new Set([...b,...a])]);
+    if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Array.isArray(a)&&!Array.isArray(b))return JSON.stringify(Object.assign({},b,a))}catch{}}
+  return null};
+
+async function hydrate(sig){
+  if(sig!==lastSig)hydrated=false;
+  const room=S.room,uid=S.uid;
+  const {data,error}=await sb.from(TBL).select('key,value,updated_at').eq('room_id',room).eq('user_id',uid).limit(1000);
+  if(error){console.warn('cloud sync load:',error.message);nextTry=Date.now()+10000;return}
+  const srv={};(data||[]).forEach(r=>srv[r.key]=r);
+  const keys=new Set(Object.keys(srv));for(let i=0;i<ls.length;i++){const k=ls.key(i);if(ok(k))keys.add(k)}
+  const up=[],del=[];let pulled=0;const now=Date.now();
+  const pull=(k,v,t)=>{applying=true;try{_set.call(ls,k,v)}catch{}applying=false;TS[k]=t||now;pulled++};
+  keys.forEach(k=>{
+    const L=_get.call(ls,k),s=srv[k],sv=s?(typeof s.value==='string'?s.value:JSON.stringify(s.value)):null,st=s?Date.parse(s.updated_at)||0:0,lt=TS[k]||0;
+    if(L===null&&sv===null)return;
+    if(sv===null){up.push({k,v:L});return}                       /* в облаке нет → отправляем локальное */
+    if(L===null){if(lt>st)del.push(k);else pull(k,sv,st);return}   /* локально нет → подтягиваем (или удалено позже — удаляем в облаке) */
+    if(L===sv)return;
+    const m=merge(k,L,sv);
+    if(m!==null){if(m!==L)pull(k,m,now);if(m!==sv)up.push({k,v:m});return}
+    if(lt>st)up.push({k,v:L});else pull(k,sv,st)                   /* побеждает более свежее; без метки — облако */
+  });
+  try{
+    if(up.length){const rows=up.map(x=>{TS[x.k]=now;return{room_id:room,user_id:uid,key:x.k,value:x.v,updated_at:new Date(now).toISOString()}});
+      const {error:e}=await sb.from(TBL).upsert(rows,{onConflict:'room_id,user_id,key'});if(e)throw e}
+    if(del.length){const {error:e}=await sb.from(TBL).delete().eq('room_id',room).eq('user_id',uid).in('key',del);if(e)throw e}
+  }catch(e){console.warn('cloud sync push:',e&&e.message||e);nextTry=Date.now()+10000;return}
+  saveTS();
+
+  /* значения, которые раньше «застревали» в localStorage (gx_*), пока в couple_game не было колонки */
+  try{const g=JSON.parse(_get.call(ls,'gx_'+room)||'{}');
+    if(g&&Object.keys(g).length&&typeof gUpdate==='function'){_set.call(ls,'gx_'+room,'{}');const r=await gUpdate(g);
+      if(r&&r.error){const cur=JSON.parse(_get.call(ls,'gx_'+room)||'{}');_set.call(ls,'gx_'+room,JSON.stringify(Object.assign({},g,cur)))}}}catch{}
+
+  lastSig=sig;hydrated=true;
+  /* новый телефон: приложение уже прочитало старые значения при старте — один раз перезапускаем, чтобы подхватить облако */
+  const doneK='cs_done_'+room+'_'+uid;
+  const first=!_get.call(ls,doneK);try{_set.call(ls,doneK,'1')}catch{}
+  if(first&&pulled>0){let rl=null;try{rl=sessionStorage.getItem('cs_rl')}catch{}if(!rl){try{sessionStorage.setItem('cs_rl','1')}catch{}location.reload();return}}
+  if(Object.keys(dirty).length)schedule(500)}
+
+setInterval(()=>{
+  if(!ready()||hyd)return;const sig=S.room+'|'+S.uid;
+  if(sig===lastSig&&hydrated)return;if(Date.now()<nextTry)return;
+  hyd=true;hydrate(sig).catch(e=>{console.warn('cloud sync:',e&&e.message||e);nextTry=Date.now()+10000}).finally(()=>{hyd=false})},1500);
+
+window.cloudSyncNow=()=>{beacon();return flush()};
+})();
+
 </script>
 </body></html>
