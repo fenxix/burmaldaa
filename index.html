@@ -5216,7 +5216,17 @@ try{Object.assign(PL,{catdef:'🐱 в Cat Defense'})}catch{}
 /* ---------- сохранение прогресса ---------- */
 const defSV=()=>({g:20,own:['murzik','barsik'],team:['murzik','barsik'],wu:[],lv:{},ep:[],ach:{},kills:0,up:0,pf:0,fm:{},cs:[]});
 let SV=(()=>{try{return Object.assign(defSV(),JSON.parse(lg('cd_save')||'{}'))}catch{return defSV()}})();
-const svs=()=>ls('cd_save',JSON.stringify(SV));
+/* ---------- облако: прогресс хранится в Supabase (таблица couple_catdef), локально остаётся копией ---------- */
+const CL={t:0,ok:0,busy:0},clUid=()=>{try{return S&&S.uid}catch{return null}};
+function clPush(now){const u=clUid();if(!u||!CL.ok)return;clearTimeout(CL.t);const go=()=>{try{sb.from('couple_catdef').upsert({user_id:u,data:SV,updated_at:new Date().toISOString()}).then(()=>{},()=>{})}catch{}};now?go():CL.t=setTimeout(go,1500)}
+function clMerge(c){const U=(a,b)=>[...new Set([...(a||[]),...(b||[])])],mx=(a,b)=>{const o=Object.assign({},a);for(const k in b)o[k]=Math.max(o[k]||0,b[k]||0);return o};
+ SV.g=(c.ts||0)>(SV.ts||0)?(c.g||0):SV.g;SV.own=U(SV.own,c.own);SV.wu=U(SV.wu,c.wu);SV.ep=U(SV.ep,c.ep);SV.cs=U(SV.cs,c.cs);SV.lv=mx(SV.lv,c.lv);SV.ach=Object.assign({},c.ach,SV.ach);SV.fm=Object.assign({},c.fm,SV.fm);
+ ['kills','up','pf'].forEach(k=>SV[k]=Math.max(SV[k]||0,c[k]||0));if((SV.team||[]).length<=2&&Array.isArray(c.team)&&c.team.length)SV.team=c.team;
+ SV.team=SV.team.filter(k=>TW[k]&&SV.own.includes(k)).slice(0,TMAX);if(!SV.team.length)SV.team=SV.own.slice(0,TMAX)}
+async function clSync(){const u=clUid();if(!u||CL.busy)return;CL.busy=1;try{const {data,error}=await sb.from('couple_catdef').select('data').eq('user_id',u).maybeSingle();if(error)throw error;if(data&&data.data&&typeof data.data==='object')clMerge(data.data);CL.ok=1;svs();if(VIEW==='menu')menu()}catch(e){console.warn('catdef cloud',e)}CL.busy=0}
+const clWait=setInterval(()=>{if(clUid()){clearInterval(clWait);clSync()}},2000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clPush(1);else if(CL.ok)clSync()});
+const svs=()=>{SV.ts=Date.now();ls('cd_save',JSON.stringify(SV));clPush()};
 if(!Array.isArray(SV.ep))SV.ep=[];if(!SV.ach||typeof SV.ach!=='object')SV.ach={};if(!SV.fm||typeof SV.fm!=='object')SV.fm={};if(!Array.isArray(SV.cs))SV.cs=[];if(!Array.isArray(SV.team)||!SV.team.length)SV.team=SV.own.slice(0,TMAX);SV.team=SV.team.filter(k=>TW[k]&&SV.own.includes(k)).slice(0,TMAX);
 const done=w=>[0,1,2,3,4].every(l=>(SV.lv[w+'-'+l]||0)>0),lvOpen=(w,l)=>SV.wu.includes(w)&&(l===0||(SV.lv[w+'-'+(l-1)]||0)>0);
 function badge(){const b=$('cdBadge');if(!b)return;const n=Object.values(SV.lv).filter(v=>v>0).length;b.textContent=n?`Пройдено уровней: ${n}/${WORLDS.length*5}`:'Новая игра'}
@@ -5347,7 +5357,7 @@ function menu(){achCheck();sT($('cdGold'),SV.g);document.querySelectorAll('#cdTa
 function teamH(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k)),cd=(k,c)=>`<button class="tm-s ${c}" style="--bg:${TW[k].bg}" data-a="tm" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${TW[k].role} · ${TW[k].cost}</span></button>`;
  return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — убрать</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).length} · тап — взять в отряд</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`}
 function setH(){const row=(a,t,d,on)=>`<button class="cd-set" data-a="${a}"><span><b>${t}</b><small>${d}</small></span><i class="cd-sw${on?' on':''}"></i></button>`;
- return row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Следующая волна начинается сама. Выключи — и запускай волны кнопкой в бою',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
+ return `<p class="tm-h">${CL.ok?'Прогресс сохраняется в облаке и доступен на всех твоих устройствах':'Облако пока не подключено: прогресс хранится только в этом браузере. Войди в аккаунт приложения'}</p>`+row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Следующая волна начинается сама. Выключи — и запускай волны кнопкой в бою',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
 function worldsH(){return WORLDS.map((w,i)=>{const op=SV.wu.includes(i);let b;
  if(op)b=`<div class="cl-row">${[0,1,2,3,4].map(l=>{const s=SV.lv[i+'-'+l]||0,o=lvOpen(i,l);return `<button class="cl${s?' ok':''}${l===4?' boss':''}" data-a="lvl" data-w="${i}" data-l="${l}" ${o?'':'disabled'}>${o?(l===4?`<svg viewBox="-36 -38 72 70"><use href="#cd-${DOGS[i]}"/></svg>`:`<b>${l+1}</b>`):ic('lock')}<span>${s?'★'.repeat(s)+'☆'.repeat(3-s):''}</span></button>`}).join('')}</div><button class="cd-btn g sm" data-a="film">${ic('film')}История мира</button>`.replace('data-a="film"',`data-a="film" data-w="${i}"`);
  else if(i>=5&&!SV.ep.includes(2))b=`<div class="cw-lock">${ic('lock')}Сначала открой Эпоху II</div>`;
