@@ -4909,6 +4909,550 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur==='blo
 hud();
 }catch(e){console.error('blocks',e)}})();
 </script>
+<script id="burmalda-catdefense">
+/* ===== Cat Defense: Tower Defense с котиками. Вся графика — SVG, звуки — Web Audio, без внешних файлов.
+   Отдельный модуль: добавляет карточку в «Игры» и экран #catdef; остальной код приложения не меняется. ===== */
+(()=>{try{
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const W=360,H=480,C=60;
+const lg=k=>{try{return localStorage.getItem(k)}catch{return null}},ls=(k,v)=>{try{localStorage.setItem(k,v)}catch{}};
+const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch{}};
+const say=t=>{try{toast(t,1500)}catch{}};
+const rnd=(a,b)=>a+Math.random()*(b-a),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const use=(id,p,a)=>mk('use',Object.assign({href:'#cd-'+id},a),p);
+const show=(n,v)=>v?n.removeAttribute('display'):n.setAttribute('display','none');
+const sT=(e,v)=>{if(e._v!==v){e._v=v;e.textContent=v}};
+
+/* ---------- данные: миры, дороги, котики, враги, волны ---------- */
+const PA=[[8,90],[270,90],[270,210],[90,210],[90,330],[270,330],[270,450],[330,450]],
+ PB=[[90,8],[90,390],[210,390],[210,90],[330,90],[330,450]],
+ PC=[[8,30],[330,30],[330,390],[30,390],[30,150],[210,150],[210,270]],PD=[[30,8],[30,330],[150,330],[150,90],[270,90],[270,450],[330,450]],
+ PE=[[8,30],[210,30],[210,150],[30,150],[30,270],[300,270],[300,450],[330,450]],
+ PF=[[330,8],[330,90],[30,90],[30,210],[270,210],[270,330],[30,330],[30,450],[330,450]],
+ ROUTES=[PA,PB,PC,PD,PE,PF],MAPS=[[0,3,1,4,2],[1,5,0,3,4],[2,4,5,1,3],[3,5,2,0,4],[5,4,3,2,1]],BS=['bowl','bowl','srv','igl','bowl'],DOGS=['dog','dog2','dog3','dog4','dog5'],TMAX=6,MAXT=3;
+let PATH=PA,TOT=0,BASE=[330,446],SPD=lg('cd_spd')==='2'?2:1,VIEW='menu',TAB='w',MAXW=5,WAVES=[],LV={w:0,l:0,fish:160,hm:.1,hb:0,boss:0};
+const SEG=[],ROAD=new Set();
+const pos=d=>{const s=SEG.find(g=>d<=g.s+g.l)||SEG[SEG.length-1],t=Math.min(1,(d-s.s)/s.l);return[s.a[0]+(s.b[0]-s.a[0])*t,s.a[1]+(s.b[1]-s.a[1])*t]};
+function setPath(p){PATH=p;SEG.length=0;TOT=0;ROAD.clear();
+ for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]);SEG.push({a,b,l,s:TOT});TOT+=l}
+ SEG.forEach(s=>{for(let t=0;t<=s.l;t+=6){const x=s.a[0]+(s.b[0]-s.a[0])*t/s.l,y=s.a[1]+(s.b[1]-s.a[1])*t/s.l;ROAD.add(Math.floor(x/C)+','+Math.floor(y/C))}});
+ const e=p[p.length-1];BASE=[Math.min(330,e[0]),e[1]-4]}
+setPath(PA);
+const TW={ // cost — цена в бою (рыбки), pr — цена в магазине (золотые рыбки), range — радиус (px), cd — перезарядка (с)
+ murzik:{n:'Мурзик',role:'Стрелок',cost:50,pr:0,range:96,cd:.7,dmg:3,bg:'#ffedd5',pj:'yarn',sp:300,inf:'Бросает клубки шерсти',st:'Обычный дворовый кот, который просто хотел поспать, но ради миски корма готов сражаться.'},
+ barsik:{n:'Барсик',role:'Танк',melee:1,cost:100,pr:0,range:58,cd:1.1,dmg:4,bg:'#e2e8f0',inf:'Бьёт лапой с когтями и замедляет врагов на 40%',st:'Бывший боевой кот генерала, ушедший на заслуженный отдых, но вернувшийся в строй.'},
+ pushok:{n:'Пушок',role:'Инженер',cost:75,pr:70,range:0,cd:9,gain:35,bg:'#d1fae5',inf:'Не стреляет: каждую волну делает +35 рыбных консервов',st:'Кот-изобретатель в каске. Его консервная фабрика работает без выходных.'},
+ murka:{n:'Мурка',role:'Маг',cost:120,pr:150,range:92,cd:1.8,dmg:3.5,aoe:42,bg:'#ede9fe',pj:'nip',sp:190,snd:'nip',inf:'Взрывной кошачий мятный шар — урон по площади',st:'Ведьмина кошка, которая случайно пролила зелье предсказаний на свой хвост.'},
+ frost:{n:'Снежок',role:'Мороз',cost:85,pr:110,range:88,cd:1,dmg:2,slow:.55,bg:'#e0f2fe',pj:'snowb',sp:260,inf:'Снежки замедляют врагов на 45%',st:'Родился на ледяной крыше и чихает снежками — от них зомби еле шевелят лапами.'},
+ tigra:{n:'Тигра',role:'Скорострел',cost:110,pr:180,range:76,cd:.22,dmg:1.3,bg:'#fef3c7',pj:'yarn',sp:360,inf:'Очень частая стрельба клубками',st:'Полосатая хулиганка. Не умеет сидеть на месте и швыряет клубки без остановки.'},
+ sphinx:{n:'Граф',role:'Снайпер',cost:140,pr:240,range:175,cd:2.3,dmg:16,bg:'#ede9fe',pj:'star',sp:420,inf:'Дальний выстрел с огромным уроном',st:'Лысый аристократ в цилиндре. Стреляет редко, но всегда в самую голову.'},
+ ninja:{n:'Тень',role:'Ниндзя',cost:95,pr:200,range:82,cd:.34,dmg:2,bg:'#e2e8f0',pj:'yarn',sp:430,inf:'Очень быстрые броски клубков, дальше чем у Тигры',st:'Ночной охотник в красной повязке. Никто ни разу не видел, как он целится.'},
+ chef:{n:'Тунец',role:'Повар',cost:110,pr:260,range:0,cd:9,gain:70,bg:'#fef9c3',inf:'Не стреляет: каждую волну готовит +70 рыбных консервов',st:'Шеф-повар с усами из рыбьих хвостов. Фирменное блюдо — снова консервы.'},
+ pirat:{n:'Одноглаз',role:'Пират',cost:130,pr:300,range:98,cd:2,dmg:6,aoe:38,bg:'#e5e7eb',pj:'ball',sp:230,snd:'nip',inf:'Стреляет ядрами: урон по площади',st:'Пират с одним глазом, зато с двумя пушками. Любит всё, что взрывается.'},
+ kosm:{n:'Космо',role:'Лазер',cost:150,pr:360,range:135,cd:1.1,dmg:6,bg:'#e0f2fe',pj:'laser',sp:540,inf:'Быстрые лазеры на большой дальности',st:'Вернулся с Луны, где нет зомби. Теперь с удовольствием наверстывает.'},
+ lila:{n:'Лилу',role:'Коготь',cost:190,pr:520,range:74,cd:2.6,wind:.8,dmg:34,bg:'#f3f4f6',inf:'Сначала замахивается и предупреждает «!», потом бьёт с огромным уроном',st:'Серая шотландская вислоухая кошечка. В отряде ради любимой хозяйки, корма и своего тёплого места. Сначала предупреждает, потом бьёт.'},
+ biz:{n:'Мистер Мур',role:'Бизнесмен',cost:140,pr:340,range:0,cd:6,inc:9,bg:'#fef3c7',inf:'Не стреляет: во время волны каждые 6 секунд приносит +9 рыбок',st:'Кот в дорогом костюме. Уверен, что любую проблему решают деньги, и пока что прав.'},
+ flame:{n:'Огонёк',role:'Огнемёт',cost:120,pr:280,range:62,cd:.14,dmg:.8,bg:'#ffedd5',pj:'fire',sp:300,inf:'Поливает врагов огнём на близкой дистанции',st:'Рыжий любитель тепла. Холодных зомби он не терпит.'},
+ knight:{n:'Сэр Мурлот',role:'Рыцарь',cost:125,pr:310,range:60,cd:.8,dmg:5,melee:1,bg:'#e2e8f0',inf:'Бьёт мечом по всем рядом и замедляет врагов',st:'Вырос на сказках о рыцарях. Шлем у него из кастрюли, а клятва настоящая.'},
+ jelly:{n:'Мармелад',role:'Желе',cost:105,pr:230,range:90,cd:1.5,dmg:1.5,aoe:44,slow:.5,bg:'#fce7f3',pj:'gel',sp:210,snd:'nip',inf:'Липкие шарики: урон и замедление по площади',st:'Живёт в кондитерской и очень добрый. Зомби застревают в нём, как в варенье.'},
+ fairy:{n:'Искорка',role:'Фея',cost:100,pr:240,range:112,cd:.55,dmg:2.6,bg:'#fae8ff',pj:'star',sp:380,inf:'Часто стреляет звёздочками на средней дальности',st:'Маленькая фея-кошка. Хочет вернуть небу погасшие звёзды.'}};
+const EN={mouse:{hp:6,sp:54,r:11,gold:5,dmg:1},rat:{hp:24,sp:28,r:15,gold:9,dmg:2},surf:{hp:9,sp:84,r:12,gold:7,dmg:1},zcat:{hp:5,sp:62,r:10,gold:2,dmg:1},
+ dog:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog2:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog3:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog4:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1},dog5:{hp:260,sp:21,r:26,gold:80,dmg:5,sum:1}};
+const WORLDS=[
+ {n:'Молочные Сады',s:'Green Paws',c:'#34d399',d:'Зелёные лужайки, где зомби идут по мягкой траве. Обучение и лёгкие противники.',lv:['Первый шаг','Тропинка к миске','Клубковый дождь','Крепкие ребята','Босс: Доктор Пёс']},
+ {n:'Рыбный Порт',s:'Meow-Time',c:'#38bdf8',d:'Побережье с деревянными мостиками. Появляются быстрые зомби на досках для сёрфинга.',lv:['Причал','Мостики','Солёный ветер','Волна прилива','Босс: Доктор Пёс']},
+ {n:'Кибер-Лаборатория',s:'Cyber-Cat',c:'#c084fc',d:'Неоновый мир будущего. База котиков защищает главный сервер с рыбными деликатесами.',lv:['Вход в портал','Неоновый коридор','Сбой системы','Охрана сервера','Босс: Доктор Пёс']},
+ {n:'Снежные Вершины',s:'Ice-Meow',c:'#7dd3fc',d:'Заснеженные горы и ледяные мостики. Зомби упрямо лезут вверх, а тропы на каждом уровне новые.',lv:['Подножие','Ледяной мост','Метель','Хрустальный перевал','Босс: Доктор Пёс']},
+ {n:'Лавовые Пещеры',s:'Fire-Purr',c:'#fb923c',d:'Раскалённый вулкан. Последний мир истории: нужна сильная команда и немного терпения.',lv:['Горячий вход','Искры и пепел','Река лавы','Дымный перевал','Босс: Доктор Пёс']}];
+const mkWaves=(w,l)=>{const n=3+l,a=[];for(let i=0;i<n;i++){const k=1+w*.5+l*.3+i*.25,x=[['mouse',Math.round(6+4*k),Math.max(.45,1.15-.12*k)]];
+ if(k>1.5)x.push(['rat',Math.round((k-1.4)*2.2),Math.max(.9,2.2-.2*k),2]);
+ if(w>0&&k>1.3)x.push(['surf',Math.round((k-1)*(1+w)),Math.max(.5,1.1-.1*k),1]);
+ if(l===4&&i===n-1)x.push([DOGS[w],1,1,12]);a.push(x)}return a};
+
+/* ---------- SVG-спрайты (рисуются один раз в <defs>) ---------- */
+const cat=(c,d,x)=>`<ellipse cy="13" rx="14" ry="11" fill="${c}"/><path d="M-16-6L-14-24-3-14ZM16-6L14-24 3-14Z" fill="${c}"/><path d="M-13-10L-12-19-7-14ZM13-10L12-19 7-14Z" fill="#fda4af"/><circle cy="-4" r="16" fill="${c}"/><ellipse cx="-6" cy="-5" rx="2.6" ry="3.4" fill="#1f2937"/><ellipse cx="6" cy="-5" rx="2.6" ry="3.4" fill="#1f2937"/><circle cx="-5.2" cy="-6.4" r="1" fill="#fff"/><circle cx="6.8" cy="-6.4" r="1" fill="#fff"/><path d="M-2.2 0h4.4L0 2.6Z" fill="#fb7185"/><path d="M-16-1H-24M-16 3L-23 6M16-1H24M16 3L23 6" stroke="${d}" stroke-width="1.3" stroke-linecap="round"/>${x}`;
+const zom=(sc,skin,ear,x)=>`<g transform="scale(${sc})"><path d="M9 12Q26 12 24-2" stroke="#f9a8d4" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cy="6" rx="12" ry="9" fill="${skin}"/><circle cx="-10" cy="-10" r="7.5" fill="${skin}"/><circle cx="10" cy="-10" r="7.5" fill="${skin}"/><circle cx="-10" cy="-10" r="4.5" fill="${ear}"/><circle cx="10" cy="-10" r="4.5" fill="${ear}"/><ellipse cy="-3" rx="11" ry="10" fill="${skin}"/><path d="M-7-7l4 4m0-4l-4 4M3-7l4 4m0-4l-4 4" stroke="#dc2626" stroke-width="1.7" stroke-linecap="round"/><circle cy="2" r="2" fill="#fb7185"/><path d="M-4 5q4 3 8 0" stroke="#7f1d1d" stroke-width="1.3" fill="none"/>${x}</g>`;
+const SYM={
+ murzik:cat('#fb923c','#9a3412','<path d="M-5-18v5M0-19v6M5-18v5" stroke="#c2410c" stroke-width="2.2" stroke-linecap="round"/>'),
+ barsik:`<g transform="scale(1.14)">${cat('#94a3b8','#475569','<path d="M-11-11l6 3M11-11l-6 3" stroke="#334155" stroke-width="2.4" stroke-linecap="round"/><path d="M8-12l3 5" stroke="#475569" stroke-width="1.6"/>')}</g>`,
+ murka:cat('#a78bfa','#6d28d9','<path d="M-15-12L3-44 15-12Z" fill="#7c3aed"/><ellipse cy="-12" rx="20" ry="5" fill="#6d28d9"/><path d="M-13-15Q0-11 13-15" stroke="#fde047" stroke-width="3" fill="none"/><circle cx="3" cy="-30" r="3" fill="#fde047"/>'),
+ pushok:cat('#6ee7b7','#047857','<path d="M-15-12Q0-34 15-12Z" fill="#fbbf24"/><rect x="-17" y="-14" width="34" height="4" rx="2" fill="#f59e0b"/><circle cy="-24" r="2.6" fill="#fff"/><path d="M17 16l8-9" stroke="#64748b" stroke-width="3.4" stroke-linecap="round"/>'),
+ mouse:zom(1,'#a7c4a0','#fbcfe8',''),
+ rat:zom(1.3,'#64748b','#cbd5e1','<rect x="-8" y="3" width="16" height="9" rx="3" fill="#94a3b8"/><path d="M-12-6Q0-24 12-6Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/><circle cy="-15" r="1.8" fill="#64748b"/>'),
+ dog:'<g transform="scale(1.7)"><ellipse cy="9" rx="17" ry="11" fill="#92400e"/><ellipse cx="-17" cy="-4" rx="7" ry="13" fill="#78350f" transform="rotate(14 -17 -4)"/><ellipse cx="17" cy="-4" rx="7" ry="13" fill="#78350f" transform="rotate(-14 17 -4)"/><circle cy="-4" r="15" fill="#b45309"/><ellipse cy="4" rx="9" ry="7" fill="#fde68a"/><ellipse rx="3.6" ry="2.6" fill="#1f2937"/><path d="M-5 7q5 4 10 0" stroke="#7f1d1d" stroke-width="1.5" fill="none"/><path d="M-4 6l1.5 3 1.5-3M1 6l1.5 3 1.5-3" fill="#fff"/><path d="M-9-9l5 4m0-4l-5 4" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/><circle cx="6" cy="-8" r="3.4" fill="#fde047"/><circle cx="6" cy="-8" r="1.4" fill="#dc2626"/><path d="M-3-17l2 6M3-17l-2 6" stroke="#4b5563" stroke-width="1.5"/><rect x="-13" y="11" width="26" height="5" rx="2.5" fill="#ef4444"/><path d="M-9 11l2-5 2 5M-1 11l2-5 2 5M7 11l2-5 2 5" fill="#e5e7eb"/></g>',
+ yarn:'<circle r="6" fill="#f472b6"/><path d="M-5-2Q0 2 5-3M-4 3Q1 6 5 1M-2-5Q3-2 4 3" stroke="#fbcfe8" stroke-width="1.3" fill="none"/>',
+ nip:'<circle r="7" fill="#bbf7d0"/><path d="M0-9Q5-3 0 2Q-5-3 0-9ZM-8 3Q-1 0 1 6Q-6 9-8 3ZM8 3Q1 0-1 6Q6 9 8 3Z" fill="#16a34a"/>',
+ paw:'<ellipse cy="5" rx="8" ry="7" fill="#f9a8d4"/><circle cx="-8" cy="-4" r="3.6" fill="#f9a8d4"/><circle cx="-3" cy="-9" r="3.6" fill="#f9a8d4"/><circle cx="3" cy="-9" r="3.6" fill="#f9a8d4"/><circle cx="8" cy="-4" r="3.6" fill="#f9a8d4"/>',
+ fish:'<path d="M-9 0Q-1-9 8-1L14-7V7L8 1Q-1 9-9 0Z" fill="#38bdf8"/><circle cx="-4" cy="-1.5" r="1.4" fill="#0f172a"/>',
+ bowl:'<ellipse cy="12" rx="21" ry="5" fill="#0000001f"/><path d="M-20-3Q-17 15 0 15T20-3Z" fill="#818cf8"/><ellipse cy="-3" rx="20" ry="6" fill="#e0e7ff"/><ellipse cy="-2" rx="16.5" ry="4" fill="#fff"/><path d="M0-8c-2-5-8-1-4 3l4 3 4-3c4-4-2-8-4-3z" fill="#fb7185"/>'};
+
+
+/* новые спрайты: крот в каске, сёрфер, зомби-кошка, робот-пёс, новые котики, иконки */
+SYM.rat='<g transform="scale(1.2)"><ellipse cy="7" rx="14" ry="10" fill="#7c5a43"/><ellipse cx="-8" cy="12" rx="5" ry="3" fill="#f9a8d4"/><ellipse cx="8" cy="12" rx="5" ry="3" fill="#f9a8d4"/><ellipse cy="-3" rx="13" ry="11" fill="#8b6a50"/><path d="M-6-4l3 3m0-3l-3 3M3-4l3 3m0-3l-3 3" stroke="#dc2626" stroke-width="1.6" stroke-linecap="round"/><path d="M0 1l-4 4h8z" fill="#fb7185"/><path d="M-3 5q3 2 6 0" stroke="#3f1d0f" stroke-width="1.2" fill="none"/><path d="M-13-4Q0-26 13-4Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1.6"/><path d="M-9-9H9M-6-14H6" stroke="#94a3b8" stroke-width="1.4"/></g>';
+SYM.surf='<ellipse cy="15" rx="22" ry="5" fill="#fb923c"/><path d="M-14 15H14" stroke="#fff" stroke-width="1.6"/><g transform="translate(0 -3)">'+zom(.9,'#a7c4a0','#fbcfe8','')+'</g>';
+SYM.zcat=zom(.75,'#9ca3af','#fda4af','<path d="M-12-12L-9-21-4-13M12-12L9-21 4-13" fill="#9ca3af"/>');
+const rdog=(b,a,e)=>`<g transform="scale(1.7)"><ellipse cy="9" rx="17" ry="11" fill="${b}"/><path d="M-19-5L-14-18-8-8ZM19-5L14-18 8-8Z" fill="${a}"/><circle cy="-4" r="15" fill="${b}"/><rect x="-12" y="-9" width="24" height="9" rx="4" fill="#0f172a"/><circle cx="-5" cy="-5" r="3" fill="${e}"/><circle cx="5" cy="-5" r="3" fill="${e}"/><ellipse cy="5" rx="8" ry="6" fill="#e5e7eb"/><ellipse cy="2.5" rx="3.4" ry="2.4" fill="#1f2937"/><path d="M-5 8h10" stroke="#475569" stroke-width="1.5"/><path d="M-4 8l1 2 1-2M1 8l1 2 1-2" fill="#fff"/><path d="M-3-19l2 6M3-19l-2 6" stroke="${a}" stroke-width="1.6"/><circle cx="-3" cy="-20" r="1.6" fill="${e}"/><rect x="-13" y="12" width="26" height="4" rx="2" fill="${a}"/></g>`;
+SYM.dog=rdog('#94a3b8','#475569','#ef4444');SYM.dog2=rdog('#5eead4','#0f766e','#facc15');SYM.dog3=rdog('#c084fc','#7e22ce','#22d3ee');
+SYM.frost=cat('#e0f2fe','#7dd3fc','<path d="M-13 3Q0 11 13 3L11 9Q0 15-11 9Z" fill="#38bdf8"/><path d="M0-18v7M-3-15l6 4M3-15l-6 4" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>');
+SYM.tigra=cat('#fbbf24','#92400e','<path d="M-9-17l2 6M0-19v7M9-17l-2 6M-16-2l5 1M16-2l-5 1" stroke="#78350f" stroke-width="2.2" stroke-linecap="round"/><path d="M-14 8Q0 14 14 8" stroke="#dc2626" stroke-width="3" fill="none"/>');
+SYM.sphinx=cat('#fcd9c4','#9a6b55','<rect x="-9" y="-33" width="18" height="16" rx="2" fill="#1f2937"/><rect x="-14" y="-19" width="28" height="4" rx="2" fill="#1f2937"/><rect x="-9" y="-24" width="18" height="3" fill="#a78bfa"/><circle cx="6" cy="-5" r="5.2" fill="none" stroke="#f59e0b" stroke-width="1.5"/><path d="M11-2L15 10" stroke="#f59e0b" stroke-width="1.2"/>');
+SYM.snowb='<circle r="6" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.5"/><path d="M0-3v6M-3 0h6" stroke="#38bdf8" stroke-width="1.2"/>';
+SYM.star='<path d="M0-8L2.4-2.4 8 0 2.4 2.4 0 8-2.4 2.4-8 0-2.4-2.4Z" fill="#fde047" stroke="#f59e0b" stroke-width="1"/>';
+SYM.gfish='<path d="M-9 0Q-1-9 8-1L14-7V7L8 1Q-1 9-9 0Z" fill="#fbbf24"/><path d="M-3-4Q0 0-3 4" stroke="#f59e0b" stroke-width="1.2" fill="none"/><circle cx="-5" cy="-1.5" r="1.4" fill="#78350f"/>';
+SYM.srv='<ellipse cy="14" rx="20" ry="5" fill="#0000003a"/><rect x="-15" y="-16" width="30" height="30" rx="4" fill="#1e293b" stroke="#22d3ee" stroke-width="1.6"/><rect x="-11" y="-12" width="22" height="7" rx="2" fill="#0f172a"/><rect x="-11" y="-3" width="22" height="7" rx="2" fill="#0f172a"/><circle cx="-8" cy="-8.5" r="1.5" fill="#4ade80"/><circle cx="-8" cy="0.5" r="1.5" fill="#22d3ee"/><path d="M-3 10Q2 5 8 10L11 7V13L8 10Q2 15-3 10Z" fill="#38bdf8"/>';
+SYM.lila=`<ellipse cy="13" rx="14" ry="11" fill="#9ca3af"/><ellipse cx="-12" cy="-13" rx="7" ry="5" fill="#6b7280" transform="rotate(-28 -12 -13)"/><ellipse cx="12" cy="-13" rx="7" ry="5" fill="#6b7280" transform="rotate(28 12 -13)"/><circle cy="-4" r="16" fill="#9ca3af"/><path d="M-6-18l1 5M0-19v6M6-18l-1 5" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/><circle cx="-6" cy="-5" r="3.8" fill="#fbbf24"/><circle cx="6" cy="-5" r="3.8" fill="#fbbf24"/><ellipse cx="-6" cy="-5" rx="1.4" ry="3.1" fill="#1f2937"/><ellipse cx="6" cy="-5" rx="1.4" ry="3.1" fill="#1f2937"/><circle cx="-5" cy="-6.5" r="1" fill="#fff"/><circle cx="7" cy="-6.5" r="1" fill="#fff"/><path d="M-2.2 0h4.4L0 2.6Z" fill="#fb7185"/><path d="M-16-1H-24M-16 3L-23 6M16-1H24M16 3L23 6" stroke="#4b5563" stroke-width="1.3" stroke-linecap="round"/><path d="M-9 12Q0 17 9 12" stroke="#ef4444" stroke-width="3" fill="none"/><circle cy="15" r="2.4" fill="#fde047"/>`;
+SYM.ninja=cat('#334155','#0f172a','<rect x="-16" y="-9" width="32" height="5" rx="2" fill="#dc2626"/><path d="M16-8l10 5-9 1z" fill="#dc2626"/>');
+SYM.chef=cat('#fde68a','#b45309','<path d="M-11-16Q-19-31-6-28Q0-37 8-28Q19-29 11-16Z" fill="#fff" stroke="#e2e8f0"/><rect x="-11" y="-17" width="22" height="5" rx="2" fill="#f1f5f9"/>');
+SYM.pirat=cat('#374151','#111827','<path d="M-17-11Q0-27 17-11Z" fill="#dc2626"/><circle cx="-6" cy="-5" r="5" fill="#111827"/><path d="M-12-9L8-18" stroke="#111827" stroke-width="1.6"/><circle cx="14" cy="4" r="2.4" fill="#fbbf24"/>');
+SYM.kosm=cat('#f1f5f9','#94a3b8','<circle cy="-4" r="20" fill="#bae6fd" fill-opacity=".35" stroke="#e2e8f0" stroke-width="3"/><rect x="-10" y="15" width="20" height="5" rx="2" fill="#f97316"/>');
+SYM.ball='<circle r="6" fill="#1f2937"/><circle cx="-2" cy="-2" r="2" fill="#64748b"/>';
+SYM.laser='<ellipse rx="10" ry="3" fill="#22d3ee"/><ellipse rx="5" ry="1.6" fill="#fff"/>';
+SYM.igl='<ellipse cy="12" rx="22" ry="5" fill="#0000001f"/><path d="M-20 12A20 20 0 0120 12Z" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="2"/><path d="M-6 12V3a6 6 0 0112 0v9Z" fill="#1e3a5f"/><path d="M0-6c-2-5-8-1-4 3l4 3 4-3c4-4-2-8-4-3z" fill="#fb7185" transform="translate(0 -2) scale(.6)"/>';
+SYM.dog4=rdog('#bae6fd','#0ea5e9','#1d4ed8');SYM.dog5=rdog('#f97316','#7f1d1d','#fde047');
+SYM.fire='<circle r="5.5" fill="#fb923c"/><circle r="2.8" fill="#fde047"/>';
+SYM.gel='<circle r="7" fill="#f9a8d4" fill-opacity=".85"/><circle cx="-2" cy="-2" r="2" fill="#fff"/>';
+SYM.biz=cat('#d6d3d1','#78716c','<path d="M-14 8L0 22 14 8V22H-14Z" fill="#1f2937"/><path d="M-3 12L0 16 3 12 0 24z" fill="#dc2626"/><circle cx="-6" cy="-5" r="4.8" fill="none" stroke="#1f2937" stroke-width="1.5"/><circle cx="6" cy="-5" r="4.8" fill="none" stroke="#1f2937" stroke-width="1.5"/><rect x="14" y="14" width="14" height="10" rx="2" fill="#92400e"/><circle cx="-16" cy="-20" r="6" fill="#fde047" stroke="#b45309" stroke-width="1.5"/>');
+SYM.flame=cat('#f87171','#991b1b','<path d="M-6-19Q0-36 6-19Q3-23 0-30Q-3-23-6-19Z" fill="#fb923c"/><path d="M-3-19Q0-28 3-19Z" fill="#fde047"/><path d="M-14 8Q0 14 14 8" stroke="#7f1d1d" stroke-width="3" fill="none"/>');
+SYM.knight=cat('#cbd5e1','#64748b','<path d="M-15-10Q-15-27 0-27T15-10Z" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/><rect x="-2" y="-31" width="4" height="8" fill="#ef4444"/><path d="M18 18L28 4" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/>');
+SYM.jelly=cat('#f9a8d4','#be185d','<path d="M-14-12Q0-30 14-12Q8-16 0-14Q-8-16-14-12Z" fill="#fce7f3"/><circle cx="-8" cy="14" r="3" fill="#c084fc"/><circle cx="8" cy="16" r="2.4" fill="#67e8f9"/>');
+SYM.fairy=cat('#e9d5ff','#a855f7','<path d="M-14 6Q-36-8-24 10Q-30 22-14 14ZM14 6Q36-8 24 10Q30 22 14 14Z" fill="#f5d0fe" fill-opacity=".85"/><path d="M16 16L26-2" stroke="#a16207" stroke-width="2"/><path d="M26-2l2-5 2 5 5 2-5 2-2 5-2-5-5-2z" fill="#fde047"/>');
+const IC={
+ back:'<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+ snd:'<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+ mute:'<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M16 9.500l5 5M21 9.500l-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+ wave:'<path d="M2 9c2.500-3 4.500-3 7 0s4.500 3 7 0 3.500-2 6-1M2 16c2.500-3 4.500-3 7 0s4.500 3 7 0 3.500-2 6-1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+ ff:'<path d="M3 6l8 6-8 6zM12 6l8 6-8 6z" fill="currentColor"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2.500" fill="currentColor"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2.200"/>',
+ star:'<path d="M12 2.500l2.900 6 6.600.9-4.800 4.600 1.200 6.500L12 17.400 6.100 20.500l1.200-6.500L2.500 9.400l6.600-.9z" fill="currentColor"/>',
+ map:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+ bag:'<path d="M5 8h14l-1 12H6zM9 8a3 3 0 016 0" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linejoin="round" stroke-linecap="round"/>',
+ film:'<rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/>',
+ skip:'<path d="M5 5l9 7-9 7zM18 5v14" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'};
+IC.gear='<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>';
+IC.team='<circle cx="9" cy="8" r="3.4" fill="currentColor"/><circle cx="17" cy="9.500" r="2.6" fill="currentColor"/><path d="M2.5 19c0-3.600 2.900-6 6.500-6s6.500 2.400 6.500 6zM16 14.200c3 0 5.500 1.800 5.500 4.800H17.500" fill="currentColor"/>';
+const ic=(n,c)=>`<svg class="ci ${c||''}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
+const fi=k=>`<svg class="fi" viewBox="-12 -9 28 18" aria-hidden="true"><use href="#cd-${k||'fish'}"/></svg>`;
+
+/* ---------- звук (Web Audio, без файлов; уважает настройки звука приложения) ---------- */
+let AC=null,mg=null,nb=null,SA=null,mute=lg('cd_mute')==='1',AUTO=lg('cd_auto')!=='0';const lastS={};
+const sOn=()=>!mute&&(window.BSFX?window.BSFX.on:lg('bm_snd')!=='0');
+const volume=()=>{const v=lg('bm_vol');return(v===null?60:+v)/100*3};
+function unlock(){try{
+ if(!AC){const A=window.AudioContext||window.webkitAudioContext;if(!A)return;AC=new A();mg=AC.createGain();const cp=AC.createDynamicsCompressor();mg.connect(cp);cp.connect(AC.destination);mg.gain.value=volume();try{navigator.audioSession&&(navigator.audioSession.type='playback')}catch{}}
+ if(AC.state!=='running'){/* iOS: resume + тихий буфер строго внутри жеста; 'interrupted' тоже лечится resume */
+  try{const p=AC.resume();p&&p.catch&&p.catch(()=>{})}catch{}
+  try{const b=AC.createBuffer(1,1,22050),n=AC.createBufferSource();n.buffer=b;n.connect(AC.destination);n.start(0)}catch{}
+  try{if(!SA)SA=new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');SA.currentTime=0;const q=SA.play();q&&q.catch&&q.catch(()=>{})}catch{}}
+}catch{}}
+const tn=(f,d,o={})=>{const t=AC.currentTime+(o.at||0),os=AC.createOscillator(),g=AC.createGain();os.type=o.w||'sine';os.frequency.setValueAtTime(f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.v||.1,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g);g.connect(mg);os.start(t);os.stop(t+d+.05)};
+const nz=(d,f,to,v,ft)=>{if(!nb){nb=AC.createBuffer(1,AC.sampleRate>>1,AC.sampleRate);const a=nb.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}const t=AC.currentTime,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;fl.type=ft||'bandpass';fl.frequency.setValueAtTime(f,t);fl.frequency.exponentialRampToValueAtTime(to,t+d);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(g);g.connect(mg);s.start(t);s.stop(t+d+.05)};
+const SFX={
+ click:()=>tn(520,.08,{to:760,v:.1}),
+ deny:()=>tn(220,.12,{to:170,v:.1,w:'triangle'}),
+ place:()=>{const b=700+Math.random()*120;tn(b,.09,{to:b*1.35,w:'triangle',v:.09});tn(b*1.35,.16,{at:.09,to:b*.85,w:'triangle',v:.09})},
+ shoot:()=>tn(620,.1,{to:1000,w:'triangle',v:.07}),
+ nip:()=>{tn(420,.2,{to:880,w:'triangle',v:.08});nz(.12,2500,900,.08)},
+ paw:()=>{nz(.16,2000,300,.22);tn(170,.14,{to:70,v:.2})},
+ boom:()=>{nz(.38,900,90,.32,'lowpass');tn(150,.3,{to:45,v:.28})},
+ hit:()=>tn(340,.06,{to:200,w:'square',v:.04}),
+ pop:()=>tn(520,.12,{to:160,v:.1}),
+ coin:()=>{tn(988,.07,{w:'square',v:.05});tn(1319,.2,{at:.07,w:'square',v:.05})},
+ leak:()=>tn(210,.32,{to:80,w:'sawtooth',v:.1}),
+ wave:()=>{tn(392,.28,{w:'triangle',v:.12});tn(523,.4,{at:.2,w:'triangle',v:.12})},
+ win:()=>[523,659,784,1047,1319].forEach((f,i)=>tn(f,.3,{at:i*.11,v:.09})),
+ lose:()=>[392,330,262,196].forEach((f,i)=>tn(f,.4,{at:i*.2,w:'triangle',v:.1}))};
+const sfx=n=>{if(!AC||!sOn()||document.hidden)return;if(AC.state!=='running'){try{const p=AC.resume();p&&p.catch&&p.catch(()=>{})}catch{}return}const t=performance.now();if(lastS[n]&&t-lastS[n]<40)return;lastS[n]=t;try{SFX[n]()}catch{}};
+/* глобальный разблокировщик: любое первое касание/клик в любом месте экрана; слушатели остаются, пока звук не пошёл (iOS разрешает resume только в touchend/click) */
+const GU=()=>{if(AC&&AC.state==='running')return;unlock();try{window.BSFX&&window.BSFX.unlock&&window.BSFX.unlock()}catch{}};
+['touchstart','touchend','pointerdown','mousedown','click','keydown'].forEach(ev=>document.addEventListener(ev,GU,{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.state!=='running'){try{const p=AC.resume();p&&p.catch&&p.catch(()=>{})}catch{}}});
+window.addEventListener('pageshow',GU);
+
+SFX.film=()=>[392,494,587].forEach((f,i)=>tn(f,.35,{at:i*.12,w:'triangle',v:.07}));
+SFX.warn=()=>{tn(880,.12,{w:'square',v:.06});tn(880,.12,{at:.17,w:'square',v:.06})};
+
+/* ---------- стили ---------- */
+const st=document.createElement('style');st.textContent=`
+#catdef{padding:calc(env(safe-area-inset-top,0px) + 12px) 12px calc(12px + env(safe-area-inset-bottom,0px));overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+#catdef.on{display:flex;flex-direction:column;align-items:center}
+#catdef .head{width:100%}
+.cd-hud{display:flex;gap:8px;width:100%;max-width:398px;margin:6px 0 8px}
+.cd-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font:700 14px Montserrat,sans-serif;white-space:nowrap}
+.cd-chip svg{width:28px;height:22px;flex:none}
+.cd-chip.hit{animation:cdhit .4s}
+@keyframes cdhit{30%{background:rgba(244,63,94,.55);transform:translateX(-3px)}60%{transform:translateX(3px)}}
+#cdWave{flex:1.6}
+#cdWave.go{background:linear-gradient(135deg,#fb923c,#f43f5e);border-color:transparent;animation:cdpulse 1s ease-in-out infinite}
+@keyframes cdpulse{50%{box-shadow:0 0 18px rgba(251,146,60,.7);transform:scale(1.03)}}
+.cd-wrap{position:relative;width:min(100%,398px,max(220px,calc((100dvh - 280px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*.75)));aspect-ratio:3/4;flex:none;border-radius:22px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+#cdSvg{display:block;width:100%;height:100%}
+.cd-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:398px;margin-top:10px}
+.cd-t{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 5px;border-radius:16px;background:var(--bg);color:#1f2937;border:2px solid transparent;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.cd-t svg{width:40px;height:44px}
+.cd-t b{font-size:11px;font-weight:800}
+.cd-t span{display:flex;align-items:center;gap:2px;font-size:12px;font-weight:700}
+.cd-t span svg{width:18px;height:12px}
+.cd-t.sel{border-color:#f97316;transform:translateY(-4px);box-shadow:0 0 16px rgba(249,115,22,.6)}
+.cd-t.no{opacity:.5;filter:grayscale(.5)}
+.cd-ov{position:absolute;inset:0;z-index:5;display:none;place-items:center;overflow:hidden;background:rgba(76,29,149,.4);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.cd-ov.on{display:grid;animation:fade .25s ease-out}
+.cd-card{width:86%;text-align:center;padding:16px 14px;border-radius:24px;background:linear-gradient(160deg,#fff7ed,#ede9fe);color:#1f2937;box-shadow:0 18px 40px rgba(0,0,0,.4);display:grid;gap:7px;justify-items:center;z-index:1}
+.cd-card h3{font:800 24px Comfortaa,sans-serif;color:#6d28d9}
+.cd-card p{font-size:12px;line-height:1.35;color:#475569}
+.cd-card small{font-size:11px;color:#7c3aed;font-weight:700}
+.cd-card .st{font-size:30px;letter-spacing:4px;color:#f59e0b;text-shadow:0 2px 0 #fcd34d}
+.cd-btn{min-height:44px;padding:0 26px;border-radius:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,#fb923c,#f43f5e);box-shadow:0 8px 18px rgba(249,115,22,.4)}
+.cd-btn.g{background:#fff;color:#6d28d9;box-shadow:none;border:2px solid #ddd6fe}
+.cd-conf{position:absolute;inset:0;pointer-events:none}
+.cd-conf i{position:absolute;top:-14px;width:8px;height:12px;border-radius:2px;animation:cdconf 2.6s linear infinite}
+@keyframes cdconf{to{transform:translateY(560px) rotate(540deg)}}
+.cd-ban{position:absolute;left:0;right:0;top:34%;z-index:4;text-align:center;pointer-events:none;font:800 26px Comfortaa,sans-serif;color:#fff;text-shadow:0 3px 0 #7c3aed,0 0 18px rgba(124,58,237,.7);opacity:0}
+.cd-ban.on{animation:cdban 1.8s ease-out}
+@keyframes cdban{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.1)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+.cd-sell{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;display:none;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:14px;font:800 13px Montserrat,sans-serif;color:#fff;background:linear-gradient(135deg,#f43f5e,#fb923c);box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.cd-sell svg{width:20px;height:13px}
+`;document.head.appendChild(st);
+
+
+const st2=document.createElement('style');st2.textContent=`
+#catdef{z-index:40;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(165deg,#1a0f3a,#2b1556 55%,#10253f)}
+.cdv{display:none;width:100%;flex:1;min-height:0;flex-direction:column;align-items:center}.cdv.on{display:flex}
+.cd-top{display:flex;align-items:center;gap:10px;width:100%;max-width:398px;min-height:46px}
+.cd-top h2{flex:1;min-width:0;font:800 17px Comfortaa,sans-serif;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd-ib{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#fff}
+.cd-ib.t{width:auto;padding:0 12px;gap:6px;display:flex;align-items:center;font-weight:800;font-size:13px}
+.ci{width:22px;height:22px;flex:none}.fi{width:20px;height:14px;flex:none}
+.cd-chip svg.ci{width:20px;height:20px}.cd-chip svg.fi{width:26px;height:18px}
+#cdHpC{flex:.9}#cdWave{flex:1.9}#cdWT{font-size:12.5px}#cdWave.go{color:#fff}.cd-x2{flex:.8;color:#cbd5e1}.cd-x2.on{background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;border-color:transparent}
+.cd-gold{display:flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:14px;background:rgba(251,191,36,.16);border:1px solid rgba(251,191,36,.4);font:800 14px Montserrat,sans-serif;color:#fde68a}
+.cd-tabs{display:flex;gap:8px;width:100%;max-width:398px;margin:6px 0 10px}
+.cd-tabs button{flex:1;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:14px;color:#c4b5fd;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.cd-tabs button.on{color:#fff;background:linear-gradient(135deg,#fb923c,#f43f5e);border-color:transparent}
+.cd-body{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:398px;padding-bottom:14px;-webkit-overflow-scrolling:touch}
+.cw{margin-bottom:12px;padding:12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:grid;gap:9px}
+.cw.cl0{opacity:.92}.cw-h{display:flex;align-items:center;gap:11px}.cw-h b{display:block;font-size:15px}.cw-h small{color:var(--c);font-weight:700;font-size:12px}
+.cw-t{width:50px;height:50px;border-radius:15px;background:var(--c);display:grid;place-items:center;flex:none}.cw-t svg{width:38px;height:34px}
+.cw p{font-size:12px;line-height:1.4;color:#cbd5e1}
+.cw-lock{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#fda4af}
+.cl-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.cl{aspect-ratio:1/1.15;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.2);color:#fff;font:800 18px Comfortaa,sans-serif;overflow:hidden}
+.cl.ok{border-color:#fbbf24;background:rgba(251,191,36,.16)}.cl.boss{border-color:#f43f5e}.cl:disabled{opacity:.45}
+.cl svg{width:30px;height:28px}.cl svg.ci{width:20px;height:20px}.cl span{font-size:9px;color:#fbbf24;letter-spacing:1px;min-height:11px}
+.cd-btn.sm{min-height:38px;font-size:13px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.ck-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ck{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border-radius:18px;background:var(--bg);color:#1f2937;text-align:center}
+.ck>svg{width:56px;height:64px}.ck b{font-size:14px;font-weight:800}.ck em{font-style:normal;font-size:11px;font-weight:800;color:#7c3aed}
+.ck p{font-size:11px;font-weight:700;line-height:1.3}.ck small{font-size:10px;line-height:1.3;color:#475569;flex:1}
+.ck-c{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:800}.ck .cd-btn{width:100%;padding:0}
+.ck-ok{display:flex;align-items:center;gap:5px;font-weight:800;font-size:13px;color:#16a34a;min-height:38px}.ck-ok svg{width:18px;height:18px}
+.cd-film{position:relative;width:min(100%,398px,max(220px,calc((100dvh - 230px)*.75)));aspect-ratio:3/4;flex:none;border-radius:22px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+.cd-film>svg{display:block;width:100%;height:100%}
+.cd-cap{width:100%;max-width:398px;min-height:88px;margin-top:10px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);font-size:14px;line-height:1.45}
+.cd-dots{display:flex;gap:6px;margin:10px 0 8px}.cd-dots i{width:8px;height:8px;border-radius:9px;background:rgba(255,255,255,.25)}.cd-dots i.on{background:#fb923c;width:22px}
+.cd-bar{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cd-bar::-webkit-scrollbar{display:none}
+.cd-t{flex:0 0 74px}
+.a-bob{animation:fbob 1.6s ease-in-out infinite}.a-fall{animation:ffall 5s linear infinite}.a-march{animation:fmarch 7s linear infinite}
+.a-spin{animation:fspin 6s linear infinite;transform-box:fill-box;transform-origin:center}.a-tw{animation:ftw 2.4s ease-in-out infinite}
+.a-wav{animation:fwav 4s ease-in-out infinite alternate}.a-jump{animation:fjump 2.4s ease-in-out infinite}.a-surf{animation:fmarch 4.5s linear infinite}
+@keyframes fbob{50%{transform:translateY(-6px)}}@keyframes ffall{from{transform:translateY(-70px) rotate(0)}to{transform:translateY(560px) rotate(540deg)}}
+@keyframes fmarch{from{transform:translateX(-110px)}to{transform:translateX(440px)}}@keyframes fspin{to{transform:rotate(360deg)}}
+@keyframes ftw{50%{opacity:.2}}@keyframes fwav{to{transform:translateX(-30px)}}@keyframes fjump{40%{transform:translateY(-30px) rotate(-20deg)}70%{transform:translateY(0)}}
+`;document.head.appendChild(st2);
+
+const st3=document.createElement('style');st3.textContent=`
+.cd-tabs{gap:5px}.cd-tabs button{flex-direction:column;gap:2px;height:48px;font-size:11.5px;padding:0 2px}.cd-tabs .ci{width:18px;height:18px}
+.cd-set{display:flex;align-items:center;gap:12px;width:100%;padding:12px;margin-bottom:10px;border-radius:16px;text-align:left;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14)}
+.cd-set span{flex:1}.cd-set b{display:block;font-size:14px}.cd-set small{font-size:11px;line-height:1.35;color:#cbd5e1}
+.cd-sw{width:46px;height:26px;border-radius:13px;background:rgba(255,255,255,.22);position:relative;flex:none}.cd-sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}.cd-sw.on{background:#22c55e}.cd-sw.on:after{left:23px}
+.tm-h{margin:6px 2px 8px;font:800 13px Comfortaa,sans-serif;color:#fde68a}.tm-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.tm-s{aspect-ratio:1/1.12;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--bg,transparent);border:2px solid transparent;color:#1f2937;font-size:11px;font-weight:800;padding:2px}
+.tm-s svg{width:46px;height:50px}.tm-s span{font-size:9.5px;font-weight:700;color:#475569}.tm-s.f{border-color:#f97316}.tm-s.in{opacity:.4}.tm-s.e{border:2px dashed rgba(255,255,255,.28);color:#c4b5fd;font-size:24px}
+.cd-sell{left:8px;transform:none}.cd-sell.cd-up{left:auto;right:8px;background:linear-gradient(135deg,#22c55e,#0ea5e9)}.cd-up:disabled{filter:grayscale(.8);opacity:.7}
+.cd-fw{position:relative;flex:none;width:min(100%,398px,max(220px,calc((100dvh - 260px)*.75)))}.cd-fw .cd-film{width:100%}
+.cd-fw .cd-cap{position:absolute;left:8px;right:8px;top:8px;z-index:2;width:auto;max-width:none;min-height:0;margin:0;padding:10px 12px;font-size:15px;line-height:1.4;background:rgba(14,9,38,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.cd-cap:empty{display:none}.cd-pbar{width:100%;max-width:398px;height:4px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden;margin-bottom:8px}.cd-pbar i{display:block;height:100%;width:0;background:#fb923c}#cdFN{margin-top:2px}.cd-t small.cd-n{font-size:10px;font-weight:800;color:#64748b}
+`;document.head.appendChild(st3);
+
+/* ---------- разметка: спрайты, экран (меню / игра / фильм), карточка в «Играх» ---------- */
+$('app').insertAdjacentHTML('beforeend',`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.keys(SYM).map(k=>`<g id="cd-${k}">${SYM[k]}</g>`).join('')}</defs></svg>
+<section class="screen" id="catdef">
+<div class="cdv on" id="cdMenu"><div class="cd-top"><button class="cd-ib" data-a="exit" aria-label="Выйти">${ic('back')}</button><h2>Хвостатый Дозор</h2><div class="cd-gold" id="cdGoldC">${fi('gfish')}<span id="cdGold">0</span></div><button class="cd-ib cd-snd" aria-label="Звук"></button></div>
+<div class="cd-tabs" id="cdTabs"><button data-t="w">${ic('map')}Миры</button><button data-t="t">${ic('team')}Команда</button><button data-t="s">${ic('bag')}Магазин</button><button data-t="c">${ic('gear')}Настройки</button></div><div class="cd-body" id="cdBody"></div></div>
+<div class="cdv" id="cdPlay"><div class="cd-top"><button class="cd-ib" id="cdQuit" aria-label="Выйти">${ic('back')}</button><h2 id="cdLT"></h2><button class="cd-ib cd-snd" aria-label="Звук"></button></div>
+<div class="cd-hud"><div class="cd-chip" id="cdHpC"><svg viewBox="-24 -16 48 36"><use href="#cd-bowl"/></svg><b id="cdHp">10</b></div><div class="cd-chip">${fi()}<b id="cdFish">0</b></div><button class="cd-chip" id="cdWave">${ic('wave')}<span id="cdWT">Волна 0/5</span></button><button class="cd-chip cd-x2" id="cdX2" aria-label="Ускорение">${ic('ff')}<b>x1</b></button></div>
+<div class="cd-wrap"><svg id="cdSvg" viewBox="0 0 ${W} ${H}"></svg><div class="cd-ban" id="cdBan"></div><button class="cd-sell" id="cdSell"><span></span>${fi()}</button><button class="cd-sell cd-up" id="cdUp"><span></span>${fi()}</button><div class="cd-ov" id="cdOv"></div></div>
+<div class="cd-bar" id="cdBar"></div></div>
+<div class="cdv" id="cdFilm"><div class="cd-top"><button class="cd-ib" data-a="skip" aria-label="Выйти">${ic('back')}</button><h2 id="cdFT"></h2><button class="cd-ib t" data-a="skip">${ic('skip')}Пропустить</button></div>
+<div class="cd-fw"><div class="cd-film" id="cdFA" data-a="tap"></div><div class="cd-cap" id="cdFC" data-a="tap"></div></div><div class="cd-dots" id="cdFD"></div><div class="cd-pbar"><i id="cdFP"></i></div><button class="cd-btn" id="cdFN" data-a="tap">Далее</button></div>
+</section>`);
+const CARD=`<button class="game" id="cdCard" onclick="go('catdef')"><div class="thumb" style="justify-content:center;align-items:center"><svg viewBox="-28 -46 56 66" width="38" height="44"><use href="#cd-murzik"/></svg></div><div class="sp"><b style="font-weight:600">Cat Defense</b><p class="sm">Хвостатый Дозор: защитите миски с молоком от зомби</p><span class="badge" id="cdBadge"></span></div><i class="fa-solid fa-chevron-right sm"></i></button>`;
+const card=()=>{const gl=$('gamesList');if(gl&&!$('cdCard'))gl.insertAdjacentHTML('beforeend',CARD);badge()};
+try{Object.assign(PL,{catdef:'🐱 в Cat Defense'})}catch{}
+
+/* ---------- сохранение прогресса ---------- */
+const defSV=()=>({g:20,own:['murzik','barsik'],team:['murzik','barsik'],wu:[],lv:{}});
+let SV=(()=>{try{return Object.assign(defSV(),JSON.parse(lg('cd_save')||'{}'))}catch{return defSV()}})();
+const svs=()=>ls('cd_save',JSON.stringify(SV));
+if(!Array.isArray(SV.team)||!SV.team.length)SV.team=SV.own.slice(0,TMAX);SV.team=SV.team.filter(k=>TW[k]&&SV.own.includes(k)).slice(0,TMAX);
+const done=w=>[0,1,2,3,4].every(l=>(SV.lv[w+'-'+l]||0)>0),lvOpen=(w,l)=>SV.wu.includes(w)&&(l===0||(SV.lv[w+'-'+(l-1)]||0)>0);
+function badge(){const b=$('cdBadge');if(!b)return;const n=Object.values(SV.lv).filter(v=>v>0).length;b.textContent=n?`Пройдено уровней: ${n}/25`:'Новая игра'}
+
+/* ---------- карта (рисуется под выбранный мир) и слои ---------- */
+const svg=$('cdSvg');let sd=7;const rn=()=>(sd=sd*16807%2147483647)/2147483647;
+svg.innerHTML='<g id="cdMap"></g><g id="cdBase"></g><g id="cdTw"></g><g id="cdEn"></g><g id="cdPr"></g><g id="cdGrid" fill="#fff" fill-opacity=".85" display="none"></g><g id="cdGh" display="none" style="pointer-events:none"><circle id="cdGr" r="0" fill="#fff" fill-opacity=".28" stroke="#fff" stroke-width="2" stroke-dasharray="5 4"/><use id="cdGu" opacity=".7"/></g><g id="cdFx" style="pointer-events:none"></g>';
+function buildMap(w){sd=7;let m='';const T=[['#bbf7d0','#d1fae5'],['#fde68a','#fef3c7'],['#0f172a','#131f3a'],['#e0f2fe','#f0f9ff'],['#3b1a0e','#4a2412']][w];
+ for(let r=0;r<8;r++)for(let c=0;c<6;c++){m+=`<rect x="${c*C}" y="${r*C}" width="${C}" height="${C}" fill="${T[(r+c)%2]}"/>`;
+  if(!ROAD.has(c+','+r)&&rn()<.45){const x=(c*C+8+rn()*44)|0,y=(r*C+8+rn()*44)|0,q=(rn()*4)|0;
+   if(w===0)m+=`<circle cx="${x}" cy="${y}" r="3.2" fill="${['#f9a8d4','#c4b5fd','#fdba74','#fff'][q]}"/><circle cx="${x}" cy="${y}" r="1.2" fill="#fde047"/>`;
+   else if(w===1)m+=`<circle cx="${x}" cy="${y}" r="2.6" fill="${['#fda4af','#fff','#93c5fd','#fdba74'][q]}"/><path d="M${x-4} ${y+5}h8" stroke="#d97706" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/>`;
+   else if(w===3)m+=`<circle cx="${x}" cy="${y}" r="2.6" fill="#fff"/><path d="M${x-4} ${y+5}h8" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round"/>`;else if(w===4)m+=`<circle cx="${x}" cy="${y}" r="2.2" fill="${['#fb923c','#fbbf24','#ef4444','#fde047'][q]}" fill-opacity=".7"/>`;else m+=`<rect x="${x}" y="${y}" width="${q%2?8:3}" height="${q%2?3:8}" rx="1.200" fill="${['#22d3ee','#a855f7','#f472b6','#4ade80'][q]}" fill-opacity=".55"/>`}}
+ const pl=PATH.map(p=>p.join(',')).join(' '),L2=(wd,col,ex)=>`<polyline points="${pl}" fill="none" stroke="${col}" stroke-width="${wd}" stroke-linejoin="round" ${ex||''}/>`;
+ if(w===0)m+=L2(58,'#fcd34d')+L2(50,'#fef3c7')+L2(3,'#fbbf24','stroke-opacity=".6" stroke-dasharray="2 11" stroke-linecap="round"');
+ else if(w===1)m+=L2(68,'#38bdf8')+L2(60,'#7dd3fc')+L2(50,'#b45309')+L2(44,'#d97706')+L2(44,'#78350f','stroke-opacity=".5" stroke-dasharray="2 12"');
+ else if(w===3)m+=L2(60,'#93c5fd')+L2(52,'#bfdbfe')+L2(3,'#fff','stroke-opacity=".7" stroke-dasharray="2 12" stroke-linecap="round"');else if(w===4)m+=L2(64,'#7c2d12')+L2(54,'#ea580c')+L2(40,'#f97316')+L2(3,'#fde047','stroke-opacity=".6" stroke-dasharray="3 10"');else m+=L2(66,'#22d3ee','stroke-opacity=".22"')+L2(58,'#0e7490')+L2(50,'#0b1730')+L2(3,'#22d3ee','stroke-dasharray="10 8"');
+ const s=PATH[0];m+=`<circle cx="${s[0]}" cy="${s[1]}" r="18" fill="${['#92400e','#0c4a6e','#7e22ce','#1e40af','#7f1d1d'][w]}"/><circle cx="${s[0]}" cy="${s[1]}" r="12" fill="${['#451a03','#082f49','#020617','#0c1a3a','#1c0a05'][w]}"/>`;
+ $('cdMap').innerHTML=m;$('cdBase').innerHTML=`<use href="#cd-${BS[w]}"/>`;$('cdBase').setAttribute('transform',`translate(${BASE[0]} ${BASE[1]}) scale(1.5)`)}
+const L={tw:$('cdTw'),en:$('cdEn'),pr:$('cdPr'),fx:$('cdFx')};
+
+/* ---------- состояние игры ---------- */
+let G;
+function reset(){G={paused:false,hp:10,fish:LV.fish,wave:0,state:'idle',cd:0,wt:0,q:[],en:[],tw:[],pr:[],fx:[],sel:null,pick:null,tm:0,kills:0,shake:0};
+ [L.tw,L.en,L.pr,L.fx].forEach(g=>g.innerHTML='');select(null);grid()}
+const queue=i=>{const q=[];WAVES[i].forEach(([k,n,gap,off])=>{for(let j=0;j<n;j++)q.push({t:(off||0)+j*gap,k})});return q.sort((a,b)=>a.t-b.t)};
+
+/* ---------- эффекты ---------- */
+function addFx(e,life,u){G.fx.push({e,t:0,life,u});u(0)}
+function ring(x,y,r,col){const c=mk('circle',{cx:x,cy:y,fill:col,'fill-opacity':.25,stroke:col,'stroke-width':3},L.fx);addFx(c,.35,k=>{c.setAttribute('r',(r*(.3+.7*k)).toFixed(1));c.setAttribute('opacity',1-k)})}
+function puff(x,y,col,n){for(let i=0;i<n;i++){const c=mk('circle',{r:rnd(2,4),fill:col},L.fx),a=rnd(0,6.28),v=rnd(25,60);addFx(c,.4,k=>{c.setAttribute('cx',(x+Math.cos(a)*v*k*.4).toFixed(1));c.setAttribute('cy',(y+Math.sin(a)*v*k*.4-k*8).toFixed(1));c.setAttribute('opacity',1-k)})}}
+function pop(x,y,txt,fish,col){const g=mk('g',{},L.fx),t=mk('text',{'text-anchor':'end','font-size':14,'font-weight':800,fill:col||'#f97316',stroke:'#fff','stroke-width':3,'paint-order':'stroke'},g);t.textContent=txt;if(fish)use('fish',g,{transform:'translate(9 -5) scale(.6)'});addFx(g,.9,k=>{g.setAttribute('transform',`translate(${Math.min(W-14,Math.max(24,x))} ${y-k*26})`);g.setAttribute('opacity',k<.7?1:(1-k)/.3)})}
+function ban(t){const b=$('cdBan');b.textContent=t;b.classList.remove('on');void b.offsetWidth;b.classList.add('on')}
+
+/* ---------- сущности ---------- */
+function mkEn(type,hm){const c=EN[type],g=mk('g',{},L.en),sl=mk('circle',{r:c.r+3,fill:'#60a5fa','fill-opacity':.4,display:'none'},g),b=mk('g',{},g);use(type,b);
+ const hb=mk('g',{display:'none'},g),w=c.r*2;mk('rect',{x:-c.r,y:-c.r-12,width:w,height:4,rx:2,fill:'#0f172a','fill-opacity':.45},hb);const hf=mk('rect',{x:-c.r,y:-c.r-12,width:w,height:4,rx:2,fill:'#34d399'},hb);
+ const hp=c.hp*hm;return{type,c,r:c.r,hp,max:hp,d:0,x:PATH[0][0],y:PATH[0][1],g,b,sl,hb,hf,w,slow:0,fl:0,ph:rnd(0,6)}}
+function mkTw(k,c,r){const x=c*C+30,y=r*C+30,g=mk('g',{transform:`translate(${x} ${y})`},L.tw);mk('ellipse',{cy:18,rx:20,ry:7,fill:'#065f46','fill-opacity':.2},g);const b=mk('g',{},g);use(k,b);
+ return{k,c,r,x,y,cf:TW[k],cd:TW[k].cd*.5,kick:0,fl:1,ph:rnd(0,6),g,b,lv:1,inv:TW[k].cost,wd:0,lt:mk('text',{y:32,'text-anchor':'middle','font-size':12,'font-weight':800,fill:'#f59e0b',stroke:'#fff','stroke-width':2.5,'paint-order':'stroke'},g)}}
+function dmg(e,n){if(e.dead)return;e.hp-=n;e.fl=.1;show(e.hb,1);e.hf.setAttribute('width',Math.max(0,e.w*e.hp/e.max).toFixed(1));sfx('hit');
+ if(e.hp<=0){e.dead=true;e.g.remove();G.fish+=e.c.gold;G.kills++;puff(e.x,e.y,'#a3b18a',6);pop(e.x,e.y-12,'+'+e.c.gold,1);sfx('pop');if(e.c.sum)sfx('boom')}}
+function shoot(t,tg){const cf=t.cf,v=cf.pj||'yarn',p={x:t.x,y:t.y-8,tg,tx:tg.x,ty:tg.y,sp:cf.sp||300,dmg:cf.dmg,aoe:cf.aoe||0,slow:cf.slow||0,r:v==='nip'?6:5,rot:0,g:mk('g',{},L.pr)};use(v,p.g);G.pr.push(p);sfx(cf.snd||'shoot')}
+function swipe(t){sfx('paw');ring(t.x,t.y,t.cf.range,'#f9a8d4');const p=mk('g',{transform:`translate(${t.x} ${t.y}) scale(1.6)`},L.fx);use('paw',p);addFx(p,.35,k=>p.setAttribute('opacity',1-k));
+ G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=t.cf.range+e.r*.5){dmg(e,t.cf.dmg);e.slow=1.6;e.sf=.6}})}
+function boom(p){sfx('boom');ring(p.x,p.y,p.aoe,'#4ade80');puff(p.x,p.y,'#86efac',7);G.en.forEach(e=>{if(!e.dead&&dist(e,p)<=p.aoe+e.r){dmg(e,p.dmg);if(p.slow){e.slow=1.8;e.sf=p.slow}}})}
+
+/* ---------- игровая логика (шаг симуляции) ---------- */
+function nextWave(early){if(G.state!=='break')return;if(early&&AUTO)G.fish+=Math.ceil(G.cd);G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;G.fish+=t.cf.gain;pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
+function step(dt){
+ if(G.state==='break'){if(AUTO)G.cd-=dt;if(G.cd<=0)nextWave()}
+ else if(G.state==='wave'){G.wt+=dt;while(G.q.length&&G.q[0].t<=G.wt)G.en.push(mkEn(G.q.shift().k,1+LV.hm*(G.wave-1)+LV.hb))}
+ else return;
+ /* враги идут по дороге; дошёл до миски — отнимает молоко */
+ G.en.forEach(e=>{if(e.dead)return;e.d+=e.c.sp*(e.slow>0?(e.sf||.5):1)*dt;e.slow-=dt;e.fl-=dt;const p=pos(e.d);e.x=p[0];e.y=p[1];
+  if(e.d>=TOT){e.dead=true;e.g.remove();G.hp=Math.max(0,G.hp-e.c.dmg);G.shake=.4;sfx('leak');vib(60);pop(e.x,e.y-14,'-'+e.c.dmg,0,'#ef4444');const c=$('cdHpC');c.classList.remove('hit');void c.offsetWidth;c.classList.add('hit')}});
+ G.en.forEach(e=>{if(e.dead||!e.c.sum)return;e.sc=(e.sc||0)+dt;if(e.sc>=10){e.sc=0;for(let i=0;i<4;i++){const z=mkEn('zcat',1+LV.hm*(G.wave-1)+LV.hb);z.d=Math.max(0,e.d-16*(i+1));const p=pos(z.d);z.x=p[0];z.y=p[1];G.en.push(z)}ring(e.x,e.y,50,'#a855f7');ban('Пёс зовёт зомби-кошек!');sfx('wave')}});
+ if(G.hp<=0)return finish(false);
+ /* котики: ищут самого дальнего врага в радиусе и атакуют */
+ G.tw.forEach(t=>{t.cd-=dt;if(t.cd>0)return;const cf=t.cf;
+   if(cf.gain){t.cd=9;return}
+   if(cf.inc){if(G.state!=='wave'){t.cd=1;return}t.cd=cf.cd;const n=Math.round(cf.inc);G.fish+=n;t.kick=1;pop(t.x,t.y-24,'+'+n,1);sfx('coin');return}
+   const fnd=()=>{let tg=null;G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=cf.range+e.r*.5&&(!tg||e.d>tg.d))tg=e});return tg};
+   if(t.wd){/* Лилу: замах закончился — удар */t.wd=0;t.cd=cf.cd;const w=t.wt,tg=w&&!w.dead&&dist(w,t)<=cf.range+w.r?w:fnd();if(tg){t.kick=1;sfx('paw');vib(20);ring(tg.x,tg.y,32,'#9ca3af');puff(tg.x,tg.y,'#e5e7eb',8);dmg(tg,cf.dmg)}return}
+   const tg=fnd();if(!tg)return;t.fl=tg.x<t.x?-1:1;
+   if(cf.wind){t.wd=1;t.wt=tg;t.cd=cf.wind;pop(t.x,t.y-30,'!',0,'#ef4444');ring(t.x,t.y,cf.range,'#ef4444');sfx('warn');return}
+   t.cd=cf.cd;t.kick=1;if(cf.melee)swipe(t);else shoot(t,tg)});
+ /* снаряды: наведение + коллизия «круг—круг» с любым зомби на пути */
+ G.pr.forEach(p=>{if(p.tg&&!p.tg.dead){p.tx=p.tg.x;p.ty=p.tg.y}
+  const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy),s=p.sp*dt;let arrive=false;
+  if(d<=s){p.x=p.tx;p.y=p.ty;arrive=true}else{p.x+=dx/d*s;p.y+=dy/d*s}
+  const hit=G.en.find(e=>!e.dead&&dist(e,p)<e.r+p.r);
+  if(hit||arrive){p.done=true;p.g.remove();if(p.aoe)boom(p);else if(hit){dmg(hit,p.dmg);if(p.slow){hit.slow=1.8;hit.sf=p.slow}puff(p.x,p.y,p.slow?'#bae6fd':'#f9a8d4',3)}}
+  else{p.rot+=dt*420;p.g.setAttribute('transform',`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${p.rot.toFixed(0)})`)}});
+ G.pr=G.pr.filter(p=>!p.done);G.en=G.en.filter(e=>!e.dead);
+ /* волна отбита */
+ if(G.state==='wave'&&!G.q.length&&!G.en.length){const b=20+10*G.wave;G.fish+=b;pop(W/2+10,40,'+'+b,1);sfx('coin');
+  if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=9;ban('Волна отбита! ✨')}}}
+function finish(win){G.state='over';let n=0,gold=0;if(win){n=G.hp>=8?3:G.hp>=5?2:1;const k=LV.w+'-'+LV.l,o=SV.lv[k]||0;gold=o?(n>o?10*(n-o)+8+4*LV.w:8+4*LV.w):14+8*n+5*LV.w;SV.lv[k]=Math.max(o,n);SV.g+=gold;svs()}G.gold=gold;badge();
+ sfx(win?'win':'lose');vib(win?[40,40,80]:[120,60,120]);const g=G;setTimeout(()=>{if(G===g&&G.state==='over')showOv(win?'win':'lose',n)},700)}
+
+/* ---------- отрисовка кадра: анимация ходьбы, дыхания, отдачи ---------- */
+function draw(dt){
+ G.tw.forEach(t=>{t.kick=Math.max(0,t.kick-dt*5);const s=Math.sin(G.tm*3+t.ph);t.b.setAttribute('transform',`translate(0 20) scale(${(t.fl*.95*(1+.025*s+.14*t.kick)).toFixed(3)} ${(.95*(1-.025*s-.12*t.kick)).toFixed(3)}) translate(0 -20)`)});
+ G.en.forEach(e=>{const s=Math.sin(e.ph+G.tm*(e.c.sp/54)*(e.slow>0?5:9));e.g.setAttribute('transform',`translate(${e.x.toFixed(1)} ${e.y.toFixed(1)})`);
+  e.b.setAttribute('transform',`translate(0 ${(-Math.abs(s)*3).toFixed(1)}) rotate(${(s*9).toFixed(1)})`);e.b.setAttribute('opacity',e.fl>0?.5:1);show(e.sl,e.slow>0)});
+ G.fx=G.fx.filter(f=>{f.t+=dt;const k=Math.min(1,f.t/f.life);f.u(k);if(k>=1){f.e.remove();return false}return true});
+ G.shake=Math.max(0,G.shake-dt);$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}
+const N={hp:$('cdHp'),fish:$('cdFish'),wave:$('cdWave'),wt:$('cdWT')};
+function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel)$('cdUp').style.opacity=G.sel.lv>=3||G.fish>=upc(G.sel)?1:.55;
+ if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW} · ${AUTO?Math.ceil(G.cd):'▶'}`;go=1}
+ else if(G.state==='wave')t=`Волна ${G.wave}/${MAXW} · ${G.q.length+G.en.length}`;else t=`Волна ${G.wave}/${MAXW}`;
+ sT(N.wt,t);N.wave.classList.toggle('go',!!go);
+ document.querySelectorAll('#cdBar .cd-t').forEach(b=>{const k=b.dataset.k;const n=G.tw.filter(t=>t.k===k).length;b.classList.toggle('no',G.fish<TW[k].cost||n>=MAXT);b.classList.toggle('sel',G.pick===k);sT(b.lastChild,n+'/'+MAXT)})}
+let raf=0,last=0;
+function frame(ts){raf=0;if(cur!=='catdef'||VIEW!=='play')return;const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
+ try{if(!G.paused){for(let i=0;i<SPD;i++)step(dt);G.tm+=dt*SPD}draw(G.paused?0:dt*SPD);ui()}catch(e){console.error('catdef',e)}raf=requestAnimationFrame(frame)}
+
+/* ---------- ввод: выбор котика, постановка, продажа ---------- */
+const cell=e=>{const r=svg.getBoundingClientRect();return[Math.floor((e.clientX-r.left)/r.width*W/C),Math.floor((e.clientY-r.top)/r.height*H/C)]};
+const free=(c,r)=>c>=0&&c<6&&r>=0&&r<8&&!ROAD.has(c+','+r)&&!G.tw.some(t=>t.c===c&&t.r===r);
+function ghost(x,y,range,k){const g=$('cdGh');if(x==null)return show(g,0);show(g,1);g.setAttribute('transform',`translate(${x} ${y})`);const r=$('cdGr');r.setAttribute('r',range||0);show(r,!!range);const u=$('cdGu');if(k){u.setAttribute('href','#cd-'+k);show(u,1)}else show(u,0)}
+function grid(){const g=$('cdGrid');if(!G.pick)return show(g,0);show(g,1);let h='';for(let r=0;r<8;r++)for(let c=0;c<6;c++)if(free(c,r))h+=`<circle cx="${c*C+30}" cy="${r*C+30}" r="4.5"/>`;g.innerHTML=h}
+const upc=t=>Math.round(TW[t.k].cost*(.35+.35*t.lv)),upg=(k,lv)=>{const b=TW[k],m=lv-1;return Object.assign({},b,{dmg:b.dmg&&b.dmg*(1+.45*m),range:b.range*(1+.06*m),cd:b.cd*(1-.1*m),gain:b.gain&&b.gain*(1+.5*m),inc:b.inc&&b.inc*(1+.5*m)})};
+function select(t){G.sel=t;const s=$('cdSell'),u=$('cdUp');if(!t){s.style.display=u.style.display='none';return ghost()}s.style.display=u.style.display='flex';s.firstChild.textContent=`Продать +${Math.floor(t.inv*.6)}`;u.firstChild.textContent=t.lv>=3?'Макс. ур.':`Ур.${t.lv+1} · ${upc(t)}`;u.disabled=t.lv>=3;t.lt.textContent='★'.repeat(t.lv-1);ghost(t.x,t.y,t.cf.range)}
+svg.addEventListener('pointerdown',e=>{unlock();if(G.state==='idle'||G.state==='over')return;const[c,r]=cell(e),t=G.tw.find(t=>t.c===c&&t.r===r);
+ if(t){G.pick=null;grid();select(t);sfx('click');return}
+ select(null);if(!G.pick)return;
+ if(c<0||c>5||r<0||r>7)return;if(ROAD.has(c+','+r))return say('Тут дорога — ставь на траву 🌿');
+ const cf=TW[G.pick];if(G.tw.filter(x=>x.k===G.pick).length>=MAXT){sfx('deny');return say(cf.n+': максимум '+MAXT+' на поле')}if(G.fish<cf.cost){sfx('deny');return say('Не хватает рыбок 🐟')}
+ G.fish-=cf.cost;G.tw.push(mkTw(G.pick,c,r));puff(c*C+30,r*C+40,'#fff',5);sfx('place');vib(10);if(G.tw.filter(t=>t.k===G.pick).length>=MAXT)G.pick=null;grid()});
+svg.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!G.pick||G.state==='idle'||G.state==='over')return;const[c,r]=cell(e);free(c,r)?ghost(c*C+30,r*C+30,TW[G.pick].range,G.pick):ghost()});
+svg.addEventListener('pointerleave',()=>{if(!G.sel)ghost()});
+$('cdSell').addEventListener('click',()=>{const t=G.sel;if(!t)return;G.fish+=Math.floor(t.inv*.6);t.g.remove();G.tw=G.tw.filter(x=>x!==t);puff(t.x,t.y,'#fde047',6);sfx('coin');select(null);grid()});
+$('cdUp').addEventListener('click',()=>{const t=G.sel;if(!t||t.lv>=3)return;const c=upc(t);if(G.fish<c){sfx('deny');return say('Не хватает рыбок 🐟')}G.fish-=c;t.inv+=c;t.lv++;t.cf=upg(t.k,t.lv);t.kick=1;ring(t.x,t.y,38,'#fde047');puff(t.x,t.y,'#fde047',8);sfx('win');select(t)});
+$('cdBar').addEventListener('click',e=>{const b=e.target.closest('.cd-t');if(!b||G.state==='idle'||G.state==='over')return;const k=b.dataset.k;select(null);
+ if(G.pick===k)G.pick=null;else if(G.fish<TW[k].cost){sfx('deny');say(TW[k].n+': нужно '+TW[k].cost+' рыбок 🐟')}else if(G.tw.filter(t=>t.k===k).length>=MAXT){sfx('deny');say(TW[k].n+': максимум '+MAXT+' на поле')}else{G.pick=k;sfx('click')}grid()});
+N.wave.addEventListener('click',()=>{unlock();if(G.state==='break')nextWave(true)});
+$('catdef').addEventListener('pointerdown',unlock,true);
+const sndIcon=()=>document.querySelectorAll('.cd-snd').forEach(b=>b.innerHTML=ic(sOn()?'snd':'mute'));
+document.querySelectorAll('.cd-snd').forEach(b=>b.addEventListener('click',()=>{unlock();if(!mute&&window.BSFX&&!window.BSFX.on)return say('Звук выключен в настройках');mute=!mute;ls('cd_mute',mute?'1':'0');sndIcon();sfx('click');if(VIEW==='menu'&&TAB==='c')menu()}));
+
+
+/* ---------- меню: миры и магазин ---------- */
+const view=v=>{VIEW=v;[['Menu','menu'],['Play','play'],['Film','film']].forEach(([n,k])=>$('cd'+n).classList.toggle('on',k===v));if(v==='play'){last=performance.now();if(!raf)raf=requestAnimationFrame(frame)}};
+function menu(){sT($('cdGold'),SV.g);document.querySelectorAll('#cdTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===TAB));$('cdBody').innerHTML=({w:worldsH,t:teamH,s:shopH,c:setH})[TAB]()}
+function teamH(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k)),cd=(k,c)=>`<button class="tm-s ${c}" style="--bg:${TW[k].bg}" data-a="tm" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${TW[k].role} · ${TW[k].cost}</span></button>`;
+ return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — убрать</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).length} · тап — взять в отряд</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`}
+function setH(){const row=(a,t,d,on)=>`<button class="cd-set" data-a="${a}"><span><b>${t}</b><small>${d}</small></span><i class="cd-sw${on?' on':''}"></i></button>`;
+ return row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Следующая волна начинается сама. Выключи — и запускай волны кнопкой в бою',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
+function worldsH(){return WORLDS.map((w,i)=>{const op=SV.wu.includes(i);let b;
+ if(op)b=`<div class="cl-row">${[0,1,2,3,4].map(l=>{const s=SV.lv[i+'-'+l]||0,o=lvOpen(i,l);return `<button class="cl${s?' ok':''}${l===4?' boss':''}" data-a="lvl" data-w="${i}" data-l="${l}" ${o?'':'disabled'}>${o?(l===4?`<svg viewBox="-36 -38 72 70"><use href="#cd-${DOGS[i]}"/></svg>`:`<b>${l+1}</b>`):ic('lock')}<span>${s?'★'.repeat(s)+'☆'.repeat(3-s):''}</span></button>`}).join('')}</div><button class="cd-btn g sm" data-a="film">${ic('film')}История мира</button>`.replace('data-a="film"',`data-a="film" data-w="${i}"`);
+ else if(i===0||done(i-1))b=`<button class="cd-btn sm go" data-a="unlock" data-w="${i}">${ic('film')}Разблокировать</button>`;
+ else b=`<div class="cw-lock">${ic('lock')}Пройди все уровни мира ${i}, чтобы открыть</div>`;
+ return `<div class="cw${op?'':' cl0'}" style="--c:${w.c}"><div class="cw-h"><div class="cw-t"><svg viewBox="${i===1?'-12 -9 28 18':'-24 -22 48 40'}"><use href="#cd-${['bowl','fish','srv','igl','bowl'][i]}"/></svg></div><div><b>Мир ${i+1} · ${w.n}</b><small>${w.s}</small></div></div><p>${w.d}</p>${b}</div>`}).join('')}
+function shopH(){return `<div class="ck-grid">${Object.keys(TW).map(k=>{const t=TW[k],own=SV.own.includes(k);return `<div class="ck" style="--bg:${t.bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${t.n}</b><em>${t.role}</em><p>${t.inf}</p><small>${t.st}</small><div class="ck-c">В бою: ${fi()}${t.cost}</div>${own?`<div class="ck-ok">${ic('star')}Куплен</div>${CF[k]?`<button class="cd-btn g sm" data-a="cf" data-k="${k}">${ic('film')}История</button>`:''}`:`<button class="cd-btn sm" data-a="buy" data-k="${k}">${fi('gfish')}${t.pr}</button>`}</div>`}).join('')}</div>`}
+$('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a],[data-t]');if(!b)return;unlock();const d=b.dataset;
+ if(d.t){TAB=d.t;sfx('click');return menu()}
+ if(d.a==='exit'){sfx('click');return go('games')}
+ if(d.a==='unlock'){const w=+d.w;return film(w,()=>{if(!SV.wu.includes(w)){SV.wu.push(w);svs()}})}
+ if(d.a==='film')return film(+d.w,null);
+ if(d.a==='lvl'){sfx('click');return startLevel(+d.w,+d.l)}
+  if(d.a==='cf'){sfx('click');return cfilm(d.k)}
+  if(d.a==='tm'){const i=SV.team.indexOf(d.k);if(i>=0){if(SV.team.length<2){sfx('deny');return say('В отряде нужен хотя бы один котик')}SV.team.splice(i,1)}else{if(SV.team.length>=TMAX){sfx('deny');return say('Отряд полон — сначала убери кого-нибудь')}SV.team.push(d.k)}svs();sfx('click');return menu()}
+  if(d.a==='sset'){if(mute&&window.BSFX&&!window.BSFX.on)return say('Звук выключен в настройках приложения');mute=!mute;ls('cd_mute',mute?'1':'0');sndIcon();sfx('click');return menu()}
+  if(d.a==='sauto'){AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');return menu()}
+  if(d.a==='sx2'){SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click');return menu()}
+  if(d.a==='reset'){if(confirm('Сбросить весь прогресс Cat Defense: уровни, котиков и золото?')){SV=defSV();svs();badge();sfx('lose');menu()}return}
+ if(d.a==='buy'){const t=TW[d.k];if(SV.g<t.pr){sfx('deny');return say('Не хватает золотых рыбок')}SV.g-=t.pr;SV.own.push(d.k);if(SV.team.length<TMAX)SV.team.push(d.k);svs();sfx('win');say(t.n+' теперь в твоей команде!');if(CF[d.k])return cfilm(d.k);menu()}});
+function buildBar(){$('cdBar').innerHTML=SV.team.filter(k=>SV.own.includes(k)).map(k=>`<button class="cd-t" data-k="${k}" style="--bg:${TW[k].bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${fi()}${TW[k].cost}</span><small class="cd-n">0/3</small></button>`).join('')}
+function startLevel(w,l){LV={w,l,fish:150+l*25+w*30,hm:.1+w*.02,hb:l*.07+w*.3,boss:l===4};WAVES=mkWaves(w,l);MAXW=WAVES.length;setPath(ROUTES[MAPS[w][l]]);buildMap(w);buildBar();spdUi();reset();
+ $('cdLT').textContent=`${w+1}-${l+1} · ${WORLDS[w].lv[l]}`;view('play');ui();showOv('start')}
+
+/* ---------- сюжетные фильмики (рисуются кодом: SVG + CSS-анимации) ---------- */
+const spr=(id,x,y,s,c,dl)=>`<g transform="translate(${x} ${y}) scale(${s||1})"><g class="${c||''}" ${dl?`style="animation-delay:${dl}s"`:''}><use href="#cd-${id}"/></g></g>`;
+const bgS=(a,b)=>`<defs><linearGradient id="cdSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="360" height="480" fill="url(#cdSky)"/>`;
+const tws=(n,c)=>Array.from({length:n},(_,i)=>`<circle cx="${(i*97+31)%350}" cy="${(i*53+17)%230}" r="${1+i%3*.6}" fill="${c}" class="a-tw" style="animation-delay:${(i*.3)%2}s"/>`).join('');
+const FILMS=[[
+ {t:'Давным-давно в Мяу-Тропии рыбы плавали в молочных реках, а клубки шерсти падали прямо с неба. Котики жили сладко и спокойно.',
+  a:bgS('#bae6fd','#fef9c3')+'<circle cx="290" cy="80" r="34" fill="#fde047"/><ellipse cx="90" cy="470" rx="230" ry="130" fill="#4ade80"/><ellipse cx="330" cy="480" rx="170" ry="100" fill="#22c55e"/><path d="M-10 390Q110 350 230 395T380 385V480H-10Z" fill="#f8fafc"/>'+spr('yarn',60,0,2.4,'a-fall')+spr('yarn',170,0,2,'a-fall',1.6)+spr('yarn',290,0,2.6,'a-fall',3)+spr('fish',250,415,2.6,'a-jump')+spr('murzik',110,365,2.4,'a-bob')+spr('bowl',280,360,1.5)},
+ {t:'Но за горами лежит Пустошь Мусора — межпромерстная свалка. Там поселился Злой Лаборант-Пёс и варил свои ядовитые зелья.',
+  a:bgS('#1e1b4b','#3f3f46')+tws(24,'#fef9c3')+'<path d="M-10 480V360L50 310 110 370 170 330 240 390 300 320 370 380V480Z" fill="#3f3f46"/><path d="M0 480V420L70 390 140 430 220 400 290 440 360 410V480Z" fill="#27272a"/><circle cx="180" cy="300" r="70" fill="#4ade80" opacity=".25" class="a-tw"/>'+spr('dog',180,300,1.6,'a-bob')+'<path d="M232 330l8 18h-16z" fill="#4ade80"/><rect x="226" y="322" width="12" height="6" fill="#86efac"/>'},
+ {t:'Он оживил армию Мёртвых Мышей и Зомби-Крыс! Их цель — отравить все миски с молоком и превратить пушистиков в бездумных зомби-питомцев.',
+  a:bgS('#064e3b','#1c1917')+'<ellipse cx="180" cy="470" rx="260" ry="90" fill="#14532d" opacity=".7"/>'+spr('mouse',0,330,2,'a-march')+spr('mouse',0,390,2,'a-march',1.8)+spr('rat',0,440,1.8,'a-march',3.2)+spr('mouse',0,280,1.8,'a-march',4.6)+spr('bowl',300,200,1.4,'a-bob')},
+ {t:'Тогда собрался отряд элитных котиков — «Мяу-Гвард». Мурзик, Барсик, Мурка и Пушок встали у священной миски. Защити Молочные Сады!',
+  a:bgS('#fde68a','#fb923c')+'<circle cx="180" cy="120" r="60" fill="#fff7ed" opacity=".7"/><ellipse cx="180" cy="490" rx="260" ry="110" fill="#4ade80"/>'+spr('murzik',60,330,1.7,'a-bob')+spr('barsik',140,330,1.7,'a-bob',.3)+spr('murka',220,330,1.7,'a-bob',.6)+spr('pushok',300,330,1.7,'a-bob',.9)+spr('bowl',180,420,2.4)}
+],[
+ {t:'Молочные Сады не выстоят вечно. Зомби хлынули на лужайки, и Мяу-Гвард, спасая последние миски, отступил к морю.',
+  a:bgS('#7f1d1d','#f97316')+'<ellipse cx="180" cy="500" rx="260" ry="110" fill="#365314"/><circle cx="90" cy="150" r="46" fill="#fb923c" opacity=".5" class="a-tw"/>'+spr('mouse',0,360,1.8,'a-march')+spr('mouse',0,420,1.8,'a-march',2)+spr('murzik',250,330,1.5,'a-bob')+spr('barsik',305,350,1.5,'a-bob',.4)},
+ {t:'На старом рыбацком паруснике котики пересекли Солёное Мурлыканье и пристали у шумного Рыбного Порта, где пахло свежим уловом.',
+  a:bgS('#0c4a6e','#0e7490')+tws(18,'#e0f2fe')+'<g class="a-wav"><path d="M-40 360Q10 340 60 360T160 360 260 360 360 360 460 360V480H-40Z" fill="#0284c7"/></g><g class="a-bob"><path d="M110 330h140l-20 36H130Z" fill="#92400e"/><path d="M180 330V230l60 90Z" fill="#fff"/><path d="M174 330V245l-48 75Z" fill="#fef3c7"/></g>'+spr('murzik',150,318,.9,'a-bob')+spr('murka',210,318,.9,'a-bob',.4)+'<g class="a-wav"><path d="M-40 400Q10 380 60 400T160 400 260 400 360 400 460 400V480H-40Z" fill="#0369a1"/></g>'},
+ {t:'Но Лаборант-Пёс отправил погоню: быстрые зомби на досках для сёрфинга уже мчатся по волнам. Защити Рыбный Порт!',
+  a:bgS('#fde68a','#38bdf8')+'<circle cx="290" cy="80" r="32" fill="#fff7ed"/><path d="M0 300H360V480H0Z" fill="#0ea5e9"/><g class="a-wav"><path d="M-40 330Q10 312 60 330T160 330 260 330 360 330 460 330V480H-40Z" fill="#38bdf8"/></g><rect x="0" y="270" width="360" height="26" fill="#b45309"/><path d="M30 270v26M90 270v26M150 270v26M210 270v26M270 270v26M330 270v26" stroke="#78350f" stroke-width="3"/>'+spr('surf',0,380,2.2,'a-surf')+spr('surf',0,440,2,'a-surf',1.7)+spr('barsik',300,250,1.8,'a-bob')}
+],[
+ {t:'Следы вели в тайное сердце врага. Мяу-Гвард нашёл портал, мерцающий неоном, и шагнул в будущее — в Кибер-Лабораторию.',
+  a:bgS('#1e1b4b','#312e81')+tws(26,'#a5f3fc')+'<circle cx="180" cy="210" r="86" fill="none" stroke="#22d3ee" stroke-width="10" class="a-spin" stroke-dasharray="40 14"/><circle cx="180" cy="210" r="60" fill="#0b1730" stroke="#a855f7" stroke-width="5"/><circle cx="180" cy="210" r="30" fill="#22d3ee" opacity=".4" class="a-tw"/><rect x="0" y="400" width="360" height="80" fill="#0f172a"/><path d="M0 400H360" stroke="#22d3ee" stroke-width="3"/>'+spr('murzik',110,380,1.4,'a-bob')+spr('pushok',250,380,1.4,'a-bob',.5)},
+ {t:'Здесь стоит Главный Сервер с рыбными деликатесами. Если Доктор Пёс взломает его — рыбы не останется ни в одной миске.',
+  a:bgS('#0f172a','#082f49')+'<path d="M0 340H360M0 400H360M0 460H360M60 340L-20 480M180 340V480M300 340L380 480" stroke="#22d3ee" stroke-opacity=".35" stroke-width="2"/>'+tws(18,'#67e8f9')+spr('srv',180,300,4.2,'a-bob')+spr('fish',90,200,2,'a-jump')+spr('fish',270,230,2,'a-jump',1.1)},
+ {t:'Пёс-лаборант стал огромным роботом и ждёт у сервера. Это последний рубеж этого мира. Но история Мяу-Гвард ещё только начинается!',
+  a:bgS('#3b0764','#0f172a')+tws(22,'#f0abfc')+'<circle cx="180" cy="250" r="120" fill="#c084fc" opacity=".2" class="a-tw"/>'+spr('dog3',180,270,2.6,'a-bob')+spr('murzik',70,420,1.2,'a-bob')+spr('barsik',130,430,1.2,'a-bob',.3)+spr('murka',230,430,1.2,'a-bob',.6)+spr('pushok',290,420,1.2,'a-bob',.9)}
+],[
+  {t:'Портал выбросил Мяу-Гвард на заснеженные вершины. Воздух звенит от мороза, а молоко в мисках схватывается льдом за секунды.',
+   a:bgS('#bae6fd','#f0f9ff')+tws(26,'#fff')+'<path d="M-10 480V330L70 200 140 300 210 170 300 290 370 220V480Z" fill="#e2e8f0"/><path d="M70 200l-22 34 22-8 14 14ZM210 170l-26 40 26-10 16 16Z" fill="#fff"/><path d="M0 480V400Q180 360 360 410V480Z" fill="#fff"/>'+spr('murzik',90,385,1.6,'a-bob')+spr('frost',170,395,1.6,'a-bob',.4)+spr('barsik',250,390,1.6,'a-bob',.8)+spr('igl',310,340,1.8)},
+  {t:'На вершине стоит ледяной маяк. Доктор Пёс заморозил его и спрятал внутри кристалл, который гасит тепло даже у самых упрямых зомби.',
+   a:bgS('#1e3a8a','#0c4a6e')+tws(22,'#e0f2fe')+'<path d="M150 480L165 200H195L210 480Z" fill="#cbd5e1"/><path d="M160 260H200M157 340H203" stroke="#60a5fa" stroke-width="10"/><path d="M180 120L212 200H148Z" fill="#93c5fd"/><path d="M180 90L196 128 180 160 164 128Z" fill="#fff" class="a-tw"/><circle cx="180" cy="130" r="60" fill="#bae6fd" opacity=".25" class="a-tw"/>'+spr('dog4',70,390,1.3,'a-bob')+spr('zcat',300,420,2,'a-bob',.5)},
+  {t:'Снежок чихнул — и лёд затрещал! Мяу-Гвард поднял лапы: пора растопить сердце ледяного пса и вернуть молоку тепло!',
+   a:bgS('#7dd3fc','#e0f2fe')+tws(18,'#fff')+'<ellipse cx="180" cy="490" rx="260" ry="100" fill="#fff"/>'+spr('dog4',180,250,2.4,'a-bob')+spr('snowb',120,0,3,'a-fall')+spr('snowb',250,0,2.6,'a-fall',1.5)+spr('frost',90,400,1.6,'a-jump')+spr('tigra',270,400,1.6,'a-bob',.5)}
+],[
+  {t:'За ледяными вершинами проснулся вулкан. Из трещин бьёт огонь, зомби-крысы роют лавовые норы, а в воздухе кружатся раскалённые искры.',
+   a:bgS('#450a0a','#f97316')+tws(24,'#fde047')+'<path d="M-10 480V350L120 300 180 130 240 300 370 340V480Z" fill="#44180c"/><path d="M150 180L180 130 210 180Q180 210 150 180Z" fill="#f97316" class="a-tw"/><path d="M180 140Q175 240 150 300M180 140Q190 230 220 310" stroke="#fb923c" stroke-width="7" fill="none" stroke-linecap="round"/>'+spr('rat',0,430,1.7,'a-march')+spr('mouse',0,390,1.8,'a-march',2)+spr('murzik',290,410,1.4,'a-bob')},
+  {t:'Последний рубеж. Доктор Пёс подключил главный реактор к жерлу вулкана. Если он выстрелит — молоко высохнет во всех мисках мира.',
+   a:bgS('#1c0a05','#7f1d1d')+tws(20,'#fb923c')+'<path d="M0 400Q90 370 180 420T360 400V480H0Z" fill="#f97316" class="a-wav"/><circle cx="180" cy="240" r="100" fill="#ef4444" opacity=".25" class="a-tw"/>'+spr('dog5',180,260,2.6,'a-bob')+spr('srv',300,390,1.6,'a-bob',.5)},
+  {t:'Мяу-Гвард прошёл льды, море и неон. Лилу шагнула вперёд, прищурилась и сказала одно слово: «Мяу». Пора закончить эту историю!',
+   a:bgS('#fde68a','#f97316')+'<circle cx="180" cy="140" r="70" fill="#fff7ed" opacity=".7"/><ellipse cx="180" cy="500" rx="270" ry="110" fill="#7c2d12"/>'+spr('lila',180,340,3,'a-bob')+spr('murzik',60,430,1.3,'a-bob')+spr('barsik',120,440,1.3,'a-bob',.3)+spr('murka',240,440,1.3,'a-bob',.6)+spr('ninja',300,430,1.3,'a-bob',.9)}
+]];
+const DEC={
+ home:bgS('#fde68a','#fb923c')+'<rect y="370" width="360" height="110" fill="#92400e"/><rect x="40" y="150" width="90" height="120" rx="6" fill="#bae6fd" stroke="#b45309" stroke-width="6"/><path d="M85 150v120M40 210h90" stroke="#b45309" stroke-width="4"/><rect x="200" y="310" width="140" height="70" rx="16" fill="#f472b6"/><rect x="190" y="326" width="30" height="54" rx="12" fill="#ec4899"/>',
+ street:bgS('#475569','#1e293b')+tws(14,'#fef9c3')+'<rect x="20" y="230" width="70" height="170" fill="#0f172a"/><rect x="250" y="200" width="90" height="200" fill="#0f172a"/><rect y="400" width="360" height="80" fill="#334155"/><path d="M0 445H360" stroke="#fde047" stroke-width="4" stroke-dasharray="26 18"/>',
+ sea:bgS('#7dd3fc','#0369a1')+'<circle cx="290" cy="200" r="34" fill="#fef9c3"/><g class="a-wav"><path d="M-40 380Q10 360 60 380T160 380 260 380 360 380 460 380V480H-40Z" fill="#0284c7"/></g><path d="M0 420H360V480H0Z" fill="#075985"/>',
+ space:bgS('#0f172a','#4c1d95')+tws(30,'#fff')+'<circle cx="270" cy="210" r="46" fill="#e2e8f0"/><circle cx="256" cy="198" r="9" fill="#cbd5e1"/><ellipse cx="180" cy="500" rx="260" ry="90" fill="#94a3b8"/>',
+ snow:bgS('#bae6fd','#f0f9ff')+tws(22,'#fff')+'<path d="M-10 480V350L90 240 170 340 260 220 370 350V480Z" fill="#e2e8f0"/><ellipse cx="180" cy="490" rx="260" ry="90" fill="#fff"/>',
+ lab:bgS('#1e293b','#334155')+'<rect y="390" width="360" height="90" fill="#475569"/><circle cx="70" cy="240" r="46" fill="none" stroke="#94a3b8" stroke-width="10" class="a-spin"/><rect x="250" y="230" width="80" height="160" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="3"/><circle cx="290" cy="280" r="12" fill="#4ade80" class="a-tw"/>',
+ night:bgS('#1e1b4b','#3b0764')+tws(28,'#fef9c3')+'<circle cx="80" cy="190" r="30" fill="#fef9c3"/><path d="M-10 480V390H70V350H140V400H220V330H300V380H370V480Z" fill="#0f172a"/>'};
+const S=(t,d,...sp)=>({t,a:DEC[d]+sp.map(p=>spr(p[0],p[1],p[2],p[3],p[4],p[5])).join('')});
+const Z=[['mouse',0,430,1.8,'a-march'],['rat',0,390,1.8,'a-march',1.6]];
+const CF={
+ pushok:[S('Пушок жил в гараже и чинил всё подряд: чайники, радио, даже будильник соседа. Зомби разбили его мастерскую, а он не стал плакать.','lab',['pushok',170,350,2.6,'a-bob']),S('Он собрал консервную фабрику прямо на поляне и пришёл к Мяу-Гвард: «Вы воюйте, а рыбки я обеспечу».','lab',['pushok',120,350,2.4,'a-bob'],['murzik',260,370,1.8,'a-bob',.4])],
+ murka:[S('Мурка училась на ведьмину кошку, но вечно путала зелья. Однажды пролила предсказание на хвост, и хвост стал светиться.','night',['murka',180,360,2.6,'a-bob']),S('С тех пор она видит врагов наперёд и бросает мятные шары. Говорит, что вышло «почти по плану».','night',['murka',130,360,2.4,'a-bob'],['nip',280,300,3,'a-jump'])],
+ frost:[S('Снежок родился на ледяной крыше и с детства чихал снежками. Все смеялись, а потом пришли зомби.','snow',['frost',180,360,2.6,'a-bob'],['snowb',90,0,3,'a-fall'],['snowb',270,0,2.6,'a-fall',1.4]),S('Оказалось, от снежков зомби еле шевелятся. Снежок впервые почувствовал себя героем и записался в отряд.','snow',['frost',130,360,2.4,'a-jump'],['zcat',0,420,2,'a-march'])],
+ tigra:[S('Тигра не умеет сидеть на месте. За день она сбивала со стола всё, до чего дотягивалась лапой.','home',['tigra',180,360,2.6,'a-jump'],['yarn',90,420,3,'a-bob']),S('Зомби стали первой целью, в которую можно кидаться клубками без конца. Тигра пришла за самой весёлой игрой в жизни.','street',['tigra',230,360,2.4,'a-jump'],...Z)],
+ sphinx:[S('Граф лыс и аристократичен. Он любит чай, тишину и ровные картины на стене. Зомби повесили всё криво.','home',['sphinx',180,360,2.6,'a-bob']),S('Он надел цилиндр, протёр монокль и стреляет редко, но точно: «Порядок прежде всего».','street',['sphinx',250,360,2.4,'a-bob'],...Z)],
+ ninja:[S('Тень тренировался на крышах по ночам. Никто не знал его лица, видели только красную повязку в темноте.','night',['ninja',180,360,2.6,'a-bob']),S('Когда зомби подошли к миске, он молча спрыгнул вниз. Теперь он в отряде и по-прежнему ничего не рассказывает.','street',['ninja',230,340,2.4,'a-jump'],...Z)],
+ chef:[S('Тунец был шеф-поваром лучшего кошачьего ресторана. Каждое блюдо он готовил из свежей рыбы и с любовью.','home',['chef',180,360,2.6,'a-bob'],['fish',90,420,3,'a-jump']),S('Зомби закрыли ресторан, и шеф ушёл кормить армию. Говорит: «Сытый кот дерётся вдвое лучше».','street',['chef',130,360,2.4,'a-bob'],['murzik',270,380,1.8,'a-bob',.4])],
+ pirat:[S('Одноглаз плавал по Солёному Мурлыканью и искал сундук с вечным запасом рыбы. Глаз он потерял в споре с чайкой.','sea',['pirat',180,350,2.6,'a-bob']),S('Сундука нет, зато есть зомби, в которых приятно стрелять ядрами. Пират остался в отряде навсегда.','sea',['pirat',130,350,2.4,'a-bob'],['rat',0,420,1.8,'a-march'])],
+ kosm:[S('Космо слетал на Луну и вернулся с мешком лунного сыра. Дома его встретили зомби.','space',['kosm',180,360,2.6,'a-bob']),S('Скафандр пригодился: лазер на запястье бьёт далеко. Космо говорит, что на Луне было скучнее.','street',['kosm',230,360,2.4,'a-bob'],...Z)],
+ lila:[S('Лилу — серая шотландская кошка. Ей нужны только три вещи: любимая хозяйка, миска с кормом и тёплое место на диване.','home',['lila',130,350,2.8,'a-bob'],['bowl',280,420,1.6]),S('Зомби утащили хозяйку и заняли диван. Лилу не любит драться, но тут она встала и пошла.','street',['lila',250,350,2.4,'a-bob'],...Z),S('В отряд она пришла не за славой, а чтобы спасти хозяйку, вернуть корм и своё тёплое место, где она всегда спит. Сначала предупредит, потом ударит.','home',['lila',180,350,3,'a-bob'],['murzik',60,420,1.3,'a-bob'],['barsik',300,420,1.3,'a-bob',.4])],
+ biz:[S('Мистер Мур продавал мышеловки, потом корм, потом целые рыбные склады. Всё считал в уме.','street',['biz',180,360,2.6,'a-bob']),S('Зомби испортили ему бизнес. Он пришёл в отряд как инвестор: платит за защиту и получает прибыль с каждой волны.','lab',['biz',140,360,2.4,'a-bob'],['gfish',280,330,3,'a-jump'])],
+ flame:[S('Огонёк с детства любил тепло: камин, солнечный подоконник, горячую батарею. А потом пришла зима зомби.','snow',['flame',180,360,2.6,'a-bob']),S('Он нашёл огнемёт и понял, что холод побеждается теплом. Теперь он греет всех, кроме зомби.','lab',['flame',140,360,2.4,'a-bob'],['fire',270,350,3,'a-jump'])],
+ knight:[S('Сэр Мурлот вырос на сказках о рыцарях и тренировался деревянным мечом на подушках.','home',['knight',180,360,2.6,'a-bob']),S('Когда пришла беда, он надел шлем из кастрюли и поклялся защищать миски. Меч уже настоящий.','street',['knight',230,360,2.4,'a-bob'],...Z)],
+ jelly:[S('Мармелад жил в кондитерской и ел только сладкое. От этого стал липким и очень добрым.','home',['jelly',180,360,2.6,'a-bob'],['gel',90,420,3,'a-bob']),S('Зомби застревают в его шариках, как в варенье. Мармелад извиняется, но стреляет дальше.','street',['jelly',230,360,2.4,'a-bob'],...Z)],
+ fairy:[S('Искорка — маленькая фея-кошка. Она зажигала звёзды на ночном небе, пока зомби не погасили все огни.','night',['fairy',180,360,2.6,'a-bob']),S('Теперь она стреляет звёздами по зомби, чтобы вернуть небу свет. Тех, кого заденет, она потом прощает.','night',['fairy',130,360,2.4,'a-bob'],['star',270,300,3,'a-spin'])]};
+let FP=null,FT=0;
+function film(w,cb){FP={f:FILMS[w],i:0,cb,to:0,full:false};$('cdFT').textContent=`Мир ${w+1} · ${WORLDS[w].n}`;view('film');scene()}
+function cfilm(k){if(!CF[k])return menu();FP={f:CF[k],i:0,cb:null,to:0,full:false};$('cdFT').textContent='Знакомьтесь: '+TW[k].n;view('film');scene()}
+function hold(){const t=FP.f[FP.i].t,ms=Math.max(7000,t.length*60),p=$('cdFP');p.style.transition='none';p.style.width='0';void p.offsetWidth;p.style.transition=`width ${ms}ms linear`;p.style.width='100%';clearTimeout(FP.to);if(FP.i<FP.f.length-1)FP.to=setTimeout(nextScene,ms)}
+function scene(){clearInterval(FT);clearTimeout(FP.to);const f=FP.f,sc=f[FP.i],cap=$('cdFC'),p=$('cdFP');let k=0;FP.full=false;cap.textContent='';sfx('film');p.style.transition='none';p.style.width='0';
+ $('cdFA').innerHTML=`<svg viewBox="0 0 360 480" preserveAspectRatio="xMidYMid slice">${sc.a}</svg>`;
+ $('cdFD').innerHTML=f.map((_,i)=>`<i class="${i<=FP.i?'on':''}"></i>`).join('');$('cdFN').textContent=FP.i===f.length-1?'Готово':'Далее';
+ FT=setInterval(()=>{k+=1;cap.textContent=sc.t.slice(0,k);if(k>=sc.t.length){clearInterval(FT);FP.full=true;hold()}},26)}
+function nextScene(){if(!FP)return;clearTimeout(FP.to);if(!FP.full){clearInterval(FT);$('cdFC').textContent=FP.f[FP.i].t;FP.full=true;hold();return}
+ if(FP.i>=FP.f.length-1)return endFilm();FP.i++;scene()}
+function endFilm(){clearInterval(FT);if(FP)clearTimeout(FP.to);const cb=FP&&FP.cb;FP=null;view('menu');if(cb)cb();menu()}
+function filmStop(){clearInterval(FT);if(FP)clearTimeout(FP.to);FP=null}
+$('cdFilm').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;unlock();if(b.dataset.a==='skip')return endFilm();nextScene()});
+
+/* ---------- экраны поверх игры: старт уровня / пауза / победа / поражение ---------- */
+function showOv(k,n){const o=$('cdOv'),W0=WORLDS[LV.w];let h;
+ if(k==='start')h=`<div class="cd-card"><svg viewBox="-28 -46 56 66" width="58" height="68"><use href="#cd-murzik"/></svg><h3>${LV.w+1}-${LV.l+1}</h3><p><b>${W0.lv[LV.l]}</b><br>Волн: ${MAXW}${LV.boss?' · в конце — Босс, Доктор Пёс':''}.<br>Выбери котика внизу и поставь на свободную клетку (до 3 одного вида). Зомби идут к ${LV.w===2?'серверу':'миске'}!</p><button class="cd-btn" data-a="go">В бой!</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+ else if(k==='quit')h=`<div class="cd-card"><h3>Выйти?</h3><p>Прогресс этого уровня не сохранится.</p><button class="cd-btn" data-a="resume">Продолжить</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+ else if(k==='win'){const nx=LV.l<4,wd=LV.l===4&&done(LV.w);
+  h=`<div class="cd-conf">${Array.from({length:22},()=>`<i style="left:${rnd(2,96)|0}%;background:${['#fb923c','#a78bfa','#6ee7b7','#f472b6','#fde047'][(rnd(0,5))|0]};animation-delay:${rnd(0,2.4).toFixed(1)}s"></i>`).join('')}</div><div class="cd-card"><h3>Победа!</h3><div class="st">${'★'.repeat(n)}${'☆'.repeat(3-n)}</div><p>Молоко спасено: ${G.hp}/10 · Зомби побеждено: ${G.kills}<br><b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${G.gold} ${fi('gfish')} золотых рыбок</b>${wd?(LV.w<4?'<br>Мир пройден! В меню ждёт следующий мир.':'<br>Мир пройден! Продолжение истории — скоро...'):''}</p>${nx?'<button class="cd-btn" data-a="next">Следующий уровень</button>':''}<button class="cd-btn ${nx?'g':''}" data-a="menu">В меню</button><button class="cd-btn g" data-a="retry">Заново</button></div>`}
+ else h=`<div class="cd-card"><h3>Молоко разлито</h3><p>Зомби прорвались на волне ${G.wave} из ${MAXW}.<br>Побеждено зомби: ${G.kills}. Попробуй ещё раз!</p><button class="cd-btn" data-a="retry">Ещё раз</button><button class="cd-btn g" data-a="menu">В меню</button></div>`;
+ o.innerHTML=h;o.classList.add('on')}
+$('cdOv').addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;unlock();const k=a.dataset.a;
+ if(k==='menu'){$('cdOv').classList.remove('on');G.state='idle';G.paused=false;view('menu');menu();sfx('click');return}
+ if(k==='resume'){G.paused=false;$('cdOv').classList.remove('on');return}
+ if(k==='next')return startLevel(LV.w,LV.l+1);
+ if(k==='retry')return startLevel(LV.w,LV.l);
+ if(k==='go'){$('cdOv').classList.remove('on');G.state='break';G.cd=12;sfx('click');ban('Расставляй котиков!')}});
+$('cdQuit').addEventListener('click',()=>{unlock();sfx('click');if(G.state==='idle'||G.state==='over'){view('menu');menu();return}G.paused=true;showOv('quit')});
+const spdUi=()=>{const b=$('cdX2');b.classList.toggle('on',SPD===2);b.lastChild.textContent='x'+SPD};
+$('cdX2').addEventListener('click',()=>{unlock();SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click')});
+
+/* ---------- вход / выход с экрана (как у остальных игр приложения) ---------- */
+function enter(){unlock();if(AC)mg.gain.value=volume();sndIcon();badge();G.state='idle';G.paused=false;$('cdOv').classList.remove('on');view('menu');menu()}
+{const f=window.go;window.go=function(s){const was=cur,r=f.apply(this,arguments);if(s==='games')card();if(s==='catdef'&&was!=='catdef')enter();else if(was==='catdef'&&s!=='catdef')filmStop();return r}}
+spdUi();reset();card();
+}catch(e){console.error('catdef',e)}})();
+</script>
 <script id="pack36">
 /* ===== v36: быстрая башня · плоды дерева · новые деревья · гардероб питомцев ===== */
 (()=>{
