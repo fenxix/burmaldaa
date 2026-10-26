@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#070817">
 <title>burmalda</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -6176,6 +6176,105 @@ $('cdX2').addEventListener('click',()=>{unlock();SPD=SPD===1?2:1;ls('cd_spd',SPD
 /* ---------- вход / выход с экрана (как у остальных игр приложения) ---------- */
 function enter(){unlock();if(AC)mg.gain.value=volume();sndIcon();badge();G.state='idle';G.paused=false;$('cdOv').classList.remove('on');view('menu');menu()}
 {const f=window.go;window.go=function(s){const was=cur,r=f.apply(this,arguments);if(s==='games')card();if(s==='catdef'&&was!=='catdef')enter();else if(was==='catdef'&&s!=='catdef')filmStop();return r}}
+/* ===== Часть 2: новые котики, эволюция, скины-лукошки, авто-кнопка ===== */
+Object.assign(SYM,{
+ sumo:cat('#f1f5f9','#64748b','<path d="M-9-19Q0-27 9-19" stroke="#1e293b" stroke-width="3" fill="none"/><rect x="-14" y="6" width="28" height="8" rx="3" fill="#dc2626"/>'),
+ archer:cat('#86efac','#166534','<path d="M-14-11Q-14-25 0-25T14-11Z" fill="#15803d"/><path d="M-3-26l8-6-2 8" fill="#ef4444"/><path d="M20-14Q32 4 20 22" stroke="#92400e" stroke-width="2.5" fill="none"/>'),
+ iney:cat('#dbeafe','#60a5fa','<path d="M-12-16L-8-28-3-18 0-30 3-18 8-28 12-16Z" fill="#bae6fd" stroke="#38bdf8" stroke-width="1.2"/>'),
+ dynamo:cat('#fca5a5','#b91c1c','<rect x="19" y="4" width="7" height="16" rx="2" fill="#dc2626"/><path d="M22.5 4Q22-3 28-6" stroke="#475569" stroke-width="1.5" fill="none"/><circle cx="28" cy="-6" r="2.2" fill="#fde047"/>'),
+ cowboy:cat('#fdba74','#9a3412','<path d="M-20-12Q0-6 20-12L12-26Q0-30-12-26Z" fill="#92400e"/><path d="M-14 8Q0 13 14 8" stroke="#dc2626" stroke-width="3" fill="none"/>'),
+ garden:cat('#bbf7d0','#15803d','<path d="M-16-12Q0-4 16-12L10-22Q0-27-10-22Z" fill="#fde68a"/><path d="M-3-24q3-9 9-4" stroke="#16a34a" stroke-width="2.4" fill="none"/><circle cx="20" cy="14" r="4" fill="#f472b6"/>'),
+ evo:'<circle r="7" fill="#fde047"/><circle r="4" fill="#fff"/>'});
+Object.assign(TW,{
+ sumo:{n:'Тайсон',role:'Сумоист',melee:1,cost:150,pr:420,range:64,cd:1.4,dmg:11,bg:'#f1f5f9',inf:'Тяжёлый удар по всем рядом и замедление',st:'Чемпион дворовых боёв. Не любит спешить, но если ударит — зомби помнят.'},
+ archer:{n:'Робин',role:'Лучник',cost:115,pr:330,range:160,cd:.45,dmg:3.2,pj:'star',sp:520,bg:'#dcfce7',inf:'Быстрые меткие выстрелы на большой дальности',st:'Лесной стрелок в зелёной шапочке. Попадает в муху с другого конца двора.'},
+ iney:{n:'Иней',role:'Ледяная королева',cost:135,pr:480,range:100,cd:2.2,dmg:3,aoe:50,slow:.45,pj:'snowb',sp:240,snd:'nip',bg:'#dbeafe',inf:'Ледяные шары: урон и сильное замедление по площади',st:'Правит ледяным двориком. Её корона не тает даже летом.'},
+ dynamo:{n:'Динамит',role:'Подрывник',cost:140,pr:440,range:110,cd:3,dmg:9,aoe:56,pj:'ball',sp:220,snd:'nip',bg:'#fee2e2',inf:'Тяжёлые заряды: огромный взрыв по площади',st:'Обожает фейерверки. Соседи просят его не праздновать слишком громко.'},
+ cowboy:{n:'Бискви',role:'Ковбой',cost:105,pr:360,range:110,cd:.3,dmg:2.4,pj:'ball',sp:480,bg:'#ffedd5',inf:'Очень быстрая стрельба на средней дальности',st:'Кот с Дикого Запада. Стреляет быстрее, чем зомби успевают моргнуть.'},
+ garden:{n:'Сеня',role:'Садовник',cost:100,pr:400,range:95,cd:1.2,dmg:1.5,psn:1.2,pt:5,slow:.7,pj:'nip',sp:230,bg:'#dcfce7',inf:'Ядовитые семена: яд и замедление',st:'Вырастил на подоконнике самые вредные цветы в округе.'}});
+const TWB={};Object.keys(TW).forEach(k=>TWB[k]=Object.assign({},TW[k]));
+const NEWK=['sumo','archer','iney','dynamo','cowboy','garden'];
+function fixSV(){['mat','evo','sk'].forEach(k=>{if(!SV[k]||typeof SV[k]!=='object'||Array.isArray(SV[k]))SV[k]={}});if(!Array.isArray(SV.skins))SV.skins=[];if(typeof SV.lkp!=='number')SV.lkp=0}
+fixSV();
+
+/* --- эволюция --- */
+const MAT={yarn:['🧶','Клубок'],gf:['🐠','Золотая рыба'],bell:['🔔','Колокольчик'],dust:['✨','Звёздная пыль']};
+const EVC=[null,{yarn:4,gf:2},{yarn:6,bell:2},{yarn:8,gf:4,bell:3},{bell:5,gf:5,dust:2},{dust:4,gf:8,yarn:12}];
+const EVN=['','Закалка','Острые когти','Мастерство','Эволюция','Легенда'];
+function evoCfg(b,e){const c=Object.assign({},b),eco=c.gain||c.inc;
+ if(c.dmg)c.dmg*=1+.16*e;if(c.range)c.range*=1+.035*e;if(c.cd)c.cd*=1-.035*e;if(c.gain)c.gain*=1+.2*e;if(c.inc)c.inc*=1+.2*e;
+ if(e>=4){if(eco){c.gain&&(c.gain*=1.4);c.inc&&(c.inc*=1.4)}
+  else if(c.kind==='aura')c.aura={dm:c.aura.dm*1.35,sp:c.aura.sp*1.35};
+  else if(c.melee){c.dmg*=1.3;c.range*=1.1}
+  else if(!c.kind&&c.pj){if(c.aoe){c.aoe*=1.35;c.psn=(c.psn||0)+1.2;c.pt=4}else{c.aoe=38;c.slow=c.slow||.75}c.pj='evo';c.snd='nip'}
+  else{c.dmg&&(c.dmg*=1.35);c.range&&(c.range*=1.08)}}
+ if(e>=5){if(eco){c.gain&&(c.gain*=1.25);c.inc&&(c.inc*=1.25)}else if(c.kind==='aura')c.aura={dm:c.aura.dm*1.2,sp:c.aura.sp*1.2};else if(!c.kind&&c.range>0&&!c.aura)c.aura={dm:.08,sp:.06}}
+ return c}
+function evoApply(){fixSV();Object.keys(TWB).forEach(k=>{const e=SV.evo[k]||0;TW[k]=e?evoCfg(TWB[k],e):TWB[k]})}
+function evoText(b,l){const eco=b.gain||b.inc;
+ if(l===4)return eco?'Двойной улов: доход ×1.4':b.kind==='aura'?'Аура сильнее на 35%':b.melee?'Тяжёлый удар: больше урона и дальности':(!b.kind&&b.pj)?'НОВАЯ АТАКА: золотые взрывные шары'+(b.aoe?' с ядом':' с замедлением'):'Мощный удар: больше урона и дальности';
+ if(l===5)return eco?'Легенда: доход ещё +25%':b.kind==='aura'?'Легенда: аура ещё +20%':'Легенда: аура-бафф, соседи бьют на 8% сильнее';
+ return '+'+16*l+'% урона'+(l>1?', дальше и быстрее':'')+(l===3?', золотое сияние':'')}
+
+/* --- скины-лукошки --- */
+const THEMES={
+ candy:{n:'Сладости',e:'🍬',hue:310,sat:1.3,br:1.05,acc:'<path d="M16-4v14" stroke="#fde68a" stroke-width="2"/><circle cx="16" cy="-8" r="6" fill="#f472b6"/><path d="M13-8a3 3 0 106 0" stroke="#fff" fill="none"/><path d="M-6 8L0 12 6 8V16L0 12-6 16Z" fill="#f9a8d4"/>',cats:['murzik','tigra','jelly','fairy','chef','murka']},
+ space:{n:'Космос',e:'🪐',hue:200,sat:1.1,br:1,acc:'<circle cy="-4" r="19" fill="#bae6fd" fill-opacity=".25" stroke="#e2e8f0" stroke-width="2.5"/><path d="M-18-18l2 4 4 1-4 2-1 4-2-4-4-1 4-2z" fill="#fde047"/>',cats:['kosm','sphinx','ninja','volt','frost','wing']},
+ night:{n:'Ночь',e:'🌙',hue:240,sat:.9,br:.6,acc:'<path d="M-15-12Q-4-34 18-24L8-12Z" fill="#4338ca"/><circle cx="19" cy="-24" r="3.5" fill="#fef08a"/>',cats:['barsik','knight','lila','sumo','pirat','spark']},
+ forest:{n:'Лес',e:'🌿',hue:90,sat:1.2,br:.95,acc:'<path d="M-12-16q-4-10 4-12M0-18q-2-12 7-12M12-16q4-10-4-12" fill="#22c55e" stroke="#15803d" stroke-width="1"/>',cats:['grok','archer','garden','thorn','toxic','miner']}};
+const SKS=[];Object.keys(THEMES).forEach(t=>THEMES[t].cats.filter(k=>SYM[k]&&TWB[k]).forEach((k,i)=>SKS.push({id:t+'.'+k,t,k,r:i>=4?1:0})));
+const LKP=60,pk=a=>a[Math.floor(Math.random()*a.length)];
+const skinG=(k,t)=>t?`<g filter="url(#cdf-${t})">${SYM[k]}</g>${THEMES[t].acc}`:SYM[k];
+const star=(x,y)=>`<path d="M${x} ${y}l2 4 4 1-4 2-1 4-2-4-4-1 4-2z" fill="#fde047"/>`;
+const compose=k=>{const e=SV.evo[k]||0;return (e>=3?'<circle cy="2" r="27" fill="url(#cdEg)"/>':'')+skinG(k,SV.sk[k])+(e>=1?star(-24,-30):'')+(e>=2?star(22,-30):'')+(e>=4?'<circle cy="-4" r="22" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 4"/>':'')+(e>=5?'<path d="M-10-26L-7-38 0-30 7-38 10-26Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.2"/>':'')};
+function paint(k){const g=document.getElementById('cd-'+k);if(g)g.innerHTML=compose(k)}
+const paintAll=()=>Object.keys(TW).forEach(paint);
+$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="cdEg"><stop offset="0" stop-color="#fde047" stop-opacity=".55"/><stop offset="1" stop-color="#fde047" stop-opacity="0"/></radialGradient>'+Object.keys(THEMES).map(t=>{const T=THEMES[t];return `<filter id="cdf-${t}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${T.hue}"/><feColorMatrix type="saturate" values="${T.sat}"/><feComponentTransfer><feFuncR type="linear" slope="${T.br}"/><feFuncG type="linear" slope="${T.br}"/><feFuncB type="linear" slope="${T.br}"/></feComponentTransfer></filter>`}).join('')+'<g id="cd-evo">'+SYM.evo+'</g>'+NEWK.map(k=>`<g id="cd-${k}"></g>`).join('')+SKS.map(s=>`<g id="cd-pv-${s.t}_${s.k}">${skinG(s.k,s.t)}</g>`).join('')+'</defs></svg>');
+evoApply();paintAll();
+
+/* --- интерфейс --- */
+const cdStl=document.createElement('style');cdStl.textContent='.cd-evp{position:absolute;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(7,8,23,.86);padding:18px}.cd-evp.on{display:flex}.ev-box{width:100%;max-width:340px;background:#17142e;border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:18px;text-align:center;position:relative;color:#fff;display:grid;gap:8px;justify-items:center}.ev-cat{width:110px;height:120px}.ev-pips{letter-spacing:4px;color:#fbbf24}.ev-x{position:absolute;right:12px;top:8px;font-size:18px;opacity:.7}.ev-m{display:inline-block;margin:3px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.08);font-size:13px;font-weight:700}.ev-m.ok{background:rgba(74,222,128,.22)}.ev-mats{display:flex;flex-wrap:wrap;justify-content:center;margin:0 0 6px}.lk{display:flex;gap:10px;align-items:center;padding:12px;margin:0 0 10px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}.lk-e{font-size:34px}.lk small{display:block;opacity:.7;font-size:11px;line-height:1.3}.lk-b{margin-left:auto;display:grid;gap:6px}.lk-shake{font-size:84px;animation:lks .5s ease-in-out infinite}@keyframes lks{25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}#cdAuto{padding:0 10px}#cdAuto.on{background:rgba(74,222,128,.25);border-color:#4ade80}';document.head.appendChild(cdStl);
+const evp=document.createElement('div');evp.className='cd-evp';evp.id='cdEv';$('app').appendChild(evp);
+const showEv=h=>{evp.innerHTML=h;evp.classList.add('on')},hideEv=()=>evp.classList.remove('on');
+const mats=()=>`<div class="ev-mats">${Object.keys(MAT).map(m=>`<span class="ev-m">${MAT[m][0]} ${SV.mat[m]||0}</span>`).join('')}</div>`;
+function evoH(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k));return mats()+`<p class="tm-h">Материалы выпадают за пройденные уровни. Тап по котику — эволюция</p><div class="tm-top">${ks.map(k=>{const e=SV.evo[k]||0;return `<button class="tm-s" style="--bg:${TWB[k].bg}" data-ev="open" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TWB[k].n}</b><span>${'★'.repeat(e)}${'☆'.repeat(5-e)}</span></button>`}).join('')}</div>`}
+function evoPanel(k){const e=SV.evo[k]||0,b=TWB[k],nx=e<5?EVC[e+1]:null,can=nx&&Object.keys(nx).every(m=>(SV.mat[m]||0)>=nx[m]);
+ showEv(`<div class="ev-box"><button class="ev-x" data-ev="close" aria-label="Закрыть">✕</button><svg class="ev-cat" viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${b.n} · ур. ${e}/5</b><div class="ev-pips">${'●'.repeat(e)}${'○'.repeat(5-e)}</div>${nx?`<p><b>${EVN[e+1]}:</b> ${evoText(b,e+1)}</p><div>${Object.keys(nx).map(m=>`<span class="ev-m${(SV.mat[m]||0)>=nx[m]?' ok':''}">${MAT[m][0]} ${SV.mat[m]||0}/${nx[m]}</span>`).join('')}</div><button class="cd-btn go" data-ev="up" data-k="${k}" ${can?'':'disabled'}>Эволюционировать</button>`:'<p>Максимальный уровень — легенда! 👑</p>'}</div>`)}
+function lukH(){fixSV();const free=SV.dl!==new Date().toDateString();
+ const cr=Object.keys(THEMES).map(t=>{const T=THEMES[t],all=SKS.filter(s=>s.t===t),own=all.filter(s=>SV.skins.includes(s.id)).length;return `<div class="lk"><div class="lk-e">${T.e}</div><div><b>${T.n}</b><small>Скины для: ${all.map(s=>TWB[s.k].n).join(', ')}</small><small>Собрано ${own}/${all.length}</small></div><div class="lk-b"><button class="cd-btn sm go" data-lk="roll" data-t="${t}" ${SV.g<LKP?'disabled':''}>${LKP} ${fi('gfish')}</button>${free?`<button class="cd-btn sm g" data-lk="free" data-t="${t}">Бесплатно</button>`:''}</div></div>`}).join('');
+ const mine=SKS.filter(s=>SV.skins.includes(s.id));
+ return `<p class="tm-h">Лукошки со скинами: у каждой темы свой набор котиков. Раз в день одно открытие бесплатно</p>${cr}<p class="tm-h">Мои скины · тап — надеть или снять</p><div class="tm-top">${mine.length?mine.map(s=>`<button class="tm-s${SV.sk[s.k]===s.t?' f':''}" style="--bg:${TWB[s.k].bg}" data-lk="eq" data-k="${s.k}" data-t="${s.t}"><svg viewBox="-28 -46 56 66"><use href="#cd-pv-${s.t}_${s.k}"/></svg><b>${TWB[s.k].n}</b><span>${THEMES[s.t].n}</span></button>`).join(''):'<p class="tm-h">Пока пусто — открой лукошко</p>'}</div>`}
+function roll(t,fr){fixSV();if(!fr&&SV.g<LKP){sfx('deny');return say('Не хватает золотых рыбок')}
+ const all=SKS.filter(s=>s.t===t),un=all.filter(s=>!SV.skins.includes(s.id));if(fr)SV.dl=new Date().toDateString();else SV.g-=LKP;
+ let s;if(un.length&&(SV.lkp>=3||Math.random()<.7)){const rr=un.filter(x=>x.r),cc=un.filter(x=>!x.r);s=pk(rr.length&&(!cc.length||Math.random()<.25)?rr:cc)}else s=pk(all);
+ const dup=SV.skins.includes(s.id);if(dup){SV.lkp++;SV.mat.bell=(SV.mat.bell||0)+1}else{SV.lkp=0;SV.skins.push(s.id)}
+ svs();sfx('click');showEv(`<div class="ev-box"><div class="lk-shake">${THEMES[t].e}</div><p>Открываем лукошко…</p></div>`);
+ setTimeout(()=>{sfx('win');vib([30,40,60]);showEv(`<div class="ev-box"><svg class="ev-cat" viewBox="-28 -46 56 66"><use href="#cd-pv-${s.t}_${s.k}"/></svg><b>${TWB[s.k].n} · ${THEMES[t].n}${s.r?' · редкий':''}</b><p>${dup?'Повтор — держи 🔔 колокольчик':'Новый скин!'}</p><button class="cd-btn go" data-lk="eq" data-k="${s.k}" data-t="${s.t}" data-c="1">Надеть</button><button class="cd-btn g" data-ev="close">Закрыть</button></div>`);menu()},900)}
+function act(e){const b=e.target.closest('[data-ev],[data-lk]');if(!b||b.disabled)return;unlock();const d=b.dataset;fixSV();
+ if(d.ev==='close'){sfx('click');return hideEv()}
+ if(d.ev==='open'){sfx('click');return evoPanel(d.k)}
+ if(d.ev==='up'){const e0=SV.evo[d.k]||0,nx=EVC[e0+1];if(!nx||!Object.keys(nx).every(m=>(SV.mat[m]||0)>=nx[m])){sfx('deny');return say('Не хватает материалов')}
+  Object.keys(nx).forEach(m=>SV.mat[m]-=nx[m]);SV.evo[d.k]=e0+1;evoApply();paint(d.k);svs();sfx('win');vib([40,40,80]);say(TWB[d.k].n+': '+EVN[e0+1]+'!');evoPanel(d.k);return menu()}
+ if(d.lk==='roll')return roll(d.t,0);
+ if(d.lk==='free'){if(SV.dl===new Date().toDateString())return;return roll(d.t,1)}
+ if(d.lk==='eq'){if(SV.sk[d.k]===d.t&&!d.c)delete SV.sk[d.k];else SV.sk[d.k]=d.t;paint(d.k);svs();sfx('click');if(d.c)hideEv();return menu()}}
+$('cdMenu').addEventListener('click',act);evp.addEventListener('click',e=>{if(e.target===evp)hideEv();else act(e)});
+SUBS.k.push(['e','Эволюция','team'],['x','Скины','star']);TG.e='k';TG.x='k';
+{const m0=menu;menu=function(){fixSV();if(TAB!=='e'&&TAB!=='x')return m0.apply(this,arguments);const T0=TAB;TAB='t';m0.apply(this,arguments);TAB=T0;SUBT.k=T0;document.querySelectorAll('#cdSub button').forEach(b=>b.classList.toggle('on',b.dataset.t===T0));$('cdBody').innerHTML=T0==='e'?evoH():lukH()}}
+
+/* --- добыча материалов, бой, облако --- */
+{const f0=finish;finish=function(win){f0.apply(this,arguments);if(!win)return;fixSV();const w=LV.w,wk=w%5,d={},add=(m,n)=>{SV.mat[m]=(SV.mat[m]||0)+n;d[m]=(d[m]||0)+n};
+ add('yarn',1+Math.floor(Math.random()*2)+(w>4?1:0));if(Math.random()<.45+.05*wk)add('gf',1);if(wk>=1&&Math.random()<.4)add('bell',1);
+ if(LV.l===4){add('gf',1);add('bell',1);if(Math.random()<.6)add('dust',1)}else if(wk>=3&&Math.random()<.15)add('dust',1);
+ svs();setTimeout(()=>{try{toast('Добыча: '+Object.keys(d).map(m=>MAT[m][0]+'×'+d[m]).join(' '),4200)}catch{}},1200)}}
+{const s0=startLevel;startLevel=function(){fixSV();evoApply();const r=s0.apply(this,arguments);autoUi();return r}}
+{const c0=clMerge;clMerge=function(c){c0.apply(this,arguments);try{fixSV();if((c.ts||0)>(SV.ts||0)&&c.mat)SV.mat=Object.assign({},c.mat);
+ if(c.evo)for(const k in c.evo)SV.evo[k]=Math.max(SV.evo[k]||0,c.evo[k]||0);if(Array.isArray(c.skins))SV.skins=[...new Set([...SV.skins,...c.skins])];SV.sk=Object.assign({},c.sk,SV.sk);if(c.dl&&!SV.dl)SV.dl=c.dl;evoApply();paintAll()}catch(e){console.warn('catdef merge',e)}}}
+$('cdX2').insertAdjacentHTML('afterend','<button class="cd-chip cd-x2" id="cdAuto" aria-label="Авто-волны"><b>Авто</b></button>');
+function autoUi(){const b=$('cdAuto');if(b){b.classList.toggle('on',AUTO);b.firstChild.textContent=AUTO?'Авто ✓':'Авто'}}
+$('cdAuto').addEventListener('click',()=>{unlock();AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');autoUi();say(AUTO?'Авто-волны включены':'Волны запускаются кнопкой')});
+autoUi();
+
 spdUi();reset();card();
 }catch(e){console.error('catdef',e)}})();
 </script>
