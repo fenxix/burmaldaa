@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover">
 <meta name="theme-color" content="#070817">
 <title>burmalda</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -184,7 +184,8 @@ html body #shList button.on .xs{background:rgb(var(--pr));color:#fff}
 </section>
 
 <section class="screen" id="home">
- <div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="logo" style="font-size:28px">burmalda</span><i class="fa-regular fa-heart" style="color:var(--pink);font-size:20px"></i></div>
+ <div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="logo" style="font-size:28px">burmalda</span><button type="button" id="flameBtn" class="fl or" onclick="flameSend()" aria-label="Отправить искру любви"><span class="fl-e">🔥</span><b id="flameN">0</b></button><i class="fa-regular fa-heart" style="color:var(--pink);font-size:20px"></i></div>
+ <div class="fl-strip" id="flameStrip"></div>
  <div class="card row" id="roomCard"></div>
  <div class="hq" id="hq" role="group" aria-label="Напоминания на сегодня"></div>
 
@@ -4782,7 +4783,7 @@ if(typeof render==='function'){const r0=render;render=function(){const x=r0.appl
 try{emoVec()}catch{}
 })();
 </script>
-<script id="v14">
+<script id="v14b">
 (()=>{
 const safe=(n,f)=>{try{f()}catch(e){console.warn('v14:'+n,e)}};
 /* 1. Векторные частицы эффектов башни (вместо эмодзи и текстовых символов) */
@@ -6514,6 +6515,68 @@ function hist(){var b=document.getElementById('qBody'),d=dayKey(),pn=S.pt?S.pt.n
 for(var r=0;r<QMAX;r++){var m=S.quiz.find(function(x){return x.day===d&&x.user_id===S.uid&&(x.round||0)===r}),t=S.quiz.find(function(x){return x.day===d&&x.user_id!==S.uid&&(x.round||0)===r});if(!m&&!t)continue;var q=qToday(r);
 h+='<div class="qvr"><b>'+esc(q[0])+'</b><div><span>Ты</span>'+(m?esc(q[1][m.answer]):'ещё не ответил(а)')+'</div><div><span>'+esc(pn)+'</span>'+(!m?'откроется после твоего ответа':t?esc(q[1][t.answer]):'ждём ответ…')+'</div>'+(m&&t?'<em>'+(m.answer===t.answer?'💞 Совпало':'Разные ответы')+'</em>':'')+'</div>'}
 if(b)b.insertAdjacentHTML('beforeend','<div class="qv"><h3>Ответы за сегодня</h3>'+(h||'<p class="sm">Пока нет ответов. Ответь на вопрос выше.</p>')+'</div>')}
+})();
+</script>
+<style id="calm-css">
+/* calm-ui: спокойная главная + огонёк */
+#home.on{display:flex;flex-direction:column;gap:14px}
+#home>*{margin-top:0!important;margin-bottom:0!important}
+#home>.row:first-child{order:0;align-items:center}#flameStrip{order:1}#roomCard{order:2}#hq{order:3}#home .hz-pet{order:4}#home .hz-room{order:5}#home .hzr{order:6}#home .hz-game{order:7}#hzTree{order:8}
+#gameCard{display:none}
+#home .hz-h{font:600 11px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:0 0 8px 4px}
+#home .hzr{margin-top:0!important}
+#home .hzr-b{background:var(--glass);border:1px solid var(--border);box-shadow:none}
+#home .hzr-i{background:rgba(var(--pr),.16);color:var(--pink-light)}
+#home .card{box-shadow:none}
+.fl{display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:14px;height:36px;padding:0 12px 0 9px;border-radius:999px;background:var(--glass);border:1px solid var(--border);font:800 14px Comfortaa,sans-serif;--fc:255,150,60}
+.fl.pk{--fc:255,90,160}.fl.au{--fc:255,200,80}.fl.rb{--fc:200,120,255}
+.fl .fl-e{font-size:18px;line-height:1;filter:grayscale(1) opacity(.6)}
+.fl.on{border-color:rgba(var(--fc),.7);background:rgba(var(--fc),.16);box-shadow:0 0 18px rgba(var(--fc),.35)}
+.fl.on .fl-e{filter:none;animation:flb 1.6s ease-in-out infinite}
+.fl.rb.on{animation:flh 6s linear infinite}
+#app.cbd #flameBtn{margin-right:86px}
+@keyframes flb{50%{transform:scale(1.18) rotate(-4deg)}}@keyframes flh{to{filter:hue-rotate(360deg)}}
+.fl-strip{font-size:12px;color:var(--text-secondary);line-height:1.4;padding:0 4px}.fl-strip small{display:block;color:var(--text-muted);margin-top:2px}
+#sparkFx{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;background:rgba(7,8,23,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#sparkFx.on{display:flex;animation:fade .25s ease-out}
+#sparkFx .sp-h{font-size:110px;line-height:1;animation:flb 1.2s ease-in-out infinite;filter:drop-shadow(0 0 30px rgba(255,79,154,.6))}
+#sparkFx b{font:700 20px Comfortaa,sans-serif}#sparkFx p{color:var(--text-secondary);font-size:13px}
+.fl-p{position:fixed;z-index:70;pointer-events:none;font-size:18px;animation:hup 1s ease-out forwards}
+</style>
+<script id="calm-js">
+(()=>{
+const MS=[3,7,10,11,22,30,50,77,100,111,150,200,222,300,365,500,777,1000],RW={3:10,7:30,10:50,11:30,22:40,30:100,50:150,77:150,100:300,111:200,150:250,200:400,222:300,300:500,365:800,500:800,777:1000,1000:2000};
+const pad=n=>String(n).padStart(2,'0'),ld=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return ld(d)},today=()=>ld(new Date());
+const f={n:0,last:null,fz:1,busy:0},g=id=>document.getElementById(id);
+const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k):localStorage.setItem(k,v)}catch{return null}};
+const alive=()=>!!f.last&&(f.last===today()||f.last===ago(1)||(f.fz>0&&f.last===ago(2)));
+function draw(){const b=g('flameBtn'),s=g('flameStrip');if(!b||!s)return;const sent=f.last===today(),n=alive()?f.n:0,nx=MS.find(x=>x>n),pn=(S.pt&&S.pt.name)||'партнёр';
+ g('flameN').textContent=n;b.className='fl '+(n>=100?'rb':n>=30?'au':n>=7?'pk':'or')+(sent?' on':'');
+ s.innerHTML=(sent?'Сегодня огонь горит ✓':n?'Огонь горит '+n+' дн. — отправь искру, чтобы он продолжился':'Отправь искру: '+esc(pn)+' увидит сердце на экране')+(nx?'<small>Следующая отметка — '+nx+' дн. · +'+RW[nx]+' 🪙'+(n&&nx-n<=3?' · уже скоро':'')+'</small>':'')}
+function fx(big,t1,t2,ms){let o=g('sparkFx');if(!o){o=document.createElement('div');o.id='sparkFx';o.onclick=()=>o.classList.remove('on');g('app').appendChild(o)}
+ o.innerHTML='<div class="sp-h">'+big+'</div><b>'+t1+'</b><p>'+t2+'</p>';o.classList.add('on');clearTimeout(o._t);o._t=setTimeout(()=>o.classList.remove('on'),ms||4200);try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch{}}
+function burst(){const r=g('flameBtn').getBoundingClientRect();for(let i=0;i<8;i++){const s=document.createElement('span');s.className='fl-p';s.textContent=['💗','🔥','✨'][i%3];s.style.left=(r.left+r.width/2+(Math.random()-.5)*50)+'px';s.style.top=r.top+'px';s.style.animationDelay=(i*60)+'ms';document.body.appendChild(s);setTimeout(()=>s.remove(),1400)}}
+async function loadFlame(){if(!S.room)return;const {data}=await sb.from('couple_flame').select('streak,last_day,freezes').eq('room_id',S.room).maybeSingle();if(data){f.n=data.streak;f.last=data.last_day;f.fz=data.freezes}draw()}
+async function missed(){const seen=+ls('sp_seen')||0;const {data}=await sb.from('couple_sparks').select('from_name,created_at').eq('room_id',S.room).neq('from_user',S.uid).order('created_at',{ascending:false}).limit(1);
+ const s=data&&data[0];if(s){const t=+new Date(s.created_at);if(t>seen&&Date.now()-t<172800000)fx('💗',esc(s.from_name||'Партнёр')+' прислал(а) тебе искру','Нажми, чтобы закрыть',5000)}ls('sp_seen',String(Date.now()))}
+window.flameSend=async()=>{if(f.busy||!S.room||!S.me)return;f.busy=1;setTimeout(()=>f.busy=0,2500);
+ const {data,error}=await sb.rpc('couple_spark_send',{p_room:S.room,p_day:today(),p_name:S.me.name||''});
+ if(error||!data){toast('Не получилось отправить искру');return}
+ f.n=data.streak;f.last=today();f.fz=data.freezes;burst();
+ if(data.reward){try{S.wal.coins=(S.wal.coins||0)+data.reward;drawX()}catch{}fx('🔥','Огонь любви: '+data.streak+' дн.','+'+data.reward+' 🪙 за красивую отметку',5200)}
+ else toast(data.first?'🔥 Искра отправлена · огонь '+f.n+' дн.':'💗 Искра отправлена');draw()};
+let fRoom=null;{const r0=render;render=function(){const x=r0.apply(this,arguments);try{
+ if(S.room&&S.me&&fRoom!==S.room){fRoom=S.room;if(window.spCh)sb.removeChannel(window.spCh);
+  window.spCh=sb.channel('sp'+S.room).on('postgres_changes',{event:'INSERT',schema:'public',table:'couple_sparks',filter:'room_id=eq.'+S.room},p=>{const r=p.new||{};if(r.from_user===S.uid)return;ls('sp_seen',String(Date.now()));fx('💗',esc(r.from_name||'Партнёр')+' думает о тебе','Нажми, чтобы закрыть');loadFlame()}).subscribe();
+  loadFlame().then(missed).catch(()=>{})}
+ draw()}catch(e){console.error('flame',e)}return x}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadFlame().catch(()=>{})});
+every(()=>{if(cur==='home')draw()},60000);
+/* нижнее меню: «Чат» вместо «Капсул»; капсулы — в «Ещё» */
+{const b=document.querySelector('.nav button[data-s="capsules"]');if(b){b.dataset.s='chat';b.setAttribute('onclick',"go('chat')");b.innerHTML='<i class="fa-regular fa-comments"></i>Чат'}}
+{const go0=go;go=function(s){const x=go0.apply(this,arguments);if(s==='chat')g('nav').classList.add('on');return x}}
+{const d0=drawMore;drawMore=function(){const x=d0.apply(this,arguments);try{const m=g('moreBody');if(m&&!m.querySelector('[data-cap]'))m.insertAdjacentHTML('afterbegin','<button data-cap class="card row mt" style="width:100%;text-align:left" onclick="go(\'capsules\')"><span class="ico"><i class="fa-solid fa-lock"></i></span><div class="sp"><b class="ff" style="font-size:16px">Капсулы</b><p class="xs">Сообщение, которое откроется позже</p></div><i class="fa-solid fa-chevron-right sm"></i></button>')}catch{}return x}}
 })();
 </script>
 </body></html>
