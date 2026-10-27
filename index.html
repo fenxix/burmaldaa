@@ -5341,7 +5341,7 @@ const st2=document.createElement('style');st2.textContent=`
 .cd-ib.t{width:auto;padding:0 12px;gap:6px;display:flex;align-items:center;font-weight:800;font-size:13px}
 .ci{width:22px;height:22px;flex:none}.fi{width:20px;height:14px;flex:none}
 .cd-chip svg.ci{width:20px;height:20px}.cd-chip svg.fi{width:26px;height:18px}
-#cdHpC{flex:.9}#cdWave{flex:1.9}#cdWT{font-size:12.5px}#cdWave.go{color:#fff}.cd-x2{flex:.8;color:#cbd5e1}.cd-x2.on{background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;border-color:transparent}
+#cdHpC{flex:.9}#cdWave{flex:1.9}#cdWT{font-size:12.5px}#cdWave.go{color:#fff}.cd-x2{flex:.8;color:#cbd5e1}#cdAuto{flex:.45;min-width:0;padding-left:0;padding-right:0;justify-content:center}.cd-x2.on{background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;border-color:transparent}
 .cd-gold{display:flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:14px;background:rgba(251,191,36,.16);border:1px solid rgba(251,191,36,.4);font:800 14px Montserrat,sans-serif;color:#fde68a}
 .cd-tabs{display:flex;gap:8px;width:100%;max-width:398px;margin:6px 0 10px}
 .cd-tabs button{flex:1;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;font-size:14px;color:#c4b5fd;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
@@ -5475,7 +5475,7 @@ function swipe(t){sfx('paw');ring(t.x,t.y,t.cf.range,'#f9a8d4');const p=mk('g',{
 function boom(p){sfx('boom');ring(p.x,p.y,p.aoe,'#4ade80');puff(p.x,p.y,'#86efac',7);G.en.forEach(e=>{if(!e.dead&&dist(e,p)<=p.aoe+e.r){dmg(e,p.dmg,p.src);if(p.slow){e.slow=1.8;e.sf=p.slow}}})}
 
 /* ---------- игровая логика (шаг симуляции) ---------- */
-function nextWave(early){if(G.state!=='break')return;if(early&&(AUTO||G.co)&&!(G.co&&!CQ.host)){const eb=Math.ceil(G.cd);G.fish+=eb;if(G.co)G.pf+=eb}G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;t.dd=(t.dd||0)+t.cf.gain;payTo(t,t.cf.gain);pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
+function nextWave(early){if(G.state!=='break')return;if(early&&!(G.co&&!CQ.host)){const eb=Math.ceil(G.cd);G.fish+=eb;if(G.co)G.pf+=eb}G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;t.dd=(t.dd||0)+t.cf.gain;payTo(t,t.cf.gain);pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
 /* ---------- новые атаки: путь, мины, бумеранг, луч, молния, шок, шипы, зоны, бомбёжка, яд, аура ---------- */
 function slowE(e,t,f){if(e.c.sum)f=Math.max(f,.4);if(!(e.slow>0)||f<=(e.sf==null?1:e.sf))e.sf=f;e.slow=Math.max(e.slow>0?e.slow:0,t)}
 function poison(e,dps,t,src){if(e.dead)return;e.psn={dps:Math.max(dps,e.psn?e.psn.dps:0),t,src,pf:e.psn?e.psn.pf:0}}
@@ -5516,7 +5516,7 @@ function stepX(dt){
  G.bb.forEach(b=>{b.t-=dt;if(b.t<=0){b.done=1;boom({x:b.x,y:b.y,aoe:b.aoe,dmg:b.dmg,slow:0,src:b.src})}});G.bb=G.bb.filter(b=>!b.done);
  G.mn.forEach(m=>{if(G.en.some(e=>!e.dead&&dist(e,m)<e.r+9)){m.done=1;m.g.remove();boom({x:m.x,y:m.y,aoe:m.aoe,dmg:m.dmg,slow:0,src:m.src})}});G.mn=G.mn.filter(m=>!m.done)}
 function step(dt){
- if(G.state==='break'){if(AUTO||G.co)G.cd-=dt;if(G.cd<=0&&!(G.co&&!CQ.host))nextWave()}
+ if(G.state==='break'){G.cd-=dt;if(G.cd<=0&&!(G.co&&!CQ.host))nextWave()}
  else if(G.state==='wave'){G.wt+=dt;while(!(G.co&&!CQ.host)&&G.q.length&&G.q[0].t<=G.wt)G.en.push(mkEn(G.q.shift().k,1+LV.hm*(G.wave-1)+LV.hb))}
  else return;
  /* враги идут по дороге; дошёл до миски — отнимает молоко */
@@ -5545,7 +5545,7 @@ function step(dt){
  G.pr=G.pr.filter(p=>!p.done);G.en=G.en.filter(e=>!e.dead);
  /* волна отбита */
  if(G.state==='wave'&&!(G.co&&!CQ.host)&&!G.q.length&&!G.en.length){const b=(20+10*G.wave)*(G.co?1.2:1)|0;G.fish+=b;if(G.co)G.pf+=b;pop(W/2+10,40,'+'+b,1);sfx('coin');
-  if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=G.co?14:9;ban('Волна отбита! ✨');if(G.co)coWc(b)}}}
+  if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=G.co?14:(AUTO?1:9);ban('Волна отбита! ✨');if(G.co)coWc(b)}}}
 function finish(win){G.state='over';SV.kills=(SV.kills||0)+(G.kills||0);if(win&&G.hp>=10)SV.pf=(SV.pf||0)+1;let n=0,gold=0;if(win){n=G.hp>=8?3:G.hp>=5?2:1;const k=LV.w+'-'+LV.l,o=SV.lv[k]||0;gold=o?(n>o?10*(n-o)+8+4*LV.w:8+4*LV.w):14+8*n+5*LV.w;SV.lv[k]=Math.max(o,n);SV.g+=gold;svs()}G.gold=gold;svs();achCheck();badge();
  sfx(win?'win':'lose');vib(win?[40,40,80]:[120,60,120]);const g=G;setTimeout(()=>{if(G===g&&G.state==='over')showOv(win?'win':'lose',n)},700)}
 
@@ -5558,7 +5558,7 @@ function draw(dt){
  G.shake=Math.max(0,G.shake-dt);$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}
 const N={hp:$('cdHp'),fish:$('cdFish'),wave:$('cdWave'),wt:$('cdWT')};
 function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel){$('cdUp').style.opacity=G.sel.lv>=3||G.fish>=upc(G.sel)?1:.55;const dd=$('cdiDD');if(dd)sT(dd,n1(G.sel.dd||0))}
- if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW} · ${(AUTO||G.co)?Math.ceil(G.cd):'▶'}`;go=1}
+ if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW} · ${Math.ceil(Math.max(0,G.cd))}`;go=1}
  else if(G.state==='wave')t=`Волна ${G.wave}/${MAXW} · ${G.co&&!CQ.host?G.rem:G.q.length+G.en.length}`;else t=`Волна ${G.wave}/${MAXW}`;
  sT(N.wt,t);N.wave.classList.toggle('go',!!go);
  document.querySelectorAll('#cdBar .cd-t').forEach(b=>{const k=b.dataset.k;const n=G.tw.filter(t=>t.k===k&&(!G.co||t.o===CQ.me)).length;b.classList.toggle('no',G.fish<TW[k].cost||n>=MAXT);b.classList.toggle('sel',G.pick===k);sT(b.lastChild,n+'/'+MAXT)})}
@@ -5612,7 +5612,7 @@ function menu(){achCheck();sT($('cdGold'),SV.g);const g=TG[TAB]||'w';SUBT[g]=TAB
 function teamH(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k)),cd=(k,c)=>`<button class="tm-s ${c}" style="--bg:${TW[k].bg}" data-a="tm" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${TW[k].role} · ${TW[k].cost}</span></button>`;
  return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — убрать</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).length} · тап — взять в отряд</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`}
 function setH(){const row=(a,t,d,on)=>`<button class="cd-set" data-a="${a}"><span><b>${t}</b><small>${d}</small></span><i class="cd-sw${on?' on':''}"></i></button>`;
- return `<p class="tm-h">${CL.ok?'Прогресс сохраняется в облаке и доступен на всех твоих устройствах':'Облако пока не подключено: прогресс хранится только в этом браузере. Войди в аккаунт приложения'}</p>`+row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Следующая волна начинается сама. Выключи — и запускай волны кнопкой в бою',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
+ return `<p class="tm-h">${CL.ok?'Прогресс сохраняется в облаке и доступен на всех твоих устройствах':'Облако пока не подключено: прогресс хранится только в этом браузере. Войди в аккаунт приложения'}</p>`+row('sset','Звук','Эффекты в игре',!mute)+row('sauto','Авто-волны','Включено: следующая волна стартует через 1 секунду. Выключено: через 9 секунд (можно нажать кнопку волны и запустить раньше)',AUTO)+row('sx2','Скорость x2','Быстрее двигаются и зомби, и котики',SPD===2)+`<button class="cd-btn g sm" style="width:100%;margin-top:6px;color:#e11d48" data-a="reset">Сбросить прогресс</button>`}
 const curW=()=>(EPV===1?[0,1,2,3,4]:EPV===3?[10,11,12,13,14]:[5,6,7,8,9]).find(i=>!done(i)),wEx=i=>WEX[i]!=null?WEX[i]:i===curW();
 function worldsH(){const o2=SV.ep.includes(2),ids=EPV===1?[0,1,2,3,4]:EPV===3?[10,11,12,13,14]:[5,6,7,8,9],
  sw=`<div class="cd-sub ep-sw"><button data-a="epv" data-e="1" class="${EPV===1?'on':''}">Эпоха I</button><button data-a="epv" data-e="2" class="${EPV===2?'on':''}">${o2?'':ic('lock')}Эпоха II${!o2&&done(4)?'<i></i>':''}</button><button data-a="epv" data-e="3" class="${EPV===3?'on':''}">${SV.ep.includes(3)?'':ic('lock')}Эпоха III${!SV.ep.includes(3)&&done(9)?'<i></i>':''}</button></div>`;
@@ -5658,7 +5658,7 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a],[dat
   if(d.a==='cf'){sfx('click');return cfilm(d.k)}
   if(d.a==='tm'){const i=SV.team.indexOf(d.k);if(i>=0){if(SV.team.length<2){sfx('deny');return say('В отряде нужен хотя бы один котик')}SV.team.splice(i,1)}else{if(SV.team.length>=TMAX){sfx('deny');return say('Отряд полон — сначала убери кого-нибудь')}SV.team.push(d.k)}svs();sfx('click');return menu()}
   if(d.a==='sset'){if(mute&&window.BSFX&&!window.BSFX.on)return say('Звук выключен в настройках приложения');mute=!mute;ls('cd_mute',mute?'1':'0');sndIcon();sfx('click');return menu()}
-  if(d.a==='sauto'){AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');return menu()}
+  if(d.a==='sauto'){AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');autoUi();autoCut();return menu()}
   if(d.a==='sx2'){SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click');return menu()}
   if(d.a==='reset'){if(confirm('Сбросить весь прогресс Cat Defense: уровни, котиков и золото?')){SV=defSV();svs();badge();sfx('lose');menu()}return}
  if(d.a==='buy'){const t=TW[d.k];if(t.ep&&!SV.ep.includes(t.ep)){sfx('deny');return say('Сначала открой эпоху этого котика')}if(SV.g<t.pr){sfx('deny');return say('Не хватает золотых рыбок')}SV.g-=t.pr;SV.own.push(d.k);if(SV.team.length<TMAX)SV.team.push(d.k);svs();sfx('win');say(t.n+' теперь в твоей команде!');if(CF[d.k])return cfilm(d.k);menu()}});
@@ -6263,10 +6263,11 @@ SUBS.k.push(['e','Эволюция','team'],['x','Скины','star']);TG.e='k';
 {const s0=startLevel;startLevel=function(){fixSV();evoApply();const r=s0.apply(this,arguments);autoUi();return r}}
 {const c0=clMerge;clMerge=function(c){c0.apply(this,arguments);try{fixSV();if((c.ts||0)>(SV.ts||0)&&c.mat)SV.mat=Object.assign({},c.mat);
  if(c.evo)for(const k in c.evo)SV.evo[k]=Math.max(SV.evo[k]||0,c.evo[k]||0);if(Array.isArray(c.skins))SV.skins=[...new Set([...SV.skins,...c.skins])];SV.sk=Object.assign({},c.sk,SV.sk);if(c.dl&&!SV.dl)SV.dl=c.dl;evoApply();paintAll()}catch(e){console.warn('catdef merge',e)}}}
-$('cdX2').insertAdjacentHTML('afterend','<button class="cd-chip cd-x2" id="cdAuto" aria-label="Авто-волны"><b>Авто</b></button>');
-function autoUi(){const b=$('cdAuto');if(b){b.classList.toggle('on',AUTO);b.firstChild.textContent=AUTO?'Авто ✓':'Авто'}}
-$('cdAuto').addEventListener('click',()=>{unlock();AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');autoUi();say(AUTO?'Авто-волны включены':'Волны запускаются кнопкой')});
+$('cdX2').insertAdjacentHTML('afterend','<button class="cd-chip cd-x2" id="cdAuto" aria-label="Авто-волны" title="Авто-волны"><b>A</b></button>');
+function autoUi(){const b=$('cdAuto');if(b){b.classList.toggle('on',AUTO);b.setAttribute('aria-pressed',AUTO?'true':'false')}}
+$('cdAuto').addEventListener('click',()=>{unlock();AUTO=!AUTO;ls('cd_auto',AUTO?'1':'0');sfx('click');autoUi();autoCut();say(AUTO?'Авто: следующая волна сразу':'Следующая волна через 9 секунд')});
 autoUi();
+function autoCut(){if(AUTO&&!G.co&&G.state==='break'&&G.wave>=1&&G.cd>1)G.cd=1}
 
 /* ===== Часть 3: марафоны, новые зомби, задания дня, альбом + лукошки с падением с космоса ===== */
 const dkey=()=>new Date().toDateString(),dayN=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
