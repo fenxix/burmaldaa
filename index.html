@@ -5470,7 +5470,7 @@ function dmg(e,n,src,q){if(e.dead)return;const real=Math.min(n,Math.max(0,e.hp))
  if(e.hp<=0){e.dead=true;e.g.remove();payTo(src,e.c.gold);G.kills++;coKill(e,src);puff(e.x,e.y,'#a3b18a',6);pop(e.x,e.y-12,'+'+e.c.gold,1);sfx('pop');if(e.c.sum)sfx('boom')}}
 function shoot(t,tg){const cf=t.cf,v=cf.pj||'yarn',p={x:t.x,y:t.y-8,tg,tx:tg.x,ty:tg.y,sp:cf.sp||300,dmg:cf.dmg*(t.bd||1),aoe:cf.aoe||0,slow:cf.slow||0,src:t,kb:cf.kb||0,psn:cf.psn||0,pd:cf.pt||4,r:v==='nip'?6:5,rot:0,g:mk('g',{},L.pr)};use(v,p.g);G.pr.push(p);sfx(cf.snd||'shoot')}
 function swipe(t){sfx('paw');ring(t.x,t.y,t.cf.range,'#f9a8d4');const p=mk('g',{transform:`translate(${t.x} ${t.y}) scale(1.6)`},L.fx);use('paw',p);addFx(p,.35,k=>p.setAttribute('opacity',1-k));
- G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=t.cf.range+e.r*.5){dmg(e,t.cf.dmg*(t.bd||1),t);e.slow=1.6;e.sf=.6}})}
+ G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=t.cf.range+e.r*.5){e.slow=1.6;e.sf=.6;dmg(e,t.cf.dmg*(t.bd||1),t)}})}
 function boom(p){sfx('boom');ring(p.x,p.y,p.aoe,'#4ade80');puff(p.x,p.y,'#86efac',7);G.en.forEach(e=>{if(!e.dead&&dist(e,p)<=p.aoe+e.r){dmg(e,p.dmg,p.src);if(p.slow){e.slow=1.8;e.sf=p.slow}}})}
 
 /* ---------- игровая логика (шаг симуляции) ---------- */
@@ -5519,7 +5519,7 @@ function step(dt){
  else if(G.state==='wave'){G.wt+=dt;while(!(G.co&&!CQ.host)&&G.q.length&&G.q[0].t<=G.wt)G.en.push(mkEn(G.q.shift().k,1+LV.hm*(G.wave-1)+LV.hb))}
  else return;
  /* враги идут по дороге; дошёл до миски — отнимает молоко */
- G.en.forEach(e=>{if(e.dead)return;if(e.psn){e.psn.t-=dt;dmg(e,e.psn.dps*dt,e.psn.src,1);if(e.dead)return;e.psn.pf-=dt;if(e.psn.pf<=0){e.psn.pf=.5;puff(e.x,e.y-8,'#84cc16',2)}if(e.psn.t<=0)e.psn=null}e.d+=e.c.sp*(LV.sp||1)*(e.slow>0?(e.sf==null?.5:e.sf):1)*dt;e.slow-=dt;e.fl-=dt;const p=pos(e.d);e.x=p[0];e.y=p[1];
+ G.en.forEach(e=>{if(e.dead)return;if(e.psn){e.psn.t-=dt;dmg(e,e.psn.dps*dt,e.psn.src,1);if(e.dead)return;e.psn.pf-=dt;if(e.psn.pf<=0){e.psn.pf=.5;puff(e.x,e.y-8,'#84cc16',2)}if(e.psn.t<=0)e.psn=null}e.d+=e.c.sp*(LV.sp||1)*(e.zt>0?0:(e.slow>0?(e.sf==null?.5:e.sf):1))*dt;e.slow-=dt;if(e.zt>0)e.zt-=dt;e.fl-=dt;const p=pos(e.d);e.x=p[0];e.y=p[1];
   if(e.d>=TOT){e.dead=true;e.g.remove();if(!(G.co&&!CQ.host))G.hp=Math.max(0,G.hp-e.c.dmg);G.shake=.4;sfx('leak');vib(60);pop(e.x,e.y-14,'-'+e.c.dmg,0,'#ef4444');const c=$('cdHpC');c.classList.remove('hit');void c.offsetWidth;c.classList.add('hit')}});
  G.en.forEach(e=>{if(e.dead||!e.c.sum)return;e.sc=(e.sc||0)+dt;if(e.sc>=10&&!(G.co&&!CQ.host)){e.sc=0;for(let i=0;i<4;i++){const z=mkEn('zcat',1+LV.hm*(G.wave-1)+LV.hb);z.d=Math.max(0,e.d-16*(i+1));const p=pos(z.d);z.x=p[0];z.y=p[1];G.en.push(z)}ring(e.x,e.y,50,'#a855f7');ban('Пёс зовёт зомби-кошек!');sfx('wave')}});
  if(G.hp<=0&&!(G.co&&!CQ.host))return finish(false);
@@ -6469,7 +6469,8 @@ const COM=[
  {id:'c3',n:'Неон для двоих',th:2,map:2,w:18,hm:.14,hb:.6,sp:1.35,fish:290,rw:20,bs:10,ar:2,d:'Длинные изгибы и призраки в сети. Нужны площадь и яд.'},
  {id:'c4',n:'Метель дуэтом',th:3,map:3,w:21,hm:.12,hb:.55,sp:1.25,fish:320,rw:26,bs:12,ar:2,boss2:1,d:'Миска в центре карты, враги идут по кругу. В финале — сразу два Доктора Пса.'},
  {id:'c5',n:'Огненное сердце',th:4,map:4,w:25,hm:.14,hb:.7,sp:1.35,fish:350,rw:34,bs:15,ar:2,boss2:1,d:'Лабиринт из узких коридоров. Между полосами — лучшие места для связок.'},
- {id:'c6',n:'Вулкан для двоих',th:9,map:5,w:30,hm:.18,hb:1,sp:1.5,fish:400,rw:50,bs:20,ar:2,boss2:1,ep:2,d:'Эпоха II. Рапторы, стегозавры и боссы каждые 10 волн. Только с прокачанными котиками.'}];
+ {id:'c6',n:'Вулкан для двоих',th:9,map:5,w:30,hm:.18,hb:1,sp:1.5,fish:400,rw:50,bs:20,ar:2,boss2:1,ep:2,d:'Эпоха II. Рапторы, стегозавры и боссы каждые 10 волн. Только с прокачанными котиками.'},
+ {id:'cinf',n:'Бесконечный дозор',th:3,map:3,w:0,inf:1,hm:.14,hb:.55,sp:1.3,fish:300,rw:0,bs:0,ar:2,d:'Волны без конца: зомби всё крепче, каждые 10 волн приходит Доктор Пёс. Продержитесь вдвоём как можно дольше. Награда растёт с каждой волной.'}];
 function mkCo(m){const a=[],D=1.5,n=m.w;
  for(let i=0;i<n;i++){const x=[['mouse',Math.round((7+i*1.5)*D),Math.max(.3,.9-.03*i)]];
   if(i>=1)x.push(['rat',Math.round((1+i*.5)*D),Math.max(.7,1.9-.05*i),2]);
@@ -6485,7 +6486,7 @@ function mkCo(m){const a=[],D=1.5,n=m.w;
   a.push(x)}
  return a}
 const coClr=()=>{let n=0;for(const m of COM){if((SV.co[m.id]||0)>0)n++;else break}return n};
-const coOpen=i=>i<=Math.max(coClr(),(CQ.pt&&CQ.pt.cp)||0);
+const coOpen=i=>(COM[i]&&COM[i].inf)?(coClr()>=1||((CQ.pt&&CQ.pt.cp)||0)>=1):i<=Math.max(coClr(),(CQ.pt&&CQ.pt.cp)||0);
 const myName=()=>(GS().me&&GS().me.name)||'Ты';
 const ptName=()=>(CQ.pt&&CQ.pt.n)||CQ.pn||(GS().pt&&GS().pt.name)||'Партнёр';
 function setDim(w,h,nc,nr){W=w;H=h;NC=nc;NR=nr;svg.setAttribute('viewBox','0 0 '+w+' '+h)}
@@ -6652,14 +6653,14 @@ function coRelink(quiet){const g=$('cdLk');if(!g)return;G.tw.forEach(t=>t.ln=0);
 /* ---------- награды и экран итогов ---------- */
 function coPay(res){if(CQ.paid)return CQ.pay;CQ.paid=1;fixSV();fixCo();const m=COM.find(x=>x.id===res.id),first=!(SV.co[m.id]>0),mat={};let gold=0;
  if(res.win){gold=m.rw+res.st*m.bs+(first?m.rw:0);SV.co[m.id]=Math.max(SV.co[m.id]||0,res.st);mat.yarn=2+res.st;mat.gf=1+(m.ep===2?1:0)+(res.st===3?1:0);mat.bell=1+(res.st>=2?1:0);if(m.id==='c5'||m.id==='c6')mat.dust=1+(res.st===3?1:0)}
- else gold=Math.max(0,Math.floor((res.wave-1)/3));
+ else if(m.inf){const wc=Math.max(0,res.wave-1);gold=Math.min(150,Math.floor(wc*.8));if(wc>=1)mat.yarn=1+Math.floor(wc/6);if(wc>=10)mat.bell=Math.floor(wc/10);if(wc>=12)mat.gf=Math.floor(wc/12);if(wc>=20)mat.dust=Math.floor(wc/20);const sr=wc>=50?3:wc>=25?2:wc>=10?1:0;if(sr)SV.co[m.id]=Math.max(SV.co[m.id]||0,sr);SV.cinf=Math.max(SV.cinf||0,wc)}else gold=Math.max(0,Math.floor((res.wave-1)/3));
  SV.g+=gold;for(const k in mat)SV.mat[k]=(SV.mat[k]||0)+mat[k];SV.cow=(SV.cow||0)+Math.max(0,res.wave-(res.win?0:1));SV.cpm=Math.max(SV.cpm||0,res.pr||0);SV.kills=(SV.kills||0)+(res.kl||0);
  svs();achCheck();badge();return CQ.pay={gold,mat,first}}
 function coEnd(res){if(CQ.ended||!res)return;CQ.ended=1;G.state='over';const pay=coPay(res),me=CQ.me,mv=res.sd[0]>=res.sd[1]?0:1;
  const row=i=>`<div class="cq-st${i===me?' me':''}"><b>${esc(res.n[i]||'?')}${i===mv&&(res.sd[0]+res.sd[1])>0?' 🏅':''}</b><span>💥 ${res.sd[i]}</span><span>🐾 ${res.ks[i]}</span></div>`;
  const mats=Object.keys(pay.mat).map(k=>MAT[k][0]+'×'+pay.mat[k]).join(' ');
  const conf=res.win?`<div class="cd-conf">${Array.from({length:22},()=>`<i style="left:${rnd(2,96)|0}%;background:${['#fb923c','#a78bfa','#6ee7b7','#f472b6','#fde047'][(rnd(0,5))|0]};animation-delay:${rnd(0,2.4).toFixed(1)}s"></i>`).join('')}</div>`:'';
- const o=$('cdOv');o.innerHTML=conf+`<div class="cd-card"><h3>${res.win?'Победа вдвоём!':'Молоко разлито…'}</h3>${res.win?`<div class="st">${'★'.repeat(res.st)}${'☆'.repeat(3-res.st)}</div>`:''}<p>${res.win?'Вы справились вместе!':'Дошли до волны '+res.wave+' из '+MAXW+'.'}<br>Молоко: ${res.hp}/${res.hpm} · связок 💞: ${res.pr}</p>${row(0)}${row(1)}<p>${pay.gold>0?`<b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${pay.gold} ${fi('gfish')}</b>`:'Награда за бой — только за прохождение волн'}${mats?'<br>Добыча: '+mats:''}${pay.first&&res.win?'<br>Первое прохождение — двойная награда!':''}</p><button class="cd-btn" data-q="lobby">В лобби</button></div>`;o.classList.add('on')}
+ const o=$('cdOv');o.innerHTML=conf+`<div class="cd-card"><h3>${res.win?'Победа вдвоём!':((COM.find(x=>x.id===res.id)||{}).inf?'Дозор окончен':'Молоко разлито…')}</h3>${res.win?`<div class="st">${'★'.repeat(res.st)}${'☆'.repeat(3-res.st)}</div>`:''}<p>${res.win?'Вы справились вместе!':((COM.find(x=>x.id===res.id)||{}).inf?'Продержались волн: '+Math.max(0,res.wave-1)+' · рекорд '+(SV.cinf||0):'Дошли до волны '+res.wave+' из '+MAXW+'.')}<br>Молоко: ${res.hp}/${res.hpm} · связок 💞: ${res.pr}</p>${row(0)}${row(1)}<p>${pay.gold>0?`<b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${pay.gold} ${fi('gfish')}</b>`:'Награда за бой — только за прохождение волн'}${mats?'<br>Добыча: '+mats:''}${pay.first&&res.win?'<br>Первое прохождение — двойная награда!':''}</p><button class="cd-btn" data-q="lobby">В лобби</button></div>`;o.classList.add('on')}
 
 /* ---------- интерфейс: стили, HUD, лобби, чат, метки ---------- */
 {const st=document.createElement('style');st.textContent=`
@@ -6756,7 +6757,7 @@ function lobbyH(){
  let h=`<div class="cq-pt"><span class="cq-av">${esc((ptName()[0]||'?').toUpperCase())}</span><div><b>${esc(ptName())}</b><small>${!CQ.sub?'подключаемся…':!on?'пока не в лобби — позови 💌':pt.ing?'сейчас в бою':pt.rd?'готов(а) к бою ✓':'в лобби'}</small></div><span class="cq-dot${on?' on':''}"></span></div>`;
  if(!on)h+='<button class="cd-btn g cq-go" data-q="inv">Позвать в чате 💌</button>';
  h+='<p class="tm-h">Выберите вылазку</p>';
- COM.forEach((m,i)=>{const op=coOpen(i),s=SV.co[m.id]||0;h+=`<button class="cq-mc${CQ.mis===m.id?' sel':''}${op?'':' lock'}" data-q="mis" data-id="${m.id}">${thumb(m)}<span><b>${op?'':'🔒 '}${m.n} <span style="color:#fde047">${'★'.repeat(s)}${'☆'.repeat(3-s)}</span></b><small>${m.w} волн · зомби ×2 · карта 9×12</small><small>${op?esc(m.d):'Сначала пройдите предыдущую вылазку'}</small></span></button>`});
+ COM.forEach((m,i)=>{const op=coOpen(i),s=SV.co[m.id]||0;h+=`<button class="cq-mc${CQ.mis===m.id?' sel':''}${op?'':' lock'}" data-q="mis" data-id="${m.id}">${thumb(m)}<span><b>${op?'':'🔒 '}${m.n} <span style="color:#fde047">${'★'.repeat(s)}${'☆'.repeat(3-s)}</span></b><small>${m.inf?'∞ волн':m.w+' волн'} · зомби ×2 · карта 9×12</small><small>${op?esc(m.d):(m.inf?'Сначала пройдите первую вылазку':'Сначала пройдите предыдущую вылазку')}</small></span></button>`});
  h+=`<p class="tm-h">Твой отряд</p><div class="cq-sq">${SV.team.slice(0,6).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`;
  if(pt&&pt.tm&&pt.tm.length)h+=`<p class="tm-h">Отряд ${esc(ptName())}</p><div class="cq-sq">${pt.tm.filter(k=>TW[k]).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`;
  h+=`<button class="cd-btn g cq-go" data-q="team">Изменить отряд</button>`;
@@ -6798,6 +6799,160 @@ ACH.push(
  {id:'co3',n:'Три звезды на двоих',d:'Пройди вылазку вдвоём на три звезды',r:20,i:'star',p:()=>[Object.values(SV.co||{}).some(v=>v>=3)?1:0,1]},
  {id:'co4',n:'Покорители вылазок',d:'Пройди все вылазки вдвоём',r:50,i:'wave',p:()=>[COM.filter(m=>(SV.co||{})[m.id]>0).length,COM.length]},
  {id:'co5',n:'Мур-залп!',d:'Запусти общий Мур-залп',r:10,i:'team',p:()=>[SV.csal?1:0,1]});
+
+
+/* ===== Часть 5: эволюции без смены атаки, фильмики всем, 3 новых лукошка, бесконечный режим (и вдвоём) ===== */
+
+/* ---------- 1. Эволюции: атака остаётся, добавляются эффект и/или аура-бафф ---------- */
+const KEYOF=new Map();Object.keys(TWB).forEach(k=>KEYOF.set(TWB[k],k));
+const PSN=(d,t)=>c=>{c.psn=(c.psn||0)+d;c.pt=Math.max(c.pt||0,t)};
+const PSX=(m,t)=>c=>{c.psn=(c.psn||0)*m;c.pt=Math.max(c.pt||0,t)};
+const XS=f=>c=>{c.xs=Math.min(c.xs||1,f);if(c.pj)c.slow=Math.min(c.slow||1,f)};
+const XZ=(t,k)=>c=>{c.xz=Math.max(c.xz||0,t);if(k)c.xk=Math.max(c.xk||0,k)};
+const XK=k=>c=>{c.xk=Math.max(c.xk||0,k)};
+const AO=(m,a0)=>c=>{c.aoe=c.aoe?c.aoe*m:(a0||34)};
+const ALL=(...f)=>c=>f.forEach(g=>g(c));
+const EVB={dm:.1,sp:.06};
+/* [что первым на 4-м уровне: 'u' — улучшение атаки, 'b' — аура-бафф; текст улучшения; функция; (необязательно) текст и функция второго улучшения] */
+const EVX={
+ murzik:['u','клубки с ядом: зомби травятся несколько секунд',PSN(1.6,4)],
+ barsik:['b','лапа с ядом и отбросом: когти отравлены',ALL(PSN(1.8,4),XK(14))],
+ murka:['u','мятный дым: взрыв шире и отравляет зомби',ALL(AO(1.25),PSN(1.4,4))],
+ frost:['b','ледяная вьюга: снежки на миг замораживают',ALL(XS(.4),XZ(.5))],
+ tigra:['b','липкие клубки: зомби замедляются',XS(.7)],
+ sphinx:['u','звёзды со вспышкой: небольшой взрыв при попадании',AO(1,36)],
+ ninja:['b','отравленные клубки: яд после каждого броска',PSN(1.2,3)],
+ pirat:['u','двойной заряд: взрыв шире и отброс зомби',ALL(AO(1.3),XK(12))],
+ kosm:['b','лазер со вспышкой: урон по небольшой площади',AO(1,30)],
+ lila:['u','удар оглушает зомби и отбрасывает назад',XZ(.9,26)],
+ flame:['u','липкий огонь: зомби горят ещё несколько секунд',PSN(1.8,3)],
+ knight:['b','меч оглушает: зомби замирают после удара',XZ(.5)],
+ jelly:['u','густое желе: зомби вязнут сильнее, взрыв шире',ALL(XS(.3),AO(1.25))],
+ fairy:['b','звёзды с искрой: яд после попадания',PSN(1.2,3)],
+ sumo:['u','тяжёлый шлепок оглушает и отталкивает',XZ(.7,18)],
+ archer:['b','отравленные стрелы',PSN(1.4,4)],
+ iney:['u','хрустальный шар: зомби на миг замерзают',XZ(.6)],
+ dynamo:['b','горящие заряды: взрыв поджигает зомби',PSN(2,4)],
+ cowboy:['u','пули с замедлением и чуть сильнее',ALL(XS(.75),c=>{c.dmg*=1.1})],
+ garden:['b','концентрат: яд вдвое сильнее и дольше',PSX(2,7)],
+ grok:['u','дубина оглушает ближних зомби',XZ(.6)],
+ wing:['b','тяжёлые кости отбрасывают зомби назад',XK(10)],
+ amber:['u','густая смола: сильнее замедляет, шире площадь',ALL(XS(.3),AO(1.2))],
+ bowler:['b','шар катится дальше и оглушает',ALL(c=>{c.len=(c.len||300)*1.5},XZ(.5))],
+ miner:['u','мины с ядом, и ставить их можно больше',ALL(PSN(1.6,4),c=>{c.zmax=(c.zmax||3)+1})],
+ boomer:['b','бумеранг с зазубринами: яд на пути',PSN(1.4,4)],
+ volt:['u','луч бьёт дальше и оглушает',ALL(c=>{c.range*=1.15},XZ(.5))],
+ storm:['b','молния прыгает дальше и оглушает',ALL(c=>{c.jumps=(c.jumps||3)+2},XZ(.4))],
+ spark:['u','разряд дольше оглушает и бьёт шире',c=>{c.stun=(c.stun||1.2)*1.4;c.range*=1.1}],
+ splash:['b','напор: отбрасывает сильнее и замедляет',ALL(c=>{c.kb=(c.kb||20)*1.8},XS(.6))],
+ spidey:['u','липкая паутина: держится дольше, сильнее замедляет',c=>{c.zslow=(c.zslow||.4)*.6;c.zl=(c.zl||5)*1.5;c.zmax=(c.zmax||2)+1}],
+ thorn:['u','ядовитые шипы',PSN(1.6,4)],
+ toxic:['b','концентрат: яд сильнее и дольше',PSX(1.8,7)],
+ drake:['u','жаркий огонь: горит жарче, дольше и шире',c=>{c.zdps*=1.5;c.zl*=1.4;c.zmax=(c.zmax||2)+1}],
+ baron:['u','бомбы с ядом',PSN(2,4),'кассетные бомбы: взрыв шире и бомбит чаще',c=>{c.aoe*=1.3;c.cd*=.85}]};
+const EVDEF=['u','усиленная атака: больше урона и дальности',c=>{c.dmg&&(c.dmg*=1.25);c.range&&(c.range*=1.08)}];
+const evoWhat=(X,l)=>l===4?X[0]:(X[3]?'u2':(X[0]==='u'?'b':'u'));
+evoCfg=function(b,e){const c=Object.assign({},b),eco=c.gain||c.inc,X=EVX[KEYOF.get(b)]||EVDEF;
+ if(c.dmg)c.dmg*=1+.16*e;if(c.range)c.range*=1+.035*e;if(c.cd)c.cd*=1-.035*e;if(c.gain)c.gain*=1+.2*e;if(c.inc)c.inc*=1+.2*e;
+ const step=l=>{const w=evoWhat(X,l);if(w==='u')X[2](c);else if(w==='u2')X[4](c);else if(c.range>0&&c.range<900)c.ab=Object.assign({},EVB)};
+ if(e>=4){if(eco){c.gain&&(c.gain*=1.4);c.inc&&(c.inc*=1.4)}else if(c.kind==='aura')c.aura={dm:c.aura.dm*1.35,sp:c.aura.sp*1.35};else step(4)}
+ if(e>=5){if(eco){c.gain&&(c.gain*=1.25);c.inc&&(c.inc*=1.25)}else if(c.kind==='aura')c.aura={dm:c.aura.dm*1.2,sp:c.aura.sp*1.2};else step(5)}
+ return c};
+evoText=function(b,l){const X=EVX[KEYOF.get(b)]||EVDEF,eco=b.gain||b.inc;
+ if(l<4)return '+'+16*l+'% урона'+(l>1?', дальше и быстрее':'')+(l===3?', золотое сияние':'');
+ if(eco)return l===4?'Двойной улов: доход ×1.4':'Легенда: доход ещё +25%';
+ if(b.kind==='aura')return l===4?'Аура сильнее на 35%':'Легенда: аура ещё +20%';
+ const w=evoWhat(X,l);
+ if(w==='u')return 'Та же атака, но лучше — '+X[1];
+ if(w==='u2')return 'Легенда: '+X[3];
+ return 'Аура-бафф: котики рядом бьют на '+Math.round(EVB.dm*100)+'% сильнее и на '+Math.round(EVB.sp*100)+'% быстрее. Своя атака остаётся'};
+/* эффекты улучшенной атаки: яд, замедление, оглушение, отброс — для любого вида атаки (когти, лучи, мины, молнии…) */
+{const d1=dmg;dmg=function(e,n,s,q){if(!e||e.dead)return;const h0=e.hp;d1.apply(this,arguments);
+ if(q||e.dead||!s||!s.cf||!(e.hp<h0))return;const c=s.cf;
+ if(c.psn)poison(e,c.psn,c.pt||4,s);
+ if(c.xs)slowE(e,1.3,c.xs);
+ if(c.xk)e.d=Math.max(0,e.d-c.xk*(e.c.sum?.3:1));
+ if(c.xz&&!e.c.nosl&&(!e.zc||G.tm-e.zc>3)){e.zc=G.tm;e.zt=Math.max(e.zt||0,c.xz*(e.c.sum?.3:1))}}}
+/* аура-бафф у атакующих котиков: бьют сами и усиливают соседей */
+{const sx1=stepX;stepX=function(dt){sx1.apply(this,arguments);
+ G.tw.forEach(b=>{const a=b.cf.ab;if(!a)return;G.tw.forEach(t=>{if(t!==b&&!t.cf.aura&&dist(t,b)<=b.cf.range){t.bd+=a.dm;t.bs+=a.sp}});
+  b.ap2=(b.ap2||0)-dt;if(b.ap2<=0&&G.state==='wave'){b.ap2=3.5;ring(b.x,b.y,b.cf.range*.9,'#fde68a')}})}}
+{const i1=infoX;infoX=function(c){let s=i1(c);const x=[];if(c.xs&&!c.pj)x.push('замедл. '+Math.round((1-c.xs)*100)+'%');if(c.xz)x.push('оглушает '+n1(c.xz)+'с');if(c.xk)x.push('отброс '+Math.round(c.xk));if(c.ab)x.push('аура +'+Math.round(c.ab.dm*100)+'% урона');return s+(x.length?' · '+x.join(' · '):'')}}
+
+/* ---------- 2. Фильмики для всех, у кого их не было ---------- */
+Object.assign(CF,{
+ murzik:[S('Мурзик был обычным дворовым котом и мечтал только выспаться. Миска молока, тёплый подоконник и тишина — больше ему ничего не требовалось.','home',['murzik',180,360,2.6,'a-bob'],['bowl',290,420,1.6]),S('Но зомби пришли именно за его миской. Мурзик зевнул, взял клубок и бросил. Попал. С тех пор он стреляет первым, а спит вторым.','street',['murzik',230,360,2.4,'a-bob'],['yarn',120,420,3,'a-bob'],...Z)],
+ barsik:[S('Барсик служил боевым котом у генерала и прошёл десятки сражений. Шрамы на ушах он называл «наградами», а подушку — «казармой».','night',['barsik',180,360,2.6,'a-bob']),S('Он ушёл на отдых и ворчал на подоконнике, пока зомби не полезли в дом. «Я ушёл на отдых, а не от службы», — сказал Барсик и вышел вперёд.','street',['barsik',230,360,2.4,'a-bob'],...Z)],
+ sumo:[S('Тайсон — чемпион дворовых боёв по перетягиванию рыбьей головы. Он никуда не спешит: говорит, что победа любит тех, кто вовремя поел.','home',['sumo',180,360,2.6,'a-bob'],['fish',90,420,3,'a-jump']),S('Зомби не знали, что медленный удар тяжелее быстрого. Теперь знают и держатся от Тайсона подальше.','street',['sumo',230,360,2.4,'a-bob'],...Z)],
+ archer:[S('Робин жил в лесу у старого дуба и стрелял по яблокам с другого конца поляны. Ни одно яблоко ещё не ушло.','home',['archer',180,360,2.6,'a-bob'],['star',290,300,2.4,'a-spin']),S('Когда зомби вышли из леса, Робин надел зелёную шапочку и сказал: «Мишени стали интереснее».','street',['archer',230,360,2.4,'a-bob'],...Z)],
+ iney:[S('Иней правит ледяным двориком, где даже летом на траве лежит иней. Её корона никогда не тает, а подданные ходят на цыпочках.','snow',['iney',180,360,2.6,'a-bob'],['snowb',90,0,3,'a-fall'],['snowb',270,0,2.6,'a-fall',1.4]),S('Зомби вломились в её двор. Королева подняла лапу, и они застыли, как статуи. Теперь она в отряде: заморозить ещё больше.','snow',['iney',130,360,2.4,'a-bob'],['zcat',0,420,2,'a-march'])],
+ dynamo:[S('Динамит обожал фейерверки и устраивал их каждую пятницу. Соседи вежливо просили сделать потише.','night',['dynamo',180,360,2.6,'a-bob'],['fire',90,420,3,'a-jump']),S('Зомби не просили. Они просто разлетались в стороны, а Динамит впервые услышал аплодисменты. Так он и остался в отряде.','street',['dynamo',230,360,2.4,'a-bob'],...Z)],
+ cowboy:[S('Бискви приехал с Дикого Запада на старом пикапе и первым делом спросил, где тут салун с молоком.','home',['cowboy',180,360,2.6,'a-bob'],['bowl',290,420,1.6]),S('Зомби попытались отобрать миску, но Бискви стреляет быстрее, чем они моргают. Теперь он шериф этого двора.','street',['cowboy',230,360,2.4,'a-bob'],...Z)],
+ garden:[S('Сеня вырастил на подоконнике самые вредные цветы в округе. Мухи облетали клумбу стороной.','home',['garden',180,360,2.6,'a-bob'],['nip',90,420,2.6,'a-bob']),S('Зомби не облетели. Ядовитые семена жгут их ещё долго, а Сеня поливает клумбу и напевает.','street',['garden',230,360,2.4,'a-bob'],...Z)]});
+
+/* ---------- 3. Три новых лукошка: теперь скины есть и у тех, кого не было в прежних ---------- */
+Object.assign(THEMES,{
+ fire:{n:'Пламя',e:'🔥',hue:25,sat:1.35,br:1.05,acc:'<path d="M-8-18Q-14-28-4-34Q-5-27 0-28Q-1-22 4-24Q6-30 10-26Q12-20 8-18Z" fill="#f97316"/><path d="M-3-18Q-5-24 0-27Q1-22 4-18Z" fill="#fde047"/><circle cx="-20" cy="-8" r="1.6" fill="#fb923c"/><circle cx="21" cy="-14" r="1.4" fill="#fde047"/>',cats:['tigra','amber','cowboy','flame','dynamo','drake']},
+ ocean:{n:'Океан',e:'🌊',hue:175,sat:1.2,br:1,acc:'<path d="M-14 9Q-7 3 0 9T14 9" stroke="#38bdf8" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="20" cy="-14" r="4" fill="#bae6fd" fill-opacity=".6" stroke="#0ea5e9" stroke-width="1.2"/><circle cx="25" cy="-5" r="2.4" fill="#bae6fd" fill-opacity=".6" stroke="#0ea5e9"/><path d="M-6-20Q0-30 6-20Q0-24-6-20Z" fill="#7dd3fc"/>',cats:['pirat','boomer','splash','storm','iney','baron']},
+ carn:{n:'Карнавал',e:'🎪',hue:285,sat:1.3,br:1.05,acc:'<path d="M-9-19L0-38 9-19Z" fill="#f472b6" stroke="#fff" stroke-width="1"/><circle cy="-39" r="3" fill="#fde047"/><path d="M-5-26h10M-3-31h6" stroke="#fff" stroke-width="1.4"/><circle cx="-20" cy="-10" r="1.6" fill="#38bdf8"/><circle cx="21" cy="-6" r="1.6" fill="#4ade80"/><circle cx="18" cy="-20" r="1.6" fill="#fde047"/>',cats:['jelly','pushok','biz','bowler','spidey','bard']}});
+Object.assign(YP,{fire:['#9a3412','#fed7aa','#fff7ed','#fb923c'],ocean:['#075985','#e0f2fe','#bae6fd','#38bdf8'],carn:['#86198f','#f5d0fe','#ffffff','#e879f9']});
+Object.assign(YX,{
+ fire:'<path d="M-6-44Q-16-56-4-66Q-4-56 4-58Q2-50 10-52Q14-44 6-44Z" fill="#f97316"/><path d="M-1-45Q-4-52 1-56Q4-50 6-45Z" fill="#fde047"/><g fill="#fde047"><circle cx="-22" cy="-14" r="2"/><circle cx="22" cy="-4" r="1.8"/></g>',
+ ocean:'<path d="M-30-8Q-15-22 0-8T30-8" stroke="#fff" stroke-width="4" fill="none" opacity=".8" stroke-linecap="round"/><circle cx="-12" cy="-52" r="6" fill="#e0f2fe" fill-opacity=".6" stroke="#fff" stroke-width="2"/><circle cx="10" cy="-60" r="4" fill="#e0f2fe" fill-opacity=".6" stroke="#fff" stroke-width="2"/><path d="M14 8q8-8 14 0-6 8-14 0z" fill="#fde68a"/>',
+ carn:'<path d="M-8-44Q-16-62-8-68Q0-62-8-44Z" fill="#f472b6"/><path d="M8-44Q16-62 24-60Q22-50 8-44Z" fill="#38bdf8"/><path d="M-8-44L-10-30M8-44L12-32" stroke="#fff" stroke-width="1.5"/><g fill="#fde047"><circle cx="-22" cy="-6" r="2.4"/><circle cx="22" cy="8" r="2.4"/></g><path d="M-26 10l4 4 4-4" stroke="#fff" stroke-width="2" fill="none"/>'});
+const NT=['fire','ocean','carn'];
+NT.forEach(t=>{const cs=THEMES[t].cats.filter(k=>SYM[k]&&TWB[k]);cs.forEach((k,i)=>SKS.push({id:t+'.'+k,t,k,r:i<2?0:i<4?1:i===4?2:3}));if(cs.length)SKS.push({id:t+'.'+cs[cs.length-1]+'.rb',t,k:cs[cs.length-1],r:4,rb:1})});
+$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+NT.map(t=>{const T=THEMES[t];return `<filter id="cdf-${t}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${T.hue}"/><feColorMatrix type="saturate" values="${T.sat}"/><feComponentTransfer><feFuncR type="linear" slope="${T.br}"/><feFuncG type="linear" slope="${T.br}"/><feFuncB type="linear" slope="${T.br}"/></feComponentTransfer></filter>`}).join('')+SKS.filter(s=>NT.includes(s.t)).map(s=>`<g id="${pvId(s)}">${skinG(s.k,skVal(s))}</g>`).join('')+'</defs></svg>');
+
+/* ---------- 4. Бесконечный режим: в одиночной игре и в «Вдвоём» ---------- */
+{const fx1=fixSV;fixSV=function(){fx1();if(!SV.inf||typeof SV.inf!=='object'||Array.isArray(SV.inf))SV.inf={};if(typeof SV.cinf!=='number')SV.cinf=0}}fixSV();
+{const cm1=clMerge;clMerge=function(c){cm1.apply(this,arguments);try{fixSV();if(c.inf&&typeof c.inf==='object')for(const k in c.inf)SV.inf[k]=Math.max(SV.inf[k]||0,c.inf[k]||0);SV.cinf=Math.max(SV.cinf||0,c.cinf||0)}catch{}}}
+const INFM=[
+ {id:'i1',n:'Бесконечный двор',mp:[2,3],ep:1,d:2,need:()=>done(0),req:'Пройди мир 1'},
+ {id:'i2',n:'Бесконечный вулкан',mp:[9,3],ep:2,d:5,need:()=>SV.ep.includes(2)&&done(5),req:'Эпоха II и мир 6'}];
+const INFHM=.12;
+/* волны генерируются по мере надобности: зомби всё больше и разнообразнее, каждые 10 волн — Доктор Пёс */
+function infGen(i,o){const K=v=>Math.round(v*o.D),x=[['mouse',K(7+i*1.5),Math.max(.22,1-.025*i)]];
+ if(i>=1)x.push(['rat',K(1+i*.5),Math.max(.55,1.9-.04*i),2]);
+ if(!o.ep&&i>=2)x.push(['surf',K(2+i*.45),.55,1]);
+ if(o.ep&&i>=1){x.push(['raptor',K(3+i*.55),.5,1]);if(i>=3)x.push(['stego',K(1+i*.25),1.3,3])}
+ if(i>=2&&i%2===0)x.push(['armor',K(1+i*.25),Math.max(.8,1.9-.04*i),4]);
+ if(i>=4&&i%3===1)x.push(['fly',K(2+i*.3),Math.max(.6,1.5-.03*i),2]);
+ if(i>=5&&i%4===1)x.push(['bug',K(16+i*1.8),.13,0]);
+ if(i>=6&&i%3===0)x.push(['healer',K(1+i/7),2,5]);
+ if(i>=9&&i%3===1)x.push(['ghost',K(2+i*.18),1.3,3]);
+ if(i>=11&&i%4===2)x.push(['brute',K(1+Math.floor(i/12)),3.5,6]);
+ if((i+1)%10===0)x.push([DOGS[Math.min(DOGS.length-1,o.d+Math.floor(i/10))],1+Math.floor(i/30),3,12]);
+ return x}
+const infWaves=o=>{const t=[];return new Proxy(t,{get(a,p){if(p==='length')return 9999;if(typeof p==='string'&&/^\d+$/.test(p)){const i=+p;return a[i]||(a[i]=infGen(i,o))}return a[p]}})};
+function startInf(id){if(CQ.on||W!==360)coReset();const m=INFM.find(x=>x.id===id),[w,l]=m.mp;fixSV();evoApply();
+ LV={w,l,fish:400,hm:INFHM,infHm:INFHM,hb:.3,boss:false,inf:id};WAVES=infWaves({ep:m.ep===2,d:m.d,D:1});MAXW=WAVES.length;
+ setPath(ROUTES[MAPS[w][l]]);buildMap(w);buildBar();spdUi();reset();autoUi();
+ $('cdLT').textContent='Бесконечный · '+m.n;view('play');ui();showOv('start')}
+/* чем дальше волна, тем быстрее растёт крепость зомби */
+{const nw1=nextWave;nextWave=function(early){const was=G.state;nw1.apply(this,arguments);if(was==='break'&&G.state==='wave'&&LV.inf&&LV.infHm)LV.hm=LV.infHm*(1+G.wave/45)}}
+function infPay(w){if(G.infPaid)return G.inf;G.infPaid=1;fixSV();const id=LV.inf,old=SV.inf[id]||0,rec=w>old,mat={};
+ const gold=Math.min(200,Math.floor(w*1.2))+(rec&&w>=5?10:0);
+ if(w>=1)mat.yarn=1+Math.floor(w/5);if(w>=8)mat.bell=Math.floor(w/8);if(w>=10)mat.gf=Math.floor(w/10);if(w>=20)mat.dust=Math.floor(w/20);
+ SV.g+=gold;for(const k in mat)SV.mat[k]=(SV.mat[k]||0)+mat[k];if(rec)SV.inf[id]=w;svs();achCheck();badge();return G.inf={w,gold,mat,rec,old}}
+{const f1=finish;finish=function(win){if(!LV.inf||G.co)return f1.apply(this,arguments);if(G.state==='over')return;const w=Math.max(0,G.wave-1);f1.call(this,false);infPay(w)}}
+{const so1=showOv;showOv=function(k,n){so1.apply(this,arguments);if(!LV.inf||G.co)return;const o=$('cdOv'),m=INFM.find(x=>x.id===LV.inf),c=o.querySelector('.cd-card');if(!c||!m)return;
+ if(k==='start')c.innerHTML=`<svg viewBox="-28 -46 56 66" width="58" height="68"><use href="#cd-murzik"/></svg><h3>${m.n} ∞</h3><p>Волны не заканчиваются: зомби с каждой волной крепче, а каждые 10 волн приходит Доктор Пёс. Продержись как можно дольше.<br>Рекорд: <b>${(SV.inf||{})[m.id]||0}</b> волн</p><button class="cd-btn" data-a="go">В бой!</button><button class="cd-btn g" data-a="menu">В меню</button>`;
+ else if(k==='lose'){const r=G.inf||{w:Math.max(0,G.wave-1),gold:0,mat:{},rec:false},mt=Object.keys(r.mat).map(x=>MAT[x][0]+'×'+r.mat[x]).join(' ');
+  c.innerHTML=`<h3>Дозор окончен</h3><p>Отбито волн: <b>${r.w}</b>${r.rec?' · новый рекорд! 🏆':' · рекорд '+(SV.inf[LV.inf]||0)}<br>Побеждено зомби: ${G.kills}<br>${r.gold>0?`<b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${r.gold} ${fi('gfish')}</b>`:'Отбей хотя бы одну волну, чтобы получить награду'}${mt?'<br>Добыча: '+mt:''}</p><button class="cd-btn" data-a="inf-retry">Ещё раз</button><button class="cd-btn g" data-a="menu">В меню</button>`}}}
+/* выход из боя: награда за уже отбитые волны; сброс «режимных» флагов, чтобы обычный уровень не открылся как марафон/бесконечный */
+$('cdOv').addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;const k=a.dataset.a;
+ if(k==='inf-retry'){unlock();sfx('click');return startInf(LV.inf)}
+ if(k==='menu'&&LV.inf&&!G.co&&(G.state==='wave'||G.state==='break')&&G.wave>=1){const r=infPay(Math.max(0,G.wave-(G.state==='wave'?1:0)));if(r&&r.gold>0)say('Награда за '+r.w+' волн: +'+r.gold+' золотых рыбок')}},true);
+{const mn1=menu;menu=function(){if(VIEW==='menu'&&LV&&!(G&&G.co)){LV.mar=0;LV.inf=0}return mn1.apply(this,arguments)}}
+{const wh1=worldsH;worldsH=function(){const h=wh1.apply(this,arguments);fixSV();
+ return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда за отбитые волны</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div>`+h}}
+$('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-p="inf"]');if(!b||b.disabled)return;unlock();sfx('click');startInf(b.dataset.id)});
+/* «Вдвоём»: волны без конца в общей вылазке */
+{const mc1=mkCo;mkCo=function(m){return m.inf?infWaves({ep:false,d:1,D:1.5}):mc1.apply(this,arguments)}}
+{const sc1=startCo;startCo=function(m,host){const r=sc1.apply(this,arguments);if(m.inf){LV.inf='co';LV.infHm=m.hm}return r}}
+{const u1=ui;ui=function(){u1.apply(this,arguments);if(LV&&LV.inf){const e=N.wt;if(e._v&&String(e._v).indexOf('/'+MAXW)>-1)e.textContent=String(e._v).replace('/'+MAXW,' ∞')}}}
+evoApply();paintAll();
 
 spdUi();reset();card();
 }catch(e){console.error('catdef',e)}})();
