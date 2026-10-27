@@ -6952,6 +6952,132 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-p="inf"
 {const mc1=mkCo;mkCo=function(m){return m.inf?infWaves({ep:false,d:1,D:1.5}):mc1.apply(this,arguments)}}
 {const sc1=startCo;startCo=function(m,host){const r=sc1.apply(this,arguments);if(m.inf){LV.inf='co';LV.infHm=m.hm}return r}}
 {const u1=ui;ui=function(){u1.apply(this,arguments);if(LV&&LV.inf){const e=N.wt;if(e._v&&String(e._v).indexOf('/'+MAXW)>-1)e.textContent=String(e._v).replace('/'+MAXW,' ∞')}}}
+/* ===== Часть 6: «Ещё» без выхода за экран, компактный инвентарь, 5 новых лукошек (сетка по 3), кнопка «Скины» у каждого лукошка, карточка котика в отряде ===== */
+{
+const st6b=document.createElement('style');st6b.textContent=`
+.cd-tabs button{min-width:0}
+@media(max-width:370px){.cd-tabs button{font-size:12px;gap:4px}.cd-tabs .ci{width:17px;height:17px}}
+.cd-sub{flex-wrap:wrap}
+.cd-sub button{flex:1 1 calc(33.333% - 6px);min-width:0;padding:0 4px;white-space:nowrap}
+.cd-sub button:first-child:nth-last-child(4),.cd-sub button:first-child:nth-last-child(4)~button{flex-basis:calc(50% - 6px)}
+.tm-top{grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.tm-s{aspect-ratio:auto;min-height:76px;padding:5px 2px 4px;border-radius:13px;gap:0;min-width:0}
+.tm-s svg{width:34px;height:38px}
+.tm-s b,.tm-s span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-s b{font-size:10px}.tm-s span{font-size:8.5px}
+.tm-s.e{font-size:20px;min-height:76px}
+.ck-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+.ck{padding:6px 4px 7px;border-radius:14px;gap:2px;min-width:0}
+.ck>svg{width:38px;height:44px}.ck b{font-size:11px}.ck em{font-size:9.5px;line-height:1.2}
+.ck p,.ck small{display:none}
+.ck-st{font-size:9.5px}.ck-c{font-size:10px}
+.ck-ok{min-height:30px;font-size:11px}.ck-ok svg{width:14px;height:14px}
+.ck .cd-btn,.ck .cd-btn.sm{min-height:32px;font-size:12px;padding:0 4px;gap:4px;border-radius:12px}
+.ck .cw-lock{font-size:10px;gap:4px}
+.ck[data-tp]{cursor:pointer}
+.lkh{padding:8px 10px;margin:0 0 8px;gap:10px}.lkh-b{width:62px;height:76px}
+.lg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.lg{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);text-align:center;min-width:0}
+.lg-b{width:52px;height:62px;flex:none}
+.lg b{font-size:11px;font-weight:800;line-height:1.15;max-width:100%}.lg small{font-size:10px;opacity:.75}
+.lg-btn{width:100%;min-height:30px;padding:0 4px;border-radius:11px;font:800 11.5px Comfortaa,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:4px;color:#fff;background:linear-gradient(135deg,#fb923c,#f43f5e)}
+.lg-btn.s{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#e9d5ff}
+.lg-btn:disabled{opacity:.45;filter:grayscale(.6)}
+.lg-btn .fi{width:22px;height:15px}
+.ev-box{max-height:100%;overflow-y:auto;overscroll-behavior:contain}
+.ev-box.wide{max-width:360px}
+.sp-h{display:flex;gap:10px;align-items:center;width:100%;text-align:left}.sp-h small{display:block;font-size:11px;opacity:.75;margin-top:2px}
+.sp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}.sp-grid.c3{grid-template-columns:repeat(3,1fr)}.tm-s.lock b{color:#cbd5e1}
+.tp-top{display:flex;gap:10px;align-items:center;width:100%;text-align:left}
+.tp-top>svg{width:78px;height:86px;flex:none}.tp-top b{font-size:17px}.tp-top small{display:block;font-size:12px;opacity:.8;margin:1px 0 3px}
+.tp-p{font-size:12px;line-height:1.35;text-align:left;width:100%;margin:0}
+.tp-story{font-size:11px;opacity:.72;line-height:1.35;text-align:left;width:100%;margin:0}
+.tp-st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+.tp-st div{background:rgba(255,255,255,.07);border-radius:11px;padding:5px 6px;text-align:left;font-size:10px;color:#cbd5e1;min-width:0}
+.tp-st b{display:flex;align-items:center;gap:3px;font-size:13px;color:#fff;margin-top:1px}
+.tp-b{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}.tp-b .lg-btn{min-height:40px;font-size:12.5px}.tp-b .lg-btn:only-child{grid-column:1/-1}
+.ev-box .tm-h{width:100%;text-align:left;margin:2px 0 0}
+`;document.head.appendChild(st6b);
+
+/* --- 5 новых лукошек --- */
+const NT2=['ice','desert','royal','cyber','magic'];
+Object.assign(THEMES,{
+ ice:{n:'Мороз',e:'❄️',hue:190,sat:.8,br:1.12,acc:'<g stroke="#e0f2fe" stroke-width="2" stroke-linecap="round" fill="none"><path d="M17-30v12M11-24h12M13-28l8 8M21-28l-8 8"/></g><path d="M-14-16L-11-24-7-17-3-26 1-17 5-24 9-17 13-24 14-16Z" fill="#bae6fd" stroke="#7dd3fc" stroke-width="1"/><path d="M-12 8Q0 14 12 8L11 14Q0 19-11 14Z" fill="#60a5fa"/>',cats:['murzik','pushok','murka','sphinx','frost','iney']},
+ desert:{n:'Пустыня',e:'🏜️',hue:45,sat:1.1,br:1.05,acc:'<path d="M-12-16Q0-31 12-16Z" fill="#fde68a" stroke="#d97706" stroke-width="1.2"/><path d="M-15-16H15" stroke="#b45309" stroke-width="2.4" stroke-linecap="round"/><g fill="#4ade80" stroke="#15803d" stroke-width="1"><rect x="19" y="4" width="6" height="16" rx="3"/><rect x="14" y="9" width="5" height="3" rx="1.5"/></g>',cats:['barsik','garden','tigra','cowboy','sumo','sphinx']},
+ royal:{n:'Королевство',e:'👑',hue:335,sat:1.25,br:1,acc:'<path d="M-11-17L-13-29-6-23 0-32 6-23 13-29 11-17Z" fill="#fbbf24" stroke="#b45309" stroke-width="1.2"/><circle cx="0" cy="-32" r="1.8" fill="#ef4444"/><circle cx="-13" cy="-29" r="1.5" fill="#38bdf8"/><circle cx="13" cy="-29" r="1.5" fill="#4ade80"/><path d="M-14 9Q0 16 14 9L16 17Q0 22-16 17Z" fill="#be123c"/><path d="M-14 9Q0 16 14 9" stroke="#fff" stroke-width="2" fill="none"/>',cats:['murka','chef','bard','biz','knight','baron']},
+ cyber:{n:'Киберпанк',e:'🤖',hue:200,sat:1.7,br:1.15,acc:'<rect x="-14" y="-9" width="28" height="8" rx="4" fill="#0f172a" fill-opacity=".85" stroke="#22d3ee" stroke-width="1.6"/><path d="M-10-5H10" stroke="#f0abfc" stroke-width="2" stroke-linecap="round"/><path d="M0-21V-30" stroke="#94a3b8" stroke-width="2"/><circle cx="0" cy="-32" r="3" fill="#22d3ee"/>',cats:['miner','bowler','spidey','kosm','spark','volt']},
+ magic:{n:'Магия',e:'🔮',hue:265,sat:1.4,br:.9,acc:'<path d="M-14-16L0-42 14-16Z" fill="#6d28d9" stroke="#4c1d95" stroke-width="1.2"/><path d="M-17-16H17" stroke="#4c1d95" stroke-width="3.2" stroke-linecap="round"/><path d="M0-31l1.6 3.4 3.6.5-2.6 2.5.6 3.6L0-22.6-3.2-20.9l.6-3.6-2.6-2.5 3.6-.5z" fill="#fde047"/><circle cx="20" cy="12" r="6" fill="#c4b5fd" fill-opacity=".6" stroke="#a78bfa" stroke-width="1.5"/>',cats:['lila','toxic','thorn','bard','wing','fairy']}});
+Object.assign(YP,{ice:['#0e7490','#ecfeff','#ffffff','#67e8f9'],desert:['#b45309','#fef3c7','#fffbeb','#f59e0b'],royal:['#9f1239','#fecdd3','#fde68a','#e11d48'],cyber:['#0f172a','#22d3ee','#f0abfc','#6366f1'],magic:['#4c1d95','#ddd6fe','#fde047','#8b5cf6']});
+Object.assign(YX,{
+ ice:'<g stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"><path d="M0-50v-16M-8-58h16M-6-54l12-12M6-54l-12-12"/></g><path d="M-30-30L-26-14-22-30ZM18-34L22-20 26-34Z" fill="#fff" opacity=".85"/><circle cx="-20" cy="14" r="2.4" fill="#fff"/><circle cx="24" cy="10" r="2" fill="#fff"/>',
+ desert:'<circle cx="0" cy="-56" r="9" fill="#fde047" stroke="#f59e0b" stroke-width="2.5"/><path d="M0-70v-6M-12-66l-4-4M12-66l4-4M-14-56h-6M14-56h6" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"/><g fill="#4ade80" stroke="#15803d" stroke-width="1.6"><rect x="14" y="-8" width="10" height="28" rx="5"/><rect x="6" y="-2" width="6" height="12" rx="3"/></g>',
+ royal:'<path d="M-16-44L-20-62-8-54 0-68 8-54 20-62 16-44Z" fill="#fbbf24" stroke="#b45309" stroke-width="2"/><circle cx="0" cy="-68" r="3" fill="#ef4444"/><circle cx="-20" cy="-62" r="2.6" fill="#38bdf8"/><circle cx="20" cy="-62" r="2.6" fill="#4ade80"/><g fill="#fde68a"><circle cx="-18" cy="-10" r="3"/><circle cx="20" cy="4" r="3"/><circle cx="-6" cy="20" r="2.4"/></g>',
+ cyber:'<path d="M0-44V-58" stroke="#94a3b8" stroke-width="3"/><circle cx="0" cy="-62" r="5" fill="#22d3ee"/><g stroke="#22d3ee" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M-30-14H-12V6M30 8H12V-12M-18 24H4"/></g><g fill="#f0abfc"><circle cx="-12" cy="6" r="2.6"/><circle cx="12" cy="-12" r="2.6"/></g>',
+ magic:'<path d="M-14-44L0-72 14-44Z" fill="#6d28d9" stroke="#fde047" stroke-width="2"/><circle cx="0" cy="-56" r="3" fill="#fde047"/><g fill="#fde047"><path d="M-24-14l2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1z"/><path d="M22 4l1.6 4 4 .8-3 2.4.8 4-3.4-2.4-3.4 2.4.8-4-3-2.4 4-.8z"/></g>'});
+NT2.forEach(t=>{const cs=THEMES[t].cats.filter(k=>SYM[k]&&TWB[k]);cs.forEach((k,i)=>SKS.push({id:t+'.'+k,t,k,r:i<2?0:i<4?1:i===4?2:3}));if(cs.length)SKS.push({id:t+'.'+cs[cs.length-1]+'.rb',t,k:cs[cs.length-1],r:4,rb:1})});
+$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+NT2.map(t=>{const T=THEMES[t];return `<filter id="cdf-${t}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${T.hue}"/><feColorMatrix type="saturate" values="${T.sat}"/><feComponentTransfer><feFuncR type="linear" slope="${T.br}"/><feFuncG type="linear" slope="${T.br}"/><feFuncB type="linear" slope="${T.br}"/></feComponentTransfer></filter>`}).join('')+SKS.filter(s=>NT2.includes(s.t)).map(s=>`<g id="${pvId(s)}">${skinG(s.k,skVal(s))}</g>`).join('')+'</defs></svg>');
+
+/* --- общие помощники --- */
+let PN=null;
+const rarSp=s=>{const R=RARS[s.r];return `<span class="${s.r===4?'rbt':''}" style="color:${R.c}">${R.n}</span>`};
+const refresh=()=>{if(VIEW!=='menu')return;const b=$('cdBody'),y=b?b.scrollTop:0;menu();if(b)b.scrollTop=y};
+const showKeep=h=>{const o=evp.querySelector('.ev-box'),y=o?o.scrollTop:0;showEv(h);const n=evp.querySelector('.ev-box');if(n&&y)n.scrollTop=y};
+
+/* --- карточка котика: характеристики, отряд, скины --- */
+const stl=(l,v)=>`<div>${l}<b>${v}</b></div>`;
+function tpPanel(k){fixSV();const same=PN&&PN.t==='tp'&&PN.k===k;PN={t:'tp',k};
+ const t=TW[k],own=SV.own.includes(k),inT=SV.team.includes(k),e=SV.evo[k]||0,d=dpsOf(t),
+ eco=t.gain?'+'+t.gain+' за волну':t.inc?'+'+t.inc+' / '+nf(t.cd)+' с':'',
+ all=SKS.filter(s=>s.k===k),have=all.filter(s=>SV.skins.includes(s.id)),cur=SV.sk[k]||'';
+ const S=[stl('Цена в бою',fi()+' '+t.cost)];
+ if(t.dmg)S.push(stl('Урон за удар',nf(t.dmg)));
+ if(d>0)S.push(stl('Урон в секунду',nf(d)));
+ if(t.range>0)S.push(stl('Дальность',Math.round(t.range)));
+ if(t.dmg&&t.cd>0)S.push(stl('Атак в секунду',nf(1/t.cd)));
+ if(eco)S.push(stl('Доход',eco));
+ S.push(stl('Эволюция',e+'/5'));
+ S.push(stl(own?'В магазине':'Цена в магазине',own?'куплен':fi('gfish')+' '+t.pr));
+ const tiles=`<button class="tm-s${cur?'':' f'}" style="--bg:${t.bg}" data-sk="none" data-k="${k}"><svg viewBox="-28 -46 56 66">${SYM[k]}</svg><b>Без скина</b><span>обычный</span></button>`+have.map(s=>`<button class="tm-s sk r${s.r}${cur===skVal(s)?' f':''}" style="--bg:${t.bg};--rc:${RARS[s.r].c}" data-sk="eq" data-k="${k}" data-th="${skVal(s)}"><svg viewBox="-28 -46 56 66"><use href="#${pvId(s)}"/></svg><b>${THEMES[s.t].e} ${THEMES[s.t].n}</b>${rarSp(s)}</button>`).join('');
+ const acts=own?`<div class="tp-b"><button class="lg-btn${inT?' s':''}" data-tp="${inT?'rm':'add'}" data-k="${k}">${inT?'Убрать из отряда':'Добавить в отряд'}</button><button class="lg-btn s" data-ev="open" data-k="${k}">★ Эволюция</button></div>`
+  :`<div class="tp-b"><button class="lg-btn" data-tp="buy" data-k="${k}" ${SV.g<t.pr?'disabled':''}>Купить ${fi('gfish')}${t.pr}</button></div>`;
+ const skins=own?`<p class="tm-h">Скины: ${have.length}/${all.length} · тап — надеть или снять</p><div class="sp-grid c3">${tiles}</div>${have.length?'':'<p class="tp-story">Скинов пока нет — выбивай их в лукошках (вкладка «Скины»).</p>'}`:'';
+ (same?showKeep:showEv)(`<div class="ev-box"><button class="ev-x" data-ev="close" aria-label="Закрыть">✕</button><div class="tp-top"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><div><b>${t.n}</b><small>${t.role}${t.ep?' · Эпоха II':''}${own&&inT?' · в отряде':''}</small><div class="ev-pips">${'★'.repeat(e)}${'☆'.repeat(5-e)}</div></div></div><p class="tp-p">${t.inf}</p><div class="tp-st">${S.join('')}</div>${acts}${skins}<p class="tp-story">${t.st}</p></div>`)}
+
+/* --- скины одного лукошка --- */
+function spPanel(t){fixSV();const same=PN&&PN.t==='sp'&&PN.th===t;PN={t:'sp',th:t};
+ const T=THEMES[t],all=SKS.filter(s=>s.t===t).sort((a,b)=>a.r-b.r),own=all.filter(s=>SV.skins.includes(s.id)).length;
+ const tiles=all.map(s=>{const o=SV.skins.includes(s.id),R=RARS[s.r];
+  return o?`<button class="tm-s sk r${s.r}${SV.sk[s.k]===skVal(s)?' f':''}" style="--bg:${TWB[s.k].bg};--rc:${R.c}" data-sk="eq" data-k="${s.k}" data-th="${skVal(s)}"><svg viewBox="-28 -46 56 66"><use href="#${pvId(s)}"/></svg><b>${TWB[s.k].n}</b>${rarSp(s)}</button>`
+  :`<div class="tm-s sk lock r${s.r}" style="--bg:#334155;--rc:${R.c}"><svg viewBox="-28 -46 56 66" style="filter:brightness(0) opacity(.45)"><use href="#${pvId(s)}"/></svg><b>${TWB[s.k].n}</b>${rarSp(s)}</div>`}).join('');
+ (same?showKeep:showEv)(`<div class="ev-box wide"><button class="ev-x" data-ev="close" aria-label="Закрыть">✕</button><div class="sp-h"><svg viewBox="-80 -110 160 190" class="lg-b">${basket(t,'p'+t)}</svg><div><b style="font-size:16px">${T.e} ${T.n}</b><small>Собрано ${own}/${all.length} · тап — надеть или снять</small></div></div><div class="sp-grid">${tiles}</div><div class="tp-b"><button class="lg-btn" data-sp="roll" data-th="${t}" ${SV.g<LKP?'disabled':''}>Открыть лукошко ${LKP} ${fi('gfish')}</button></div></div>`)}
+
+const onTp=e=>{const b=e.target.closest('[data-tp],[data-sk],[data-sp]');if(!b||b.disabled)return;const inner=e.target.closest('[data-a]');if(inner&&inner!==b)return;
+ unlock();const d=b.dataset;fixSV();
+ if(d.tp==='open'){sfx('click');return tpPanel(d.k)}
+ if(d.tp==='add'){if(!SV.own.includes(d.k))return;if(!SV.team.includes(d.k)){if(SV.team.length>=TMAX){sfx('deny');return say('Отряд полон — сначала убери кого-нибудь')}SV.team.push(d.k)}svs();sfx('click');refresh();return tpPanel(d.k)}
+ if(d.tp==='rm'){const i=SV.team.indexOf(d.k);if(i<0)return;if(SV.team.length<2){sfx('deny');return say('В отряде нужен хотя бы один котик')}SV.team.splice(i,1);svs();sfx('click');refresh();return tpPanel(d.k)}
+ if(d.tp==='buy'){const t=TW[d.k];if(SV.own.includes(d.k))return;if(t.ep&&!SV.ep.includes(t.ep)){sfx('deny');return say('Сначала открой Эпоху II')}if(SV.g<t.pr){sfx('deny');return say('Не хватает золотых рыбок')}
+  SV.g-=t.pr;SV.own.push(d.k);if(SV.team.length<TMAX)SV.team.push(d.k);svs();sfx('win');say(t.n+' теперь в твоей команде!');if(CF[d.k]){hideEv();return cfilm(d.k)}refresh();return tpPanel(d.k)}
+ if(d.sk){const k=d.k;if(d.sk==='none'||SV.sk[k]===d.th)delete SV.sk[k];else SV.sk[k]=d.th;paint(k);svs();sfx('click');refresh();return PN&&PN.t==='sp'?spPanel(PN.th):tpPanel(k)}
+ if(d.sp==='open'){sfx('click');return spPanel(d.th)}
+ if(d.sp==='roll'){hideEv();PN=null;return roll(d.th,0)}};
+$('cdMenu').addEventListener('click',onTp);evp.addEventListener('click',onTp);
+
+/* --- отряд: тап по котику открывает его карточку --- */
+teamH=function(){const ks=Object.keys(TW).filter(k=>SV.own.includes(k)),cd=(k,c)=>`<button class="tm-s ${c}" style="--bg:${TW[k].bg}" data-tp="open" data-k="${k}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${TW[k].role}</span></button>`;
+ return `<p class="tm-h">Отряд в бою: ${SV.team.length}/${TMAX} · тап — характеристики</p><div class="tm-top">${Array.from({length:TMAX},(_,i)=>SV.team[i]?cd(SV.team[i],'f'):'<div class="tm-s e">+</div>').join('')}</div><p class="tm-h">Все открытые котики: ${ks.length}/${Object.keys(TW).length} · тап — характеристики</p><div class="tm-top">${ks.map(k=>cd(k,SV.team.includes(k)?'in':'')).join('')}</div>`};
+
+/* --- магазин: карточки компактные, подробности открываются по тапу --- */
+{const sh0=shopH;shopH=function(){return sh0.apply(this,arguments).replace(/<div class="ck([^"]*)" style="([^"]*)"><svg([^>]*)><use href="#cd-(\w+)"\/>/g,(m,c,s,a,k)=>s.indexOf('#334155')>-1?m:`<div class="ck${c}" style="${s}" data-tp="open" data-k="${k}"><svg${a}><use href="#cd-${k}"/>`)}}
+
+/* --- лукошки: сетка по 3, у каждого кнопки «Открыть» и «Скины» --- */
+lukH=function(){fixSV();const free=SV.dl!==dkey(),dt=dailyT(),T=THEMES[dt];
+ const hero=`<div class="lkh"><svg viewBox="-80 -110 160 190" class="lkh-b">${basket(dt,'h')}</svg><div><b>Лукошко дня: ${T.n} ${T.e}</b><small>${free?'Сегодня открывается бесплатно':'Бесплатное на сегодня уже открыто'}</small>${free?'':`<div class="lkh-t">Следующее бесплатное через <span id="cdLkT">${lkLeft()}</span></div>`}<button class="cd-btn sm go" data-lk="free" data-th="${dt}" ${free?'':'disabled'}>${free?'Открыть бесплатно':'Ждём новое'}</button></div></div>`;
+ const cr=Object.keys(THEMES).map(t=>{const T=THEMES[t],all=SKS.filter(s=>s.t===t),own=all.filter(s=>SV.skins.includes(s.id)).length;
+  return `<div class="lg"><svg viewBox="-80 -110 160 190" class="lg-b">${basket(t,'t'+t)}</svg><b>${T.e} ${T.n}</b><small>Собрано ${own}/${all.length}</small><button class="lg-btn" data-lk="roll" data-th="${t}" ${SV.g<LKP?'disabled':''}>${LKP} ${fi('gfish')}</button><button class="lg-btn s" data-sp="open" data-th="${t}">Скины</button></div>`}).join('');
+ return hero+`<p class="tm-h">Шансы: ${RARS.map(r=>r.n+' '+String(r.w).replace('.',',')+'%').join(' · ')}</p><div class="lg-grid">${cr}</div><p class="tm-h">Скины в сундуке: ${SV.skins.length}/${SKS.length} · кнопка «Скины» у лукошка — посмотреть и надеть</p>`};
+}
+
 evoApply();paintAll();
 
 spdUi();reset();card();
