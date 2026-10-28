@@ -7912,7 +7912,6 @@ ACH.push({id:'v1',n:'Испытатель',d:'Пройди испытание д
 evoApply();paintAll();
 
 spdUi();reset();card();
-}catch(e){console.error('catdef',e)}})();
 
 /* ===== ЗОМБИ 2.0: риг с ходьбой, мимикой и костюмами по мирам ===== */
 (()=>{
@@ -8016,6 +8015,7 @@ const dm=dmg;dmg=function(e){const was=e&&e.dead;dm.apply(this,arguments);
  if(e&&e.dead&&!was){const T=ZW[e.zw];if(T&&T.am)puff(e.x,e.y-6,T.am[1][0],5)}};
 })();
 
+}catch(e){console.error('catdef',e)}})();
 </script>
 <script id="pack36">
 /* ===== v36: быстрая башня · плоды дерева · новые деревья · гардероб питомцев ===== */
