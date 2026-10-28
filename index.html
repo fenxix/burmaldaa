@@ -5602,12 +5602,12 @@ svg.addEventListener('pointerdown',e=>{unlock();if(G.co&&CQ.ping){coPing(e);retu
  if(t){G.pick=null;grid();select(t);sfx('click');return}
  select(null);if(!G.pick)return;
  if(c<0||c>=NC||r<0||r>=NR)return;if(ROAD.has(c+','+r))return say('Тут дорога — ставь на траву 🌿');
- const cf=TW[G.pick];if(G.tw.filter(x=>x.k===G.pick&&(!G.co||x.o===CQ.me)).length>=MAXT){sfx('deny');return say(cf.n+': максимум '+MAXT+' на поле')}if(G.fish<cf.cost){sfx('deny');return say('Не хватает рыбок 🐟')}
+ const cf=TW[G.pick];if(G.tw.filter(x=>x.k===G.pick&&(!G.co||x.o===CQ.me)).length>=MAXT){sfx('deny');return say(cf.n+': максимум '+MAXT+' на поле')}if(G.fish<cf.cost){sfx('deny');return say('Не хватает рыбок')}
  if(G.co){coPlaceTap(G.pick,c,r);return}G.fish-=cf.cost;G.tw.push(mkTw(G.pick,c,r));puff(c*C+30,r*C+40,'#fff',5);sfx('place');vib(10);if(G.tw.filter(t=>t.k===G.pick).length>=MAXT)G.pick=null;grid()});
 svg.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!G.pick||G.state==='idle'||G.state==='over')return;const[c,r]=cell(e);free(c,r)?ghost(c*C+30,r*C+30,rv(TW[G.pick]),G.pick):ghost()});
 svg.addEventListener('pointerleave',()=>{if(!G.sel)ghost()});
 $('cdSell').addEventListener('click',()=>{const t=G.sel;if(!t)return;if(G.co){coSell(t);return}G.fish+=Math.floor(t.inv*.6);t.g.remove();G.tw=G.tw.filter(x=>x!==t);puff(t.x,t.y,'#fde047',6);sfx('coin');select(null);grid()});
-$('cdUp').addEventListener('click',()=>{const t=G.sel;if(!t||t.lv>=3)return;if(G.co){coUp(t);return}const c=upc(t);if(G.fish<c){sfx('deny');return say('Не хватает рыбок 🐟')}G.fish-=c;t.inv+=c;t.lv++;if(t.lv>=3){SV.up=1;svs();achCheck()}t.cf=upg(t.k,t.lv,t.ev);t.kick=1;ring(t.x,t.y,38,'#fde047');puff(t.x,t.y,'#fde047',8);sfx('win');select(t)});
+$('cdUp').addEventListener('click',()=>{const t=G.sel;if(!t||t.lv>=3)return;if(G.co){coUp(t);return}const c=upc(t);if(G.fish<c){sfx('deny');return say('Не хватает рыбок')}G.fish-=c;t.inv+=c;t.lv++;if(t.lv>=3){SV.up=1;svs();achCheck()}t.cf=upg(t.k,t.lv,t.ev);t.kick=1;ring(t.x,t.y,38,'#fde047');puff(t.x,t.y,'#fde047',8);sfx('win');select(t)});
 $('cdBar').addEventListener('click',e=>{const b=e.target.closest('.cd-t');if(!b||G.state==='idle'||G.state==='over')return;const k=b.dataset.k;select(null);
  if(G.pick===k)G.pick=null;else if(G.fish<TW[k].cost){sfx('deny');say(TW[k].n+': нужно '+TW[k].cost+' рыбок 🐟')}else if(G.tw.filter(t=>t.k===k&&(!G.co||t.o===CQ.me)).length>=MAXT){sfx('deny');say(TW[k].n+': максимум '+MAXT+' на поле')}else{G.pick=k;sfx('click')}grid()});
 N.wave.addEventListener('click',()=>{unlock();if(G.state==='break'){if(G.co&&!CQ.host)csend('c-nw');else nextWave(true)}});
@@ -6603,17 +6603,17 @@ function hPlace(o,k,c,r,ev){if(G.state==='idle'||G.state==='over')return coNo(o,
  const cf=TW[k];if(!cf)return coNo(o,'Неизвестный котик');
  if(!free(c,r))return coNo(o,'Клетка занята');
  if(G.tw.filter(t=>t.k===k&&t.o===o).length>=MAXT)return coNo(o,cf.n+': максимум '+MAXT+' на поле');
- if((o===0?G.fish:G.pf)<cf.cost)return coNo(o,'Не хватает рыбок 🐟');
+ if((o===0?G.fish:G.pf)<cf.cost)return coNo(o,'Не хватает рыбок');
  if(o===0)G.fish-=cf.cost;else G.pf-=cf.cost;
  const t=coMake(++G.tid,k,c,r,o,ev|0,1,o===1?0:0);coRelink(0);
  csend('pl',Object.assign({id:t.id,kk:k,c,r,o,ev:ev|0},walOut()));return t}
 function hUp(o,id){const t=G.tw.find(x=>x.id===id);if(!t||t.o!==o||t.lv>=3)return coNo(o,'Нельзя улучшить');const c=upc(t);
- if((o===0?G.fish:G.pf)<c)return coNo(o,'Не хватает рыбок 🐟');
+ if((o===0?G.fish:G.pf)<c)return coNo(o,'Не хватает рыбок');
  if(o===0)G.fish-=c;else G.pf-=c;t.inv+=c;coSetLv(t,t.lv+1);
  csend('up',Object.assign({id,lv:t.lv},walOut()));
  if(o===0){if(t.lv>=3){SV.up=1;svs();achCheck()}if(G.sel===t)select(t)}return t}
 function hSell(o,id){const t=G.tw.find(x=>x.id===id);if(!t||t.o!==o)return;const g=Math.floor(t.inv*.6);if(o===0)G.fish+=g;else G.pf+=g;coRemove(t,1);csend('sl',Object.assign({id},walOut()))}
-function hGift(o,n){n=Math.max(1,Math.min(200,n|0));if((o===0?G.fish:G.pf)<n)return coNo(o,'Не хватает рыбок 🐟');
+function hGift(o,n){n=Math.max(1,Math.min(200,n|0));if((o===0?G.fish:G.pf)<n)return coNo(o,'Не хватает рыбок');
  if(o===0){G.fish-=n;G.pf+=n}else{G.pf-=n;G.fish+=n}sfx('coin');csend('gf',Object.assign({n,o},walOut()));if(o===1)say(ptName()+' передал(а) тебе '+n+' 🐟');sendSnap()}
 function hSalvo(o){if(G.fr<100||G.state!=='wave'){return coNo(o,G.state!=='wave'?'Залп работает во время волны':'Шкала ещё не заполнена')}
  G.fr=0;SV.csal=1;svs();csend('mz',walOut());salvoApply()}
@@ -6625,9 +6625,9 @@ function coPlaceTap(k,c,r){const cf=TW[k],ev=SV.evo[k]||0;
  if(CQ.host){const t=hPlace(0,k,c,r,ev);if(t){if(G.tw.filter(x=>x.k===k&&x.o===0).length>=MAXT)G.pick=null;grid()}return}
  if(CQ.pend&&performance.now()-CQ.pend<350)return;CQ.pend=performance.now();
  csend('c-pl',{kk:k,c,r,ev});sfx('click');puff(c*C+30,r*C+40,'#fff',3)}
-function coUp(t){if(t.o!==CQ.me)return;if(CQ.host)hUp(0,t.id);else{if(G.fish<upc(t)){sfx('deny');return say('Не хватает рыбок 🐟')}csend('c-up',{id:t.id})}}
+function coUp(t){if(t.o!==CQ.me)return;if(CQ.host)hUp(0,t.id);else{if(G.fish<upc(t)){sfx('deny');return say('Не хватает рыбок')}csend('c-up',{id:t.id})}}
 function coSell(t){if(t.o!==CQ.me)return;if(CQ.host)hSell(0,t.id);else csend('c-sl',{id:t.id})}
-function coGift(){const n=25;if(CQ.host)hGift(0,n);else{if(G.fish<n){sfx('deny');return say('Не хватает рыбок 🐟')}csend('c-gf',{n})}say('Передано '+n+' 🐟 → '+ptName())}
+function coGift(){const n=25;if(CQ.host)hGift(0,n);else{if(G.fish<n){sfx('deny');return say('Не хватает рыбок')}csend('c-gf',{n})}say('Передано '+n+' 🐟 → '+ptName())}
 function coSalvoTap(){if(G.fr<100){sfx('deny');return say('Копи шкалу 💞: убивайте зомби вместе')}if(CQ.host)hSalvo(0);else csend('c-mz')}
 function coWc(b){csend('wc',Object.assign({w:G.wave,b},walOut()));sendSnap(1)}
 /* связки: котики разных игроков по соседству усиливают друг друга */
@@ -6960,7 +6960,7 @@ $('cdOv').addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!
  if(k==='menu'&&LV.inf&&!G.co&&(G.state==='wave'||G.state==='break')&&G.wave>=1){const r=infPay(Math.max(0,G.wave-(G.state==='wave'?1:0)));if(r&&r.gold>0)say('Награда за '+r.w+' волн: +'+r.gold+' золотых рыбок')}},true);
 {const mn1=menu;menu=function(){if(VIEW==='menu'&&LV&&!(G&&G.co)){LV.mar=0;LV.inf=0}return mn1.apply(this,arguments)}}
 {const wh1=worldsH;worldsH=function(){const h=wh1.apply(this,arguments);fixSV();
- return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div>`+h}}
+ return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':ic('lock')}</em></button>`}).join('')}</div>`+h}}
 $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-p="inf"]');if(!b||b.disabled)return;unlock();sfx('click');startInf(b.dataset.id)});
 /* «Вдвоём»: волны без конца в общей вылазке */
 {const mc1=mkCo;mkCo=function(m){return m.inf?infWaves({ep:false,d:1,D:1.5}):mc1.apply(this,arguments)}}
@@ -7227,7 +7227,7 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if
 /* ===== Часть 9: выбор режима (История · Бесконечный · Вдвоём · Дуэль), «Дуэль» 3 линии с кошачьими домиками ===== */
 {
 keepE('📖∞🐾⚔️🏠🤖🏆💌');
-const NS2='http://www.w3.org/2000/svg',DW=360,DH=640,LX=[60,180,300];
+const NS2='http://www.w3.org/2000/svg',DW=400,DH=720,LX=[72,200,328],MID=360,DUT1=150,DUT2=270;
 const st9=document.createElement('style');st9.textContent=`
 #cdTabs button[data-t="v"]{display:none}
 .hb{display:grid;gap:10px}
@@ -7239,7 +7239,7 @@ const st9=document.createElement('style');st9.textContent=`
 .sk-wr{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;text-align:left;width:100%}
 .sk-wr>span:first-child{flex:1;min-width:0}.sk-wr em{font-style:normal;font-size:11px;opacity:.85}
 .du-clk{min-width:58px;height:36px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.1);font:800 14px Montserrat,sans-serif;flex:none}
-.du-wrap{position:relative;flex:none;margin-top:4px;width:min(100%,398px,max(190px,calc((100dvh - 248px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*.5625)));aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+.du-wrap{position:relative;flex:none;margin-top:4px;width:min(100%,398px,max(190px,calc((100dvh - 248px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*.5556)));aspect-ratio:5/9;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.4)}
 #duSvg{width:100%;height:100%;display:block;touch-action:manipulation}
 .du-ban{position:absolute;inset:0;display:none;place-items:center;font:900 52px Comfortaa,sans-serif;color:#fff;text-shadow:0 4px 16px rgba(0,0,0,.55);pointer-events:none;z-index:4;text-align:center;padding:0 10px;line-height:1.1}
 .du-ban.on{display:grid}
@@ -7277,6 +7277,32 @@ const st9=document.createElement('style');st9.textContent=`
 .du-c svg{width:32px;height:36px}.du-c b{font-size:8.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .du-c span{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:800}.du-c span svg{width:11px;height:11px}
 .du-c.on{border-color:#f43f5e;transform:translateY(-5px)}.du-c.off{opacity:.45;filter:grayscale(.5)}
+.du-top{gap:8px}.du-top .cd-ib{height:48px}
+.du-sb{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);height:48px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.18);background:#0b1224;box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.du-p{display:flex;align-items:center;gap:7px;padding:0 8px;min-width:0}
+.du-p.l{background:linear-gradient(90deg,rgba(59,130,246,.78),rgba(59,130,246,.16))}
+.du-p.r{background:linear-gradient(270deg,rgba(239,68,68,.78),rgba(239,68,68,.16));justify-content:flex-end;text-align:right}
+.du-av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;font:800 13px Montserrat,sans-serif;color:#fff;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.du-p.l .du-av{background:#2563eb}.du-p.r .du-av{background:#dc2626}
+.du-pn{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}.du-p.r .du-pn{align-items:flex-end}
+.du-pn b{font:800 11.5px Montserrat,sans-serif;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.du-pp{display:flex;gap:3px}.du-pp i{width:11px;height:7px;border-radius:3px;background:rgba(255,255,255,.2)}.du-pp i.m{width:17px}.du-pp i.on{background:#fff;box-shadow:0 0 6px rgba(255,255,255,.6)}
+.du-cr{font:900 20px Comfortaa,sans-serif;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.4);min-width:14px;text-align:center}
+.du-top .du-clk{height:auto;border-radius:0;min-width:58px;background:#0b1224;border-left:1px solid rgba(255,255,255,.14);border-right:1px solid rgba(255,255,255,.14);font:900 15px Montserrat,sans-serif}
+.du-clk.ot{color:#fde047;animation:duPulse 1s ease-in-out infinite}@keyframes duPulse{50%{background:#3b2a05}}
+.du-dock{position:relative}
+.du-emb{width:32px;height:24px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;flex:none}.du-emb svg{width:17px;height:17px}
+.du-emp{position:absolute;right:0;bottom:calc(100% + 4px);display:none;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px;border-radius:16px;background:rgba(15,23,42,.94);border:1px solid rgba(255,255,255,.2);box-shadow:0 10px 24px rgba(0,0,0,.5);z-index:8}
+.du-emp.on{display:grid}.du-emp button{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.08)}
+.du-em{position:absolute;z-index:6;width:64px;height:64px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 8px 20px rgba(0,0,0,.4),0 0 0 3px var(--c);pointer-events:none;animation:duEm 2.6s ease-out forwards}
+.du-em svg{width:46px;height:46px}
+.du-em.m{--c:#3b82f6;left:12px;bottom:15%}.du-em.o{--c:#ef4444;right:12px;top:15%}
+@keyframes duEm{0%{transform:scale(.2) translateY(14px);opacity:0}12%{transform:scale(1.15)}22%{transform:scale(1);opacity:1}80%{opacity:1}100%{transform:translateY(-16px);opacity:0}}
+.du-ic{display:inline-grid;width:18px;height:18px;flex:none;margin-right:7px;vertical-align:-4px}.du-ic svg{width:100%;height:100%}
+.du-rl{display:flex;align-items:flex-start;margin-bottom:7px}.du-rl .du-ic{margin-top:1px}
+.hb-c i svg{width:26px;height:26px}
+.di-sw{display:block;width:46px;height:46px;border-radius:12px;background:linear-gradient(var(--s) 0 38%,var(--m) 38% 62%,var(--t) 62%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 2px 6px rgba(0,0,0,.2)}
+.dlk{animation:duDash 2.4s linear infinite}@keyframes duDash{to{stroke-dashoffset:-32}}
 `;document.head.appendChild(st9);
 
 /* ---------- данные дуэли у игрока ---------- */
@@ -7285,15 +7311,28 @@ duFix();
 {const cm=clMerge;clMerge=function(c){cm.apply(this,arguments);try{duFix();if(c.du&&typeof c.du==='object')['w','l','d'].forEach(k=>SV.du[k]=Math.max(SV.du[k]||0,c.du[k]||0))}catch{}}}
 
 /* ---------- выбор режима ---------- */
+const S0=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const DUI={
+ swords:S0('<path d="M5 4l10 10M19 4L9 14M15 14l4 4M9 14l-4 4M12 15l4-4M8 11l4 4"/><circle cx="19.5" cy="18.5" r="1.1"/><circle cx="4.5" cy="18.5" r="1.1"/>'),
+ book:S0('<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 21V5M8 7h7"/>'),
+ inf:S0('<path d="M12 12c-2-3-3.5-4-5.5-4a4 4 0 000 8c2 0 3.5-1 5.5-4zm0 0c2 3 3.5 4 5.5 4a4 4 0 000-8c-2 0-3.5 1-5.5 4z"/>'),
+ paw:S0('<g fill="currentColor" stroke="none"><circle cx="6.5" cy="10" r="2"/><circle cx="10.5" cy="6.5" r="2"/><circle cx="15.5" cy="6.5" r="2"/><circle cx="19" cy="10" r="2"/><path d="M12.8 11c-3 0-5.6 3-5 5.4.4 1.8 2.6 1.9 5 1.2 2.4.7 4.6.6 5-1.2.6-2.4-2-5.4-5-5.4z"/></g>'),
+ fish:S0('<path d="M3 12c3-5 8-6 12-3l5-3v12l-5-3c-4 3-9 2-12-3z"/><circle cx="7.5" cy="11" r=".6" fill="currentColor"/>'),
+ shield:S0('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>'),
+ clock:S0('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+ cup:S0('<path d="M8 4h8v5a4 4 0 01-8 0zM8 6H4v1a4 4 0 004 4M16 6h4v1a4 4 0 01-4 4M12 13v4M8 21h8M10 17h4"/>'),
+ pause:S0('<g fill="currentColor" stroke="none"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></g>'),
+ face:S0('<circle cx="12" cy="12" r="9"/><path d="M8.5 14c1 1.8 2.2 2.5 3.5 2.5s2.5-.7 3.5-2.5"/><path d="M9 10h.01M15 10h.01"/>')
+};
 let MODE='hub';
 const hubH=()=>{duFix();const n=Object.values(SV.lv).filter(v=>v>0).length,ib=Math.max(0,...Object.values(SV.inf||{}).map(Number)),
  C=(m,c,e,t,d,b)=>`<button class="hb-c" data-md="${m}" style="--c:${c}"><i>${e}</i><span><b>${t}</b><small>${d}</small></span><em>${b}</em></button>`;
  return `<p class="tm-h">Выбери режим</p><div class="hb">`
- +C('story','#34d399','📖','История','Миры, боссы и фильмики. Проходи уровни и открывай эпохи',n+'/'+WORLDS.length*5)
- +C('inf','#fb923c','∞','Бесконечный режим','Волны без конца: сколько продержишься',ib?'рекорд '+ib:'∞')
- +C('duo','#f472b6','🐾','Вдвоём','Общая карта вместе с партнёром: вылазки и бесконечный дозор','вместе')
- +C('duel','#38bdf8','⚔️','Дуэль','Против партнёра: 3 линии и кошачьи домики. Сломай главный!',SV.du.w?SV.du.w+' поб.':'новое')+`</div>`};
-const infH=()=>{fixSV();return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div><p class="tm-h">Твой отряд</p><div class="cq-sq">${SV.team.slice(0,6).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`};
+ +C('story','#34d399',DUI.book,'История','Миры, боссы и фильмики. Проходи уровни и открывай эпохи',n+'/'+WORLDS.length*5)
+ +C('inf','#fb923c',DUI.inf,'Бесконечный режим','Волны без конца: сколько продержишься',ib?'рекорд '+ib:'∞')
+ +C('duo','#f472b6',DUI.paw,'Вдвоём','Общая карта вместе с партнёром: вылазки и бесконечный дозор','вместе')
+ +C('duel','#38bdf8',DUI.swords,'Дуэль','Против партнёра: 3 линии и кошачьи башни. Сначала боковые, затем главная!',SV.du.w?SV.du.w+' поб.':'новое')+`</div>`};
+const infH=()=>{fixSV();return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':ic('lock')}</em></button>`}).join('')}</div><p class="tm-h">Твой отряд</p><div class="cq-sq">${SV.team.slice(0,6).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`};
 /* в «Истории» бесконечного режима больше нет */
 {const w0=worldsH;worldsH=function(){return w0.apply(this,arguments).replace(/<div class="mr"><b>Бесконечный режим[\s\S]*?<\/div>/,'')}}
 {const e0=enter;enter=function(){MODE='hub';TAB='w';return e0.apply(this,arguments)}}
@@ -7315,49 +7354,126 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a="exit
 
 /* ---------- состояние дуэли ---------- */
 const DU={on:0,host:0,me:0,rdy:0,st:'idle',units:[],houses:[],shots:[],out:[],el:[5,5],tm:[[],[]],sel:null,t:0,cd:0,nid:1,raf:0,bot:0,sid:0,paid:0,snT:0,sa:0,res:null,bt:0,ot:0,pend:0,starting:0,uE:new Map(),hE:{},fr:0,last:0};
-const DS={},LIFE=[.22,.35,.2,.8,.4,.35,.25,.45];
+const DS={},LIFE=[.22,.35,.3,.8,.5,.5,.25,.45,.8,1];
 const PJI={yarn:1,nip:2,snowb:3,star:4,ball:5,laser:6,fire:7,gel:8},PJC=[0,'#f472b6','#4ade80','#e0f2fe','#fde047','#1f2937','#22d3ee','#fb923c','#f9a8d4'];
 /* уникальные способности котиков в дуэли (kd — вид, atk — перезарядка, ad — урон способности) */
-const DUK={bowler:{kd:'roll',atk:6.5,rng:140,dmg:0},miner:{kd:'mine',atk:3.4,rng:85,dmg:0},boomer:{kd:'bmr',atk:2.4,rng:90,dmg:0},volt:{kd:'rail',atk:3.2,rng:115,dmg:0,ad:60},storm:{kd:'chain',atk:1.7,rng:85,dmg:0,ad:20},spark:{kd:'stun',atk:5.5,rng:46,dmg:0,ad:30},spidey:{kd:'web',atk:5,rng:85,dmg:0},drake:{kd:'fire',atk:5,rng:75,dmg:0,ad:14},baron:{kd:'air',atk:6.5,rng:115,dmg:0,ad:80},lila:{wd:.45,aoe:22},pushok:{ei:5},chef:{ei:3.6},biz:{ei:4.2}};
-const DMAPS=[{g:['#86efac','#4ade80'],mid:'#38bdf8',wv:'#e0f2fe',br:['#b45309','#78350f'],em:['🌳','🌲','🌼','🪨','🐝']},{g:['#e0f2fe','#bae6fd'],mid:'#7dd3fc',wv:'#fff',br:null,ice:1,em:['🌲','⛄','🏔️','❄️','🛖']},{g:['#fde68a','#fcd34d'],mid:'#a16207',wv:'#78350f',br:['#d6d3d1','#78716c'],em:['🌵','🏜️','🪨','🐪','🔺']},{g:['#64748b','#475569'],mid:'#1e293b',wv:'#f8fafc',br:null,road:1,em:['🏢','🏬','💡','🌆','🚏']}];
-function duMap(){const M=DMAPS[DU.map||0],ds=[[24,26],[120,30],[240,30],[336,26],[24,150],[336,150],[120,182],[240,182],[24,236],[336,236]];let d='';
- ds.forEach((p,i)=>{d+=`<text x="${p[0]}" y="${p[1]}" font-size="22" text-anchor="middle">${M.em[i%5]}</text><text x="${p[0]}" y="${640-p[1]}" font-size="22" text-anchor="middle">${M.em[(i+2)%5]}</text>`});
- let m=`<rect y="300" width="360" height="40" fill="${M.mid}"/>`;
- if(M.road)m+=`<path d="M0 320H360" stroke="#f8fafc" stroke-width="3" stroke-dasharray="14 12"/>`+LX.map(x=>`<path d="M${x-22} 302v36M${x-11} 302v36M${x} 302v36M${x+11} 302v36M${x+22} 302v36" stroke="#e2e8f0" stroke-width="5" opacity=".8"/>`).join('');
- else if(M.ice)m+=`<path d="M10 312l40 10 30-14 50 12 40-8 60 10 50-12 40 8M0 330l60-6 40 6 70-8 60 6 70-4" stroke="#fff" stroke-width="2" fill="none" opacity=".85"/>`;
- else m+=`<path d="M0 312Q30 304 60 312T120 312 180 312 240 312 300 312 360 312M0 328Q30 320 60 328T120 328 180 328 240 328 300 328 360 328" fill="none" stroke="${M.wv}" stroke-width="2.5" opacity=".7"/>`;
- if(M.br)m+=LX.map(x=>`<g><rect x="${x-24}" y="294" width="48" height="52" rx="6" fill="${M.br[0]}" stroke="${M.br[1]}" stroke-width="2"/><path d="M${x-24} 308H${x+24}M${x-24} 320H${x+24}M${x-24} 332H${x+24}" stroke="${M.br[1]}" stroke-width="1.5"/></g>`).join('');
- return `<defs><linearGradient id="duG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${M.g[0]}"/><stop offset="1" stop-color="${M.g[1]}"/></linearGradient></defs><rect width="360" height="640" fill="url(#duG)"/><g opacity=".2" fill="#fff"><rect width="120" height="640"/><rect x="240" width="120" height="640"/></g><g stroke="#fff" stroke-opacity=".55" stroke-dasharray="6 8" stroke-width="2"><path d="M120 0V296M240 0V296M120 344V640M240 344V640"/></g>${d}${m}`}
+const DUK={bowler:{kd:'roll',atk:7,rng:92,dmg:0},miner:{kd:'mine',atk:3.4,rng:85,dmg:0},boomer:{kd:'bmr',atk:2.4,rng:90,dmg:0},volt:{kd:'rail',atk:3.2,rng:115,dmg:0,ad:60},storm:{kd:'chain',atk:1.7,rng:85,dmg:0,ad:20},spark:{kd:'stun',atk:5.5,rng:46,dmg:0,ad:30},spidey:{kd:'web',atk:5,rng:85,dmg:0},drake:{kd:'fire',atk:5,rng:75,dmg:0,ad:14},baron:{kd:'air',atk:6.5,rng:115,dmg:0,ad:80},lila:{wd:.45,aoe:22},pushok:{ei:5},chef:{ei:3.6},biz:{ei:4.2}};
+const DMAPS=[
+{n:'Зелёный луг',d:'река и деревянные мостики',g:['#a7ee82','#62c35c'],tx:'#3d9a47',pad:['#e7dcb4','#c4b27c'],mid:['#a5e8ff','#38bdf8','#0ea5e9'],wv:'#e0f7ff',bank:['#d9c58b','#b49a5a'],kind:'water',bk:'wood',dec:['tree','tree','bush','flower','rock','mush','bush','flower']},
+{n:'Снежные горы',d:'лёд и сугробы',g:['#f4faff','#cfe6f7'],tx:'#ffffff',pad:['#e2edf7','#b7cfe3'],mid:['#d8f3ff','#93d5f5','#5bb8ea'],wv:'#ffffff',bank:['#ffffff','#bcd6ea'],kind:'ice',bk:'stone',dec:['pine','pine','snowman','drift','rock','pine','drift']},
+{n:'Пустыня',d:'сухой каньон и скалы',g:['#f8dd92','#e8ba5c'],tx:'#c9902e',pad:['#f1d58a','#c99a46'],mid:['#9a5b25','#5a3112','#3b1f0b'],wv:'#c58a4a',bank:['#d39a4a','#8f5a22'],kind:'canyon',bk:'stone',dec:['cactus','mesa','dune','palm','cactus','rock','dune']},
+{n:'Ночной город',d:'дорога и зебры',g:['#56657a','#3a475b'],tx:'#6b7a90',pad:['#7b8aa0','#4a586c'],mid:['#2b3544','#1b2230','#10151f'],wv:'#f8fafc',bank:['#94a3b8','#64748b'],kind:'road',bk:'zebra',dec:['roof','lamp','crate','roof','lamp','car']},
+{n:'Осенний лес',d:'тёмная речка и палая листва',g:['#e5ae63','#b97a38'],tx:'#9a5b22',pad:['#e9c98a','#b98e52'],mid:['#7fd1c6','#2a9d8f','#1d6f6a'],wv:'#c8f3ec',bank:['#c9893f','#8a5421'],kind:'water',bk:'wood',dec:['otree','rtree','log','mush','otree','leaf','rtree']},
+{n:'Вулкан',d:'лавовая река',g:['#4a4352','#2b2531'],tx:'#6b5f78',pad:['#6b6475','#3c3645'],mid:['#ffd166','#ff7a1a','#d62718'],wv:'#fff1b0',bank:['#2a2330','#120f16'],kind:'lava',bk:'slab',dec:['lrock','cone','ember','lrock','crystalr','ember']},
+{n:'Сад сакуры',d:'ручей с лепестками',g:['#ffd9ea','#f7a8cc'],tx:'#e57fb0',pad:['#f6ecd9','#d8c3a3'],mid:['#bff0e6','#6fd3c5','#38b2ac'],wv:'#ffffff',bank:['#f3e3c8','#cdb28c'],kind:'water',bk:'wood',dec:['sakura','sakura','lantern','bamboo','pond','sakura','lantern']},
+{n:'Космос',d:'энергетический разлом',g:['#241f5a','#0e0a2e'],tx:'#6d5bd0',pad:['#4b4488','#26204f'],mid:['#0b0725','#2dd4ff','#7c3aed'],wv:'#9ff3ff',bank:['#4338ca','#1e1b4b'],kind:'rift',bk:'metal',dec:['planet','crystal','asteroid','star2','crystal','asteroid']}
+];
+function duRng(s){return()=>(s=(s*16807)%2147483647)/2147483647}
+const duTP=()=>{const a=[];for(let o=0;o<2;o++)for(let l=0;l<3;l++){const m=l===1;a.push([LX[l],o===0?(m?DH-72:DH-120):(m?72:120),m])}return a};
+const duTree=(a,b,c)=>`<ellipse cy="10" rx="14" ry="5" fill="#0003"/><rect x="-2.6" y="-2" width="5.2" height="13" rx="2" fill="#7a4a1a"/><circle cy="-9" r="13" fill="${a}"/><circle cx="-7" cy="-3" r="8.5" fill="${b}"/><circle cx="6" cy="-13" r="8" fill="${c}"/><circle cx="-3" cy="-15" r="3" fill="#fff" opacity=".35"/>`;
+const DD={
+tree:()=>duTree('#2f9e44','#3fb950','#63d471'),
+otree:()=>duTree('#e07a1f','#f59e33','#fbbf4d'),
+rtree:()=>duTree('#b8321f','#d9482b','#f0743f'),
+sakura:()=>duTree('#f472b6','#f9a8d4','#fbcfe8')+`<circle cx="9" cy="6" r="1.6" fill="#fbcfe8"/><circle cx="-8" cy="8" r="1.4" fill="#fbcfe8"/>`,
+bush:()=>`<ellipse cy="6" rx="13" ry="4" fill="#0003"/><circle cx="-6" r="7" fill="#2f9e44"/><circle cx="5" cy="-1" r="8" fill="#43b85a"/><circle cy="-5" r="6" fill="#5fd06f"/><circle cx="3" cy="-7" r="1.8" fill="#fff" opacity=".4"/>`,
+flower:()=>[[-9,2,'#f472b6'],[2,-3,'#fde047'],[9,4,'#ffffff'],[-2,6,'#c084fc']].map(([x,y,c])=>`<path d="M${x} ${y}v5" stroke="#2f7d3a" stroke-width="1.6"/><circle cx="${x}" cy="${y}" r="3.2" fill="${c}" stroke="#0002"/><circle cx="${x}" cy="${y}" r="1.2" fill="#f59e0b"/>`).join(''),
+rock:()=>`<ellipse cy="7" rx="14" ry="4" fill="#0003"/><path d="M-13 6L-9-5 0-9 10-5 14 6Z" fill="#9ca3af" stroke="#6b7280" stroke-width="1.8" stroke-linejoin="round"/><path d="M-9-5L0-9 3-2-6 2Z" fill="#d1d5db" opacity=".7"/>`,
+mush:()=>`<ellipse cy="6" rx="9" ry="3" fill="#0003"/><rect x="-2.5" y="-2" width="5" height="8" rx="2" fill="#fef3c7" stroke="#d6b97b"/><path d="M-10-1a10 8 0 0120 0z" fill="#ef4444" stroke="#b91c1c" stroke-width="1.6"/><circle cx="-4" cy="-5" r="1.8" fill="#fff"/><circle cx="3" cy="-6" r="1.4" fill="#fff"/><circle cx="6" cy="-3" r="1.2" fill="#fff"/>`,
+pine:()=>`<ellipse cy="12" rx="12" ry="4" fill="#0003"/><rect x="-2" y="4" width="4" height="9" fill="#6b4423"/><path d="M0-30L12-12H-12Z" fill="#2f7d5b"/><path d="M0-20L15 0H-15Z" fill="#3a9370"/><path d="M0-10L17 8H-17Z" fill="#46a982"/><path d="M0-30L6-21-1-22-6-21ZM0-20L8-10-2-11-8-10ZM0-10L10 0 0-1-10 0Z" fill="#fff" opacity=".9"/>`,
+snowman:()=>`<ellipse cy="12" rx="12" ry="4" fill="#0003"/><circle cy="5" r="9" fill="#fff" stroke="#b6d3ea" stroke-width="1.6"/><circle cy="-7" r="6.5" fill="#fff" stroke="#b6d3ea" stroke-width="1.6"/><circle cx="-2.2" cy="-8.5" r=".9" fill="#1f2937"/><circle cx="2.2" cy="-8.5" r=".9" fill="#1f2937"/><path d="M0-6l6 1.5-6 1z" fill="#fb923c"/><path d="M-6-1h12" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/><circle cy="4" r="1" fill="#1f2937"/>`,
+drift:()=>`<ellipse cy="4" rx="17" ry="6" fill="#bcd6ea" opacity=".6"/><ellipse cx="-2" cy="1" rx="15" ry="5.5" fill="#fff"/><ellipse cx="5" cy="-1" rx="8" ry="3" fill="#fff"/>`,
+cactus:()=>`<ellipse cy="12" rx="11" ry="3.5" fill="#0003"/><rect x="-4.5" y="-18" width="9" height="30" rx="4.5" fill="#3c9d55" stroke="#1f6b36" stroke-width="1.6"/><path d="M-4.5-2h-6a3 3 0 01-3-3v-8a3 3 0 016 0v5h3zM4.5 4h6a3 3 0 003-3v-8a3 3 0 00-6 0v5h-3z" fill="#4db469" stroke="#1f6b36" stroke-width="1.6" stroke-linejoin="round"/><circle cy="-19" r="2.6" fill="#f472b6"/>`,
+mesa:()=>`<ellipse cy="13" rx="20" ry="5" fill="#0003"/><path d="M-18 13L-14-6 14-6 18 13Z" fill="#c66a2a" stroke="#7c3a12" stroke-width="1.8" stroke-linejoin="round"/><path d="M-15-1h30M-16 6h32" stroke="#8a4519" stroke-width="1.4"/><path d="M-14-6l2-6h24l2 6Z" fill="#e0894a" stroke="#7c3a12" stroke-width="1.8" stroke-linejoin="round"/>`,
+dune:()=>`<ellipse cy="5" rx="20" ry="6" fill="#c9902e" opacity=".5"/><path d="M-20 5Q-8-9 4-2T20 5Z" fill="#f4d27a"/><path d="M-20 5Q-8-9 4-2" fill="none" stroke="#fff6cf" stroke-width="2" opacity=".7"/>`,
+palm:()=>`<ellipse cy="13" rx="12" ry="4" fill="#0003"/><path d="M0 13Q4 0 1-14" stroke="#8a5a2b" stroke-width="4.5" fill="none" stroke-linecap="round"/>`+[0,50,100,150,200,250,300].map(a=>`<path d="M1-14q13-6 20 4q-12-2-20-4z" fill="#3c9d55" stroke="#1f6b36" stroke-width="1.2" transform="rotate(${a} 1 -14)"/>`).join(''),
+roof:()=>`<rect x="-20" y="-16" width="40" height="32" rx="4" fill="#64748b" stroke="#1e293b" stroke-width="2"/><rect x="-16" y="-12" width="32" height="24" rx="2" fill="#7c8ba1"/><circle cx="-7" cy="-2" r="5.5" fill="#334155"/><path d="M-11-2h8M-7-6v8" stroke="#94a3b8" stroke-width="1.2"/><rect x="4" y="-9" width="9" height="7" fill="#fbbf24" opacity=".85"/><rect x="4" y="3" width="9" height="5" fill="#0ea5e9" opacity=".8"/>`,
+lamp:()=>`<circle r="26" fill="#fde68a" opacity=".16"/><circle r="15" fill="#fde68a" opacity=".22"/><circle r="4" fill="#fff7c2" stroke="#475569" stroke-width="2.5"/>`,
+crate:()=>`<rect x="-9" y="-6" width="18" height="16" rx="2" fill="#c08a4b" stroke="#6b4423" stroke-width="1.8"/><path d="M-9-6l18 16M9-6L-9 10" stroke="#6b4423" stroke-width="1.4"/><rect x="2" y="-15" width="13" height="12" rx="2" fill="#d69a58" stroke="#6b4423" stroke-width="1.6"/>`,
+car:()=>`<rect x="-8" y="-15" width="16" height="30" rx="6" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.8"/><rect x="-5.5" y="-8" width="11" height="8" rx="2" fill="#bae6fd"/><rect x="-5.5" y="5" width="11" height="5" rx="1.5" fill="#bae6fd" opacity=".8"/><circle cx="-5" cy="-14" r="1.5" fill="#fde047"/><circle cx="5" cy="-14" r="1.5" fill="#fde047"/>`,
+log:()=>`<ellipse cy="7" rx="17" ry="4" fill="#0003"/><rect x="-16" y="-5" width="32" height="12" rx="6" fill="#8a5a2b" stroke="#5a3513" stroke-width="1.8"/><circle cx="14" cy="1" r="6" fill="#d9a766" stroke="#5a3513" stroke-width="1.5"/><circle cx="14" cy="1" r="2.8" fill="none" stroke="#8a5a2b"/><path d="M-10-1h14M-8 3h10" stroke="#5a3513" stroke-width="1" opacity=".6"/>`,
+leaf:()=>[[-9,2,20,'#e07a1f'],[2,-4,-40,'#b8321f'],[9,5,80,'#f0b429'],[-2,7,150,'#d9482b']].map(([x,y,r,c])=>`<path d="M0-5q5 5 0 10q-5-5 0-10z" fill="${c}" transform="translate(${x} ${y}) rotate(${r})" stroke="#0002"/>`).join(''),
+lrock:()=>`<ellipse cy="7" rx="15" ry="4" fill="#0005"/><path d="M-14 7L-10-6 0-10 11-5 15 7Z" fill="#403a49" stroke="#17131c" stroke-width="2" stroke-linejoin="round"/><path d="M-4-8L-1-1-6 3M4-4L2 2 8 5" fill="none" stroke="#ff8a1f" stroke-width="2" stroke-linecap="round"/>`,
+cone:()=>`<ellipse cy="12" rx="20" ry="5" fill="#0005"/><path d="M-20 12L-6-14 6-14 20 12Z" fill="#4a4352" stroke="#17131c" stroke-width="2" stroke-linejoin="round"/><path d="M-6-14L-3-18H3L6-14Z" fill="#ff7a1a"/><path d="M-1-14L-3-2M2-14L5-3" stroke="#ff9a3a" stroke-width="2.2" stroke-linecap="round" fill="none"/>`,
+ember:()=>[[-10,0,3],[4,-5,2.2],[10,6,2.6],[-3,8,1.8]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r+3}" fill="#ff7a1a" opacity=".25"/><circle cx="${x}" cy="${y}" r="${r}" fill="#ffd166"/>`).join(''),
+crystalr:()=>`<ellipse cy="9" rx="14" ry="4" fill="#0005"/><path d="M-9 9L-6-8 0 9ZM0 9L3-16 10 9ZM-14 9L-11-1-6 9Z" fill="#ff5a36" stroke="#7f1d1d" stroke-width="1.6" stroke-linejoin="round"/><path d="M3-16L5 0 3 9" fill="none" stroke="#ffd0a8" stroke-width="1.6"/>`,
+lantern:()=>`<circle cy="-4" r="20" fill="#fde68a" opacity=".18"/><ellipse cy="11" rx="10" ry="3.5" fill="#0003"/><rect x="-7" y="6" width="14" height="5" rx="1.5" fill="#b8b2a7" stroke="#7a7468"/><rect x="-3" y="-2" width="6" height="9" fill="#a39d90"/><rect x="-8" y="-12" width="16" height="11" rx="2" fill="#fde68a" stroke="#7a7468" stroke-width="1.8"/><path d="M-11-12L0-20 11-12Z" fill="#8a8579" stroke="#5e5a50" stroke-width="1.6" stroke-linejoin="round"/>`,
+bamboo:()=>`<ellipse cy="11" rx="14" ry="3.5" fill="#0003"/>`+[-8,-2,5].map((x,i)=>`<rect x="${x-2}" y="${-22+i*3}" width="4.5" height="${32-i*3}" rx="2" fill="#7cc66a" stroke="#3f8a3a" stroke-width="1.2"/><path d="M${x-2} ${-12+i*3}h4.5M${x-2} ${-1+i*3}h4.5" stroke="#3f8a3a" stroke-width="1.2"/><path d="M${x+2} ${-16+i*3}q8-2 10 3" stroke="#5fb04e" stroke-width="2" fill="none" stroke-linecap="round"/>`).join(''),
+pond:()=>`<ellipse rx="19" ry="11" fill="#6fd3c5" stroke="#cdb28c" stroke-width="3"/><ellipse cx="-4" cy="-2" rx="11" ry="5" fill="#a5efe3" opacity=".7"/><circle cx="6" cy="2" r="4" fill="#4ade80" stroke="#15803d"/><circle cx="-8" cy="3" r="3" fill="#86efac" stroke="#15803d"/>`,
+planet:()=>`<circle r="15" fill="#7c3aed"/><circle cx="-4" cy="-4" r="13" fill="#a78bfa"/><circle cx="-5" cy="-5" r="6" fill="#ddd6fe" opacity=".5"/><ellipse rx="24" ry="6" fill="none" stroke="#67e8f9" stroke-width="3" transform="rotate(-20)" opacity=".85"/>`,
+crystal:()=>`<circle cy="-2" r="24" fill="#22d3ee" opacity=".12"/><path d="M-10 10L-7-8-2 10ZM-2 10L2-20 9 10ZM-15 10L-12 0-8 10Z" fill="#67e8f9" stroke="#0e7490" stroke-width="1.6" stroke-linejoin="round"/><path d="M2-20L4 0 2 10" fill="none" stroke="#fff" stroke-width="1.6" opacity=".8"/>`,
+asteroid:()=>`<ellipse cy="9" rx="14" ry="3.5" fill="#0005"/><path d="M-13 3L-8-8 2-10 12-4 12 6 2 10-8 9Z" fill="#7b6f9c" stroke="#3b3260" stroke-width="2" stroke-linejoin="round"/><circle cx="-3" cy="-1" r="3" fill="#5e5480"/><circle cx="6" cy="3" r="2" fill="#5e5480"/>`,
+star2:()=>`<path d="M0-9Q1-1 9 0 1 1 0 9-1 1-9 0-1-1 0-9Z" fill="#fff7c2"/><circle r="12" fill="#fff7c2" opacity=".12"/>`
+};
+function duMap(){const M=DMAPS[DU.map||0],R=duRng(11+(DU.map||0)*97),Y0=MID-28,Y1=MID+28,K=M.kind,jt=K==='canyon'?9:K==='lava'?7:4,f0=n=>(+n).toFixed(0);
+ const pts=y=>{const a=[];for(let x=-10;x<=DW+10;x+=20)a.push([x,y+(R()-.5)*jt]);return a},T=pts(Y0),B=pts(Y1);
+ const poly=d=>'M'+T.map(p=>p[0]+' '+(p[1]-d).toFixed(1)).join('L')+'L'+B.slice().reverse().map(p=>p[0]+' '+(p[1]+d).toFixed(1)).join('L')+'Z';
+ const ln=(A,d)=>'M'+A.map(p=>p[0]+' '+(p[1]+d).toFixed(1)).join('L');
+ let s=`<defs><linearGradient id="duG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${M.g[0]}"/><stop offset=".5" stop-color="${M.g[1]}"/><stop offset="1" stop-color="${M.g[0]}"/></linearGradient><radialGradient id="duV" cx=".5" cy=".5" r=".78"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></radialGradient><linearGradient id="duR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${M.mid[0]}"/><stop offset=".5" stop-color="${M.mid[1]}"/><stop offset="1" stop-color="${M.mid[2]}"/></linearGradient></defs><rect width="${DW}" height="${DH}" fill="url(#duG)"/>`;
+ for(let i=0;i<7;i++)s+=`<ellipse cx="${f0(R()*DW)}" cy="${f0(R()*DH)}" rx="${f0(50+R()*60)}" ry="${f0(30+R()*40)}" fill="#fff" opacity=".07"/>`;
+ let t='';for(let i=0;i<170;i++){const x=R()*DW,y=R()*DH;if(Math.abs(y-MID)<38)continue;
+  if(K==='ice'||K==='rift')t+=`<circle cx="${f0(x)}" cy="${f0(y)}" r="${(.7+R()*1.3).toFixed(1)}" fill="${M.tx}" opacity=".6"/>`;
+  else if(K==='road')t+=`<path d="M${f0(x)} ${f0(y)}h${f0(2+R()*4)}" stroke="${M.tx}" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>`;
+  else if(K==='canyon')t+=`<path d="M${f0(x)} ${f0(y)}q4-3 8 0" stroke="${M.tx}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".55"/>`;
+  else if(K==='lava')t+=`<path d="M${f0(x)} ${f0(y)}l5 2-2 5" stroke="${i%4?M.tx:'#ff7a1a'}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="${i%4?.5:.6}"/>`;
+  else t+=`<path d="M${f0(x)} ${f0(y)}l-2-5M${f0(x)} ${f0(y)}v-6M${f0(x)} ${f0(y)}l2-5" stroke="${M.tx}" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>`}
+ s+=t;
+ duTP().forEach(([x,y,m])=>{const a=m?54:44,b=m?32:25;s+=`<ellipse cx="${x}" cy="${y+8}" rx="${a+4}" ry="${b+4}" fill="#0003"/><ellipse cx="${x}" cy="${y+4}" rx="${a}" ry="${b+1}" fill="${M.pad[1]}"/><ellipse cx="${x}" cy="${y+1}" rx="${a}" ry="${b}" fill="${M.pad[0]}"/><ellipse cx="${x}" cy="${y+1}" rx="${a-10}" ry="${b-7}" fill="none" stroke="${M.pad[1]}" stroke-width="2" stroke-dasharray="3 5" opacity=".7"/>`});
+ if(K==='lava'||K==='rift')s+=`<path d="${poly(11)}" fill="${M.mid[1]}" opacity=".22"/>`;
+ s+=`<path d="${poly(7)}" fill="${M.bank[1]}"/><path d="${poly(4)}" fill="${M.bank[0]}"/><path d="${poly(0)}" fill="url(#duR)"/>`;
+ const ry=()=>Y0+7+R()*(Y1-Y0-14),zz=(n,st,w,op)=>{let x=R()*DW,y=ry(),p='M'+f0(x)+' '+f0(y);for(let q=0;q<n;q++){x+=8+R()*12;y+=(R()-.5)*18;p+='L'+f0(x)+' '+f0(Math.max(Y0+4,Math.min(Y1-4,y)))}return `<path d="${p}" fill="none" stroke="${st}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`};
+ if(K==='water'){for(let i=0;i<12;i++)s+=`<path d="M${f0(R()*DW-10)} ${f0(ry())}q6-4 12 0t12 0 12 0" fill="none" stroke="${M.wv}" stroke-width="2" stroke-linecap="round" opacity=".6"/>`;s+=`<path d="${ln(T,3)}" fill="none" stroke="#fff" stroke-width="2.2" opacity=".55"/><path d="${ln(B,-3)}" fill="none" stroke="#fff" stroke-width="2.2" opacity=".55"/>`}
+ else if(K==='ice'){for(let i=0;i<7;i++)s+=zz(4,'#fff',2,.85);s+=`<path d="${ln(T,3)}" fill="none" stroke="#fff" stroke-width="3" opacity=".8"/>`}
+ else if(K==='canyon'){for(let i=0;i<4;i++){const y=Y0+9+i*11;s+=`<path d="M-10 ${y}q40 ${i%2?6:-6} 80 0t80 0 80 0 80 0 80 0" fill="none" stroke="${M.wv}" stroke-width="2" opacity=".5"/>`}for(let i=0;i<9;i++)s+=`<circle cx="${f0(R()*DW)}" cy="${f0(ry())}" r="${(1.5+R()*2).toFixed(1)}" fill="#2a1507" opacity=".6"/>`}
+ else if(K==='road')s+=`<path d="M0 ${MID}H${DW}" stroke="#f8fafc" stroke-width="3" stroke-dasharray="16 12" opacity=".9"/><path d="M0 ${Y0+3}H${DW}M0 ${Y1-3}H${DW}" stroke="#facc15" stroke-width="2" opacity=".7"/>`;
+ else if(K==='lava'){for(let i=0;i<8;i++)s+=`<path d="M${f0(R()*DW-10)} ${f0(ry())}q8-6 16 0t16 0 16 0" fill="none" stroke="${M.wv}" stroke-width="3" stroke-linecap="round" opacity=".75"/>`;for(let i=0;i<10;i++)s+=`<circle cx="${f0(R()*DW)}" cy="${f0(ry())}" r="${(1.5+R()*2.5).toFixed(1)}" fill="#fff4c2" opacity=".8"/>`}
+ else{for(let i=0;i<8;i++)s+=zz(5,M.wv,2,.85);for(let i=0;i<14;i++)s+=`<circle cx="${f0(R()*DW)}" cy="${f0(ry())}" r="${(.8+R()*1.4).toFixed(1)}" fill="#fff"/>`}
+ LX.forEach(x=>{const w=28,tp=Y0-9,h=Y1-Y0+18,bt=tp+h;let r=`<ellipse cx="${x}" cy="${MID+5}" rx="${w+8}" ry="${h/2+3}" fill="#0004"/>`;
+  if(M.bk==='wood'){r+=`<rect x="${x-w}" y="${tp}" width="${w*2}" height="${h}" rx="5" fill="#cf9250" stroke="#6b3d12" stroke-width="2.4"/>`;for(let y=tp+8;y<bt-4;y+=8)r+=`<path d="M${x-w+2} ${y}H${x+w-2}" stroke="#8a5521" stroke-width="1.6"/>`;r+=[x-w-2,x+w-4].map(a=>`<rect x="${a}" y="${tp-3}" width="6" height="${h+6}" rx="3" fill="#9a6226" stroke="#4a2808" stroke-width="2"/>`).join('')+[tp,bt].flatMap(y=>[x-w+1,x+w-1].map(a=>`<circle cx="${a}" cy="${y}" r="4.2" fill="#b67a38" stroke="#4a2808" stroke-width="1.8"/>`)).join('')}
+  else if(M.bk==='stone'||M.bk==='slab'){const sl=M.bk==='slab';r+=`<rect x="${x-w}" y="${tp}" width="${w*2}" height="${h}" rx="5" fill="${sl?'#4b4452':'#dbe4ee'}" stroke="${sl?'#17131c':'#6b7f95'}" stroke-width="2.4"/>`;for(let y=tp+9,i=0;y<bt-3;y+=10,i++)r+=`<path d="M${x-w+2} ${y}H${x+w-2}M${x+(i%2?-8:8)} ${y-10}V${y}" stroke="${sl?'#2a2430':'#9bb0c6'}" stroke-width="1.5"/>`;if(sl)r+=`<rect x="${x-w+3}" y="${tp+3}" width="${w*2-6}" height="${h-6}" rx="3" fill="none" stroke="#ff8a1f" stroke-width="1.6" opacity=".7"/>`;else r+=[x-w-2,x+w-4].map(a=>`<rect x="${a}" y="${tp-2}" width="6" height="${h+4}" rx="3" fill="#c3d0de" stroke="#6b7f95" stroke-width="2"/>`).join('')}
+  else if(M.bk==='zebra'){r+=`<rect x="${x-w}" y="${tp}" width="${w*2}" height="${h}" fill="#2b3544" opacity=".5"/>`;for(let y=tp+4;y<bt-4;y+=9)r+=`<rect x="${x-w+3}" y="${y}" width="${w*2-6}" height="5" rx="1.5" fill="#f8fafc"/>`}
+  else{r+=`<rect x="${x-w}" y="${tp}" width="${w*2}" height="${h}" rx="6" fill="#1e1b4b" stroke="#67e8f9" stroke-width="2.4"/>`;for(let y=tp+8;y<bt-4;y+=9)r+=`<path d="M${x-w+3} ${y}H${x+w-3}" stroke="#67e8f9" stroke-width="1.4" opacity=".5"/>`;r+=[tp+2,bt-2].flatMap(y=>[x-w+4,x+w-4].map(a=>`<circle cx="${a}" cy="${y}" r="2.6" fill="#a5f3fc"/>`)).join('')}
+  s+=r});
+ const tp=duTP(),dc=[];let tr=0;
+ while(dc.length<22&&tr++<400){const x=14+R()*(DW-28),y=18+R()*(MID-78),i=Math.floor(R()*M.dec.length),z=.95+R()*.3;
+  if(LX.some(l=>Math.abs(x-l)<24))continue;
+  if(tp.some(([a,b,m])=>Math.abs(x-a)<(m?68:58)&&Math.abs(y-b)<(m?48:42)))continue;
+  if(dc.some(d=>Math.hypot(d[0]-x,d[1]-y)<32))continue;
+  dc.push([x,y,i,z])}
+ const all=[];dc.forEach(d=>{all.push([d[0],d[1],d[2],d[3]]);all.push([DW-d[0],DH-d[1],d[2],d[3]])});
+ all.sort((a,b)=>a[1]-b[1]).forEach(d=>{s+=`<g transform="translate(${d[0].toFixed(1)} ${d[1].toFixed(1)}) scale(${d[3].toFixed(2)})">${DD[M.dec[d[2]]]()}</g>`});
+ return s+`<rect width="${DW}" height="${DH}" fill="url(#duV)"/>`}
 /* характеристики котика в дуэли выводятся из его обычных (без эволюции, поэтому у обоих игроков одинаково) */
 function duStat(k){if(DS[k])return DS[k];const t=TWB[k]||TW[k]||{},eco=!!(t.gain||t.inc),melee=!!t.melee,tank=melee||/Танк|Страж|Сумо/.test(t.role||''),cost=t.cost||100,dc=Math.max(2,Math.min(7,Math.round(cost/28)));
  let dps=eco?0:(dpsOf(t)||5);dps=Math.min(95,dps*6.5);const atk=t.cd>0&&t.cd<=3.5?Math.max(.3,t.cd):1,rr=t.range>0?Math.min(115,Math.max(40,t.range*.55)):40;
  const r0={dc,eco,tank,hp:Math.round((50+cost*1.1)*(tank?2.3:1)),dmg:eco?0:dps*atk,atk,rng:melee?24:rr,aoe:t.aoe?t.aoe*.9:0,slow:t.slow?1:0,nova:t.kind==='nova'?1:0,sp:eco?0:(tank?24:(t.role==='Ниндзя'?38:31))};return DS[k]=Object.assign(r0,DUK[k]||{},{pj:PJI[t.pj]||0})}
-const duHouses=()=>{const a=[];for(let o=0;o<2;o++)for(let l=0;l<3;l++){const main=l===1,y=o===0?(main?578:538):(main?64:102),hp=main?2000:1400;a.push({id:o*3+l,o,l,main,x:LX[l],y,hp,max:hp,cd:Math.random()})}return a};
+const duHouses=()=>{const a=[];for(let o=0;o<2;o++)for(let l=0;l<3;l++){const main=l===1,y=o===0?(main?DH-72:DH-120):(main?72:120),hp=main?3600:2400;a.push({id:o*3+l,o,l,main,x:LX[l],y,hp,max:hp,cd:Math.random()})}return a};
 function duShot(f){return{f,age:0,life:LIFE[f[0]]||.3}}
 function duFx(ty,x1,y1,x2,y2,o,r){const f=[ty,Math.round(x1),Math.round(y1),Math.round(x2),Math.round(y2),o,Math.round(r||0)];DU.shots.push(duShot(f));if(DU.host&&!DU.bot){DU.out.push(f);if(DU.out.length>80)DU.out.shift()}}
-function duHouseFor(u){let own=null,best=1e9;const al=[];for(const h of DU.houses){if(h.o===u.o||h.hp<=0)continue;al.push(h);if(h.l===u.lane)own=h}
+const duLk=h=>h.main&&DU.houses.some(x=>x.o===h.o&&!x.main&&x.hp>0);
+function duHouseFor(u){let own=null,best=1e9;const al=[];for(const h of DU.houses){if(h.o===u.o||h.hp<=0||duLk(h))continue;al.push(h);if(h.l===u.lane)own=h}
  if(own)return own;for(const h of al){const d=Math.hypot(h.x-u.x,h.y-u.y);if(d<best){best=d;own=h}}return own}
 const duHit=(v,dm,u)=>{v.hp-=dm;if(u.slow)v.sl=1.6};
 function duStrike(u,tg,tH){
- if(u.nova){const R=52;for(const v of DU.units)if(v.o!==u.o&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<=R)duHit(v,u.dmg,u);for(const h of DU.houses)if(h.o!==u.o&&h.hp>0&&Math.hypot(h.x-u.x,h.y-u.y)<=R+22)h.hp-=u.dmg*(u.tank?2.5:1);duFx(1,u.x,u.y,u.x,u.y,u.o,R);return}
+ if(u.nova){const R=52;for(const v of DU.units)if(v.o!==u.o&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<=R)duHit(v,u.dmg,u);for(const h of DU.houses)if(h.o!==u.o&&h.hp>0&&!duLk(h)&&Math.hypot(h.x-u.x,h.y-u.y)<=R+22)h.hp-=u.dmg*(u.tank?2.5:1);duFx(1,u.x,u.y,u.x,u.y,u.o,R);return}
  if(tg){duHit(tg,u.dmg,u);if(u.aoe)for(const v of DU.units)if(v!==tg&&v.o!==u.o&&v.hp>0&&Math.hypot(v.x-tg.x,v.y-tg.y)<=u.aoe)duHit(v,u.dmg*.7,u);duFx(u.rng<=26?2:(u.aoe?1:0),u.x,u.y,tg.x,tg.y,u.o,u.aoe||u.pj);return}
  if(tH){tH.hp-=u.dmg*(u.tank?2.5:1);duFx(u.rng<=26?2:0,u.x,u.y,tH.x,tH.y,u.o,u.pj)}}
 function duPlace(p,k,x,y){if(DU.st!=='play'||!(DU.hd&&DU.hd[p]&&DU.hd[p].includes(k))||!TW[k])return false;x=+x;y=+y;if(!isFinite(x)||!isFinite(y))return false;
  const s=duStat(k);if(DU.el[p]<s.dc){return false}
- y=p===0?Math.max(345,Math.min(610,y)):Math.max(30,Math.min(295,y));x=Math.max(14,Math.min(DW-14,x));const lane=x<120?0:x<240?1:2;
+ y=p===0?Math.max(MID+34,Math.min(DH-40,y)):Math.max(40,Math.min(MID-34,y));x=Math.max(14,Math.min(DW-14,x));const lane=duNL(x);
  DU.units.push({id:DU.nid++,k,o:p,lane,x:LX[lane]+(x-LX[lane])*.4+(Math.random()-.5)*8,y,hp:s.hp,max:s.hp,dmg:s.dmg,atk:s.atk,rng:s.rng,aoe:s.aoe,slow:s.slow,sl:0,nova:s.nova,sp:s.sp,tank:s.tank,eco:s.eco,cdn:.5,pt:s.ei||4.5,ei:s.ei||4.5,kd:s.kd,ad:s.ad,wd:s.wd,pj:s.pj||0});
  DU.el[p]-=s.dc;{const hd=DU.hd[p],ix=hd.indexOf(k);if(ix>=0&&DU.dk&&DU.dk[p]){const q=DU.dk[p].q;q.push(k);hd[ix]=q.shift();DU.nx[p]=q[0]}}const u=DU.units[DU.units.length-1];duFx(5,u.x,u.y,u.x,u.y,p,0);return true}
-const duNL=x=>x<120?0:x<240?1:2;
-function duMove(u,tx,ty,dt){let wx=tx,wy=ty;const sd=y=>y>320?1:0;if(sd(u.y)!==sd(ty)){wx=LX[duNL(u.x)];wy=u.y>320?310:330}
- const d=Math.hypot(wx-u.x,wy-u.y)||1,v=u.sp*(u.sw>0?.4:u.sl>0?.55:1)*dt;u.x+=(wx-u.x)/d*v;u.y+=(wy-u.y)/d*v}
-function duBoom(o,x,y,R,dm,hd){for(const v of DU.units)if(v.o!==o&&v.hp>0&&Math.hypot(v.x-x,v.y-y)<=R)v.hp-=dm;for(const h of DU.houses)if(h.o!==o&&h.hp>0&&Math.hypot(h.x-x,h.y-y)<=R+22)h.hp-=(hd==null?dm:hd);duFx(1,x,y,x,y,o,R)}
+const duNL=x=>x<DW/3?0:x<DW*2/3?1:2;
+function duMove(u,tx,ty,dt){let wx=tx,wy=ty;const sd=y=>y>MID?1:0;if(sd(u.y)!==sd(ty)){wx=LX[duNL(u.x)];wy=u.y>MID?MID-14:MID+14}
+ const d=Math.hypot(wx-u.x,wy-u.y)||1,v=u.sp*1.12*(u.sw>0?.4:u.sl>0?.55:1)*dt;u.x+=(wx-u.x)/d*v;u.y+=(wy-u.y)/d*v}
+function duBoom(o,x,y,R,dm,hd){for(const v of DU.units)if(v.o!==o&&v.hp>0&&Math.hypot(v.x-x,v.y-y)<=R)v.hp-=dm;for(const h of DU.houses)if(h.o!==o&&h.hp>0&&!duLk(h)&&Math.hypot(h.x-x,h.y-y)<=R+22)h.hp-=(hd==null?dm:hd);duFx(1,x,y,x,y,o,R)}
 function duAb(u,tg,tH){const o=u.o,dir=o?1:-1,tx=tg?tg.x:tH.x,ty=tg?tg.y:tH.y,d=Math.hypot(tx-u.x,ty-u.y)||1,ux=(tx-u.x)/d,uy=(ty-u.y)/d,P=DU.pj;
  switch(u.kd){
  case'roll':for(let i=-1;i<2;i++)P.push({id:DU.pid++,c:0,o,x:u.x+i*11,y:u.y,pw:3,hit:[],dy:dir});duFx(5,u.x,u.y,u.x,u.y,o,0);break;
  case'mine':{const m=P.filter(q=>q.c===2&&q.o===o);if(m.length>=3)P.splice(P.indexOf(m[0]),1);const L=Math.min(d,70);P.push({id:DU.pid++,c:2,o,x:u.x+ux*L,y:u.y+uy*L,arm:.7});break}
  case'bmr':P.push({id:DU.pid++,c:1,o,x:u.x,y:u.y,sx:u.x,sy:u.y,dx:ux,dy:uy,ph:0,go:0,hit:[]});break;
  case'rail':{const L=165;for(const v of DU.units)if(v.o!==o&&v.hp>0){const a=(v.x-u.x)*ux+(v.y-u.y)*uy,p=Math.abs((v.x-u.x)*uy-(v.y-u.y)*ux);if(a>0&&a<L&&p<11)v.hp-=u.ad}
-  for(const h of DU.houses)if(h.o!==o&&h.hp>0){const a=(h.x-u.x)*ux+(h.y-u.y)*uy,p=Math.abs((h.x-u.x)*uy-(h.y-u.y)*ux);if(a>0&&a<L+20&&p<26)h.hp-=u.ad}
+  for(const h of DU.houses)if(h.o!==o&&h.hp>0&&!duLk(h)){const a=(h.x-u.x)*ux+(h.y-u.y)*uy,p=Math.abs((h.x-u.x)*uy-(h.y-u.y)*ux);if(a>0&&a<L+20&&p<26)h.hp-=u.ad}
   duFx(6,u.x,u.y,u.x+ux*L,u.y+uy*L,o,0);break}
  case'chain':{let cur=tg,px=u.x,py=u.y;const hit=[];if(!cur){tH.hp-=u.ad;duFx(6,px,py,tH.x,tH.y,o,1);break}
   for(let j=0;j<4&&cur;j++){cur.hp-=u.ad;hit.push(cur);duFx(6,px,py,cur.x,cur.y,o,1);px=cur.x;py=cur.y;let nx=null,b=55;for(const v of DU.units)if(v.o!==o&&v.hp>0&&!hit.includes(v)){const e=Math.hypot(v.x-px,v.y-py);if(e<b){b=e;nx=v}}cur=nx}break}
@@ -7365,21 +7481,21 @@ function duAb(u,tg,tH){const o=u.o,dir=o?1:-1,tx=tg?tg.x:tH.x,ty=tg?tg.y:tH.y,d=
  case'web':case'fire':{const c=u.kd==='web'?3:4,z=P.filter(q=>q.c===c&&q.o===o);if(z.length>=3)P.splice(P.indexOf(z[0]),1);P.push({id:DU.pid++,c,o,x:tx-ux*8,y:ty-uy*8,r:c===3?32:27,life:c===3?7:5,d:u.ad||0});break}
  case'air':{let best=null,bn=-1;for(const v of DU.units)if(v.o!==o&&v.hp>0){let n=0;for(const w of DU.units)if(w.o!==o&&w.hp>0&&Math.hypot(w.x-v.x,w.y-v.y)<=46)n++;if(n>bn){bn=n;best=v}}const T=best||tH;if(T){duFx(0,u.x,u.y,T.x,T.y,o,5);duBoom(o,T.x,T.y,46,u.ad)}break}}}
 function duPj(dt){const P=DU.pj;for(let i=P.length-1;i>=0;i--){const q=P[i];let del=false;
- if(q.c===0){q.y+=q.dy*105*dt;for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&!q.hit.includes(v.id)&&Math.abs(v.x-q.x)<14&&Math.abs(v.y-q.y)<12){v.hp-=45;q.hit.push(v.id);duFx(2,v.x,v.y,v.x,v.y,q.o,0);if(--q.pw<=0)del=true}
-  if(!del)for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&Math.abs(h.x-q.x)<28&&Math.abs(h.y-q.y)<16){h.hp-=70;duFx(4,h.x,h.y,h.x,h.y,q.o,0);del=true;break}
-  if(q.y<-10||q.y>650)del=true}
+ if(q.c===0){q.y+=q.dy*105*dt;q.tv=(q.tv||0)+105*dt;if(q.tv>130)del=true;for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&!q.hit.includes(v.id)&&Math.abs(v.x-q.x)<14&&Math.abs(v.y-q.y)<12){v.hp-=24;q.hit.push(v.id);duFx(2,v.x,v.y,v.x,v.y,q.o,0);if(--q.pw<=0)del=true}
+  if(!del)for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&!duLk(h)&&Math.abs(h.x-q.x)<28&&Math.abs(h.y-q.y)<16){h.hp-=38;duFx(4,h.x,h.y,h.x,h.y,q.o,0);del=true;break}
+  if(q.y<-10||q.y>DH+10)del=true}
  else if(q.c===1){const sp=210*dt;if(q.ph===0){q.x+=q.dx*sp;q.y+=q.dy*sp;q.go+=sp;if(q.go>=105){q.ph=1;q.hit=[]}}else{const dx=q.sx-q.x,dy=q.sy-q.y,d=Math.hypot(dx,dy);if(d<8)del=true;else{q.x+=dx/d*sp;q.y+=dy/d*sp}}
   for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&!q.hit.includes(v.id)&&Math.hypot(v.x-q.x,v.y-q.y)<14){v.hp-=30;q.hit.push(v.id);duFx(2,v.x,v.y,v.x,v.y,q.o,0)}
-  for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&!q.hit.includes('h'+h.id)&&Math.hypot(h.x-q.x,h.y-q.y)<26){h.hp-=30;q.hit.push('h'+h.id)}}
+  for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&!duLk(h)&&!q.hit.includes('h'+h.id)&&Math.hypot(h.x-q.x,h.y-q.y)<26){h.hp-=30;q.hit.push('h'+h.id)}}
  else if(q.c===2){q.arm-=dt;if(q.arm<=0&&DU.units.some(v=>v.o!==q.o&&v.hp>0&&Math.hypot(v.x-q.x,v.y-q.y)<15)){duBoom(q.o,q.x,q.y,40,75,40);del=true}}
  else{q.life-=dt;if(q.life<=0)del=true;else for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&Math.hypot(v.x-q.x,v.y-q.y)<=q.r){if(q.c===3)v.sw=.3;else v.hp-=q.d*dt}}
  if(del)P.splice(i,1)}}
 function duStep(dt){
  if(DU.st==='cd'){DU.cd-=dt;if(DU.cd<=0){DU.st='play';DU.t=0;DU.cd=0;duBan('В бой!',900);sfx('wave')}return}
  if(DU.st!=='play')return;
- DU.t+=dt;if(DU.t>=180&&!DU.ot){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}
+ DU.t+=dt;if(DU.t>=DUT1&&!DU.ot){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}
  const rate=(DU.ot?2:1)/2.3;DU.el[0]=Math.min(10,DU.el[0]+rate*dt);DU.el[1]=Math.min(10,DU.el[1]+rate*dt);
- if(DU.bot){DU.bt-=dt;if(DU.bt<=0){DU.bt=3.6+Math.random()*3;const ks=(DU.hd[1]||[]).filter(k=>duStat(k).dc<=DU.el[1]);if(ks.length)duPlace(1,ks[Math.floor(Math.random()*ks.length)],40+Math.random()*280,60+Math.random()*150)}}
+ if(DU.bot){DU.bt-=dt;if(DU.bt<=0){DU.bt=3.6+Math.random()*3;const ks=(DU.hd[1]||[]).filter(k=>duStat(k).dc<=DU.el[1]);if(ks.length){duPlace(1,ks[Math.floor(Math.random()*ks.length)],40+Math.random()*(DW-80),50+Math.random()*(MID-110));if(Math.random()<.07)duEmote(1,DUEM[Math.floor(Math.random()*DUEM.length)])}}}
  const U=DU.units;
  for(const u of U){if(u.hp<=0)continue;u.cdn-=dt;if(u.sl>0)u.sl-=dt;if(u.sw>0)u.sw-=dt;if(u.stn>0){u.stn-=dt;continue}
   if(u.eco){u.pt-=dt;if(u.pt<=0){u.pt=u.ei;DU.el[u.o]=Math.min(10,DU.el[u.o]+1);duFx(3,u.x,u.y,u.x,u.y,u.o,0)}continue}
@@ -7392,12 +7508,12 @@ function duStep(dt){
   if(inR){if(u.cdn<=0){if(u.kd){u.cdn=u.atk;duAb(u,tg,tH)}else if(u.wd&&!u.ww){u.ww=u.wd;duFx(7,u.x,u.y,u.x,u.y,u.o,0)}else if(u.ww>0){u.ww-=dt;if(u.ww<=0){u.ww=0;u.cdn=u.atk;duStrike(u,tg,tH)}}else{u.cdn=u.atk;duStrike(u,tg,tH)}}}
   else duMove(u,tx,ty,dt)}
  for(let i=0;i<U.length;i++){const a=U[i];if(a.hp<=0)continue;for(let j=i+1;j<U.length;j++){const b=U[j];if(b.hp<=0)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<13&&d>.01){const m=(13-d)/2/d;if(!a.eco){a.x-=dx*m;a.y-=dy*m}if(!b.eco){b.x+=dx*m;b.y+=dy*m}}}}
- for(const u of U){u.x=Math.max(10,Math.min(DW-10,u.x));u.y=Math.max(10,Math.min(DH-10,u.y));if(u.y>298&&u.y<342){const l=LX[duNL(u.x)];u.x=Math.max(l-24,Math.min(l+24,u.x))}}
- duPj(dt);for(const h of DU.houses){if(h.hp<=0)continue;h.cd-=dt;if(h.cd>0)continue;let t=null,best=h.main?120:105;for(const v of U){if(v.o===h.o||v.hp<=0)continue;const d=Math.hypot(v.x-h.x,v.y-h.y);if(d<best){best=d;t=v}}if(t){h.cd=.9;t.hp-=h.main?28:22;duFx(0,h.x,h.y-24,t.x,t.y,h.o,0)}}
+ for(const u of U){u.x=Math.max(10,Math.min(DW-10,u.x));u.y=Math.max(10,Math.min(DH-10,u.y));if(u.y>MID-24&&u.y<MID+24){const l=LX[duNL(u.x)];u.x=Math.max(l-26,Math.min(l+26,u.x))}}
+ duPj(dt);for(const h of DU.houses){if(h.hp<=0)continue;h.cd-=dt;if(h.cd>0)continue;let t=null,best=h.main?120:105;for(const v of U){if(v.o===h.o||v.hp<=0)continue;const d=Math.hypot(v.x-h.x,v.y-h.y);if(d<best){best=d;t=v}}if(t){h.cd=.9;t.hp-=h.main?28:22;duFx(0,h.x,h.y-24,t.x,t.y,h.o,9)}}
  for(let i=U.length-1;i>=0;i--)if(U[i].hp<=0){duFx(4,U[i].x,U[i].y,U[i].x,U[i].y,U[i].o,0);U.splice(i,1)}
  const m0=DU.houses[1],m1=DU.houses[4];
  if(m0.hp<=0||m1.hp<=0)return duEnd(m0.hp<=0&&m1.hp<=0?-1:m0.hp<=0?1:0,'main');
- if(DU.t>=240)duTimeEnd()}
+ if(DU.t>=DUT2)duTimeEnd()}
 const duCrowns=()=>[DU.houses.filter(h=>h.o===1&&h.hp<=0).length,DU.houses.filter(h=>h.o===0&&h.hp<=0).length];
 function duTimeEnd(){const [a,b]=duCrowns(),hp=o=>DU.houses.filter(h=>h.o===o).reduce((s,h)=>s+Math.max(0,h.hp)/h.max,0);
  duEnd(a>b?0:b>a?1:(hp(0)>hp(1)+.01?0:hp(1)>hp(0)+.01?1:-1),'time')}
@@ -7406,59 +7522,120 @@ function duAbort(msg){duFinish({nr:1,msg,w:-2,a:0,b:0})}
 function duFinish(res){if(DU.res)return;DU.res=res;DU.st='over';duFix();const me=DU.me,out=res.w===me?'w':res.w===-1?'d':'l';let g=0;
  if(!res.nr&&!DU.paid){DU.paid=1;g=DU.bot?(out==='w'?5:0):(out==='w'?25:out==='d'?10:5);if(!DU.bot)SV.du[out]++;SV.g+=g;svs();sfx(out==='l'?'lose':'win')}
  const mine=me===0?res.a:res.b,his=me===0?res.b:res.a,T={w:'Победа!',l:'Поражение',d:'Ничья'}[out],
- why=res.nr?res.msg:res.why==='main'?(out==='w'?'Ты сломал главный домик!':out==='l'?'Твой главный домик сломан.':'Оба главных домика сломаны.'):'Время вышло. Сломано домиков: '+mine+' : '+his;
+ why=res.nr?res.msg:res.why==='main'?(out==='w'?'Ты сломал главную башню!':out==='l'?'Твоя главная башня сломана.':'Обе главные башни сломаны.'):'Время вышло. Сломано башен: '+mine+' : '+his;
  $('duOv').innerHTML=`<div class="cd-card"><h3>${res.nr?'Дуэль прервана':T}</h3><p>${why}</p>${g?`<b style="display:inline-flex;align-items:center;gap:5px;color:#b45309">+${g} ${fi('gfish')}</b>`:''}${DU.bot&&!res.nr?'<small>Против бота награда меньше</small>':''}<button class="cd-btn" data-du="lobby">В лобби</button>${DU.bot?'<button class="cd-btn g" data-du="again">Ещё раз с ботом</button>':''}</div>`;$('duOv').classList.add('on')}
 
 /* ---------- экран боя ---------- */
-$('catdef').insertAdjacentHTML('beforeend',`<div class="cdv" id="cdDuel"><div class="cd-top"><button class="cd-ib" id="duQuit" aria-label="Выйти">${ic('back')}</button><h2 id="duT">Дуэль</h2><div class="du-clk" id="duClk">0:00</div></div><div class="du-wrap"><svg id="duSvg" viewBox="0 0 360 640"></svg><div class="du-ban" id="duBan"></div><div class="di" id="duIntro"></div><div class="cd-ov" id="duOv"></div></div><div class="du-dock"><div class="du-el"><span class="du-ei">${fi()}</span><div class="du-eb"><i id="duElB"></i></div><b id="duElN">5</b></div><div class="du-cards" id="duCards"></div></div></div>`);
-function duBuild(){const s=$('duSvg');
- s.innerHTML=duMap()+`<rect id="duZone" y="344" width="360" height="296" fill="#fff" opacity="0"/><g id="duH"></g><g id="duJ"></g><g id="duU"></g><g id="duF"></g>`;
+$('catdef').insertAdjacentHTML('beforeend',`<div class="cdv" id="cdDuel"><div class="cd-top du-top"><button class="cd-ib" id="duQuit" aria-label="Меню"><span class="du-ic" style="margin:0;width:18px;height:18px">${DUI.pause}</span></button><div class="du-sb"><div class="du-p l"><span class="du-av" id="duAvL"></span><div class="du-pn"><b id="duNmL"></b><div class="du-pp" id="duPpL"></div></div><b class="du-cr" id="duCrL">0</b></div><div class="du-clk" id="duClk">0:00</div><div class="du-p r"><b class="du-cr" id="duCrR">0</b><div class="du-pn"><b id="duNmR"></b><div class="du-pp" id="duPpR"></div></div><span class="du-av" id="duAvR"></span></div></div></div><div class="du-wrap"><svg id="duSvg" viewBox="0 0 ${DW} ${DH}"></svg><div class="du-ban" id="duBan"></div><div class="di" id="duIntro"></div><div class="cd-ov" id="duOv"></div><div class="cd-ov" id="duPz"></div></div><div class="du-dock"><div class="du-emp" id="duEmp"></div><div class="du-el"><span class="du-ei">${fi()}</span><div class="du-eb"><i id="duElB"></i></div><b id="duElN">5</b><button class="du-emb" id="duEmB" aria-label="Эмоции">${DUI.face}</button></div><div class="du-cards" id="duCards"></div></div></div>`);
+function duTw(main,c,mine){const L=main?1.3:1.05,yb=main?44:33,sx=main?1:0;
+ const cat=`<g transform="translate(0 ${main?-27:-26})"><path d="M-8-4l1-9 6 5M8-4l-1-9-6 5" fill="#fb923c" stroke="#9a3412" stroke-width="1.5" stroke-linejoin="round"/><circle r="9" fill="#fb923c" stroke="#9a3412" stroke-width="1.5"/><path d="M-3-8q3-2 6 0" stroke="#fdba74" stroke-width="2" fill="none"/><circle cx="-3.2" cy="-1" r="1.3" fill="#1f2937"/><circle cx="3.2" cy="-1" r="1.3" fill="#1f2937"/><path d="M-1.2 2.2h2.4l-1.2 1.4z" fill="#f43f5e"/><path d="M-9 1h-5M-9 3.5l-4.5 1.5M9 1h5M9 3.5l4.5 1.5" stroke="#7c2d12" stroke-width=".9" stroke-linecap="round"/>${main?'<path d="M-8-9L-9-18-4.5-14 0-21 4.5-14 9-18 8-9Z" fill="#fbbf24" stroke="#b45309" stroke-width="1.4" stroke-linejoin="round"/><circle cy="-13" r="1.6" fill="#ef4444"/>':''}</g>`;
+ const flag=(x,d)=>`<path d="M${x} -23V-47" stroke="#475569" stroke-width="2"/><path d="M${x} -47l${15*d} 5-${15*d} 6z" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.5" stroke-linejoin="round"/>`;
+ return (main?`<circle class="dlk" cy="-4" r="60" fill="${c[0]}" fill-opacity=".1" stroke="${c[0]}" stroke-opacity=".75" stroke-width="2.6" stroke-dasharray="9 7"/>`:'')+
+ `<g class="dpp"><g transform="scale(${L})"><g class="dok"><ellipse cy="21" rx="31" ry="7" fill="#0004"/>`+cat+flag(22,1)+(main?flag(-22,-1):'')+
+ `<path d="M-27 20L-23 -10H23L27 20Z" fill="#cbd5e1" stroke="#64748b" stroke-width="2" stroke-linejoin="round"/><path d="M-23-10H23L25 0H-25Z" fill="#fff" opacity=".35"/><path d="M-25 2H26M-26 12H26M-9-10V2M9 2V12M-15 2V12M15-10V2M-4 12V20M16 12V20" stroke="#94a3b8" stroke-width="1.2" opacity=".85"/>`+
+ `<path d="M-6 20V8a6 6 0 0112 0V20Z" fill="#78350f" stroke="#451a03" stroke-width="1.5"/><path d="M0 4V20" stroke="#451a03"/><rect x="-20" y="-3" width="7" height="9" rx="3" fill="#fde68a" stroke="#92400e" stroke-width="1.3"/><rect x="13" y="-3" width="7" height="9" rx="3" fill="#fde68a" stroke="#92400e" stroke-width="1.3"/>`+
+ `<rect x="-25" y="-15" width="50" height="6" rx="1.5" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.8"/>`+[-22.5,-10.5,1.5,13.5].map(x=>`<rect x="${x}" y="-23" width="9" height="9" rx="1.5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.6"/>`).join('')+
+ `</g><g class="dru" style="display:none"><ellipse cy="16" rx="31" ry="8" fill="#0004"/><path d="M-27 19l6-14 10 6 8-11 10 8 8-6 6 17z" fill="#94a3b8" stroke="#475569" stroke-width="2" stroke-linejoin="round"/><path d="M-14 17l4-6 6 4M10 17l4-8 6 6" stroke="#475569" fill="none" stroke-width="1.6"/><circle cx="-6" cy="-4" r="6" fill="#64748b" opacity=".5"/><circle cx="6" cy="-12" r="8" fill="#64748b" opacity=".35"/></g></g></g>`+
+ `<g class="dhb" transform="translate(0 ${yb})"><rect x="-28" y="0" width="56" height="8" rx="4" fill="#0b1224" stroke="#fff" stroke-opacity=".6" stroke-width="1.2"/><rect class="dhf" x="-26.5" y="1.5" width="53" height="5" rx="2.5" fill="${mine?'#4ade80':'#f87171'}"/><text class="dht" y="19" text-anchor="middle" font-size="10" font-weight="800" fill="#fff" stroke="#0f172a" stroke-width="2.6" paint-order="stroke" font-family="Montserrat,sans-serif">0</text></g>`}
+function duBuild(){const s=$('duSvg');s.setAttribute('viewBox',`0 0 ${DW} ${DH}`);
+ s.innerHTML=duMap()+`<rect id="duZone" y="${MID+26}" width="${DW}" height="${DH-MID-26}" fill="#60a5fa" opacity="0"/><g id="duH"></g><g id="duJ"></g><g id="duU"></g><g id="duF"></g>`;
  DU.hE={};const gH=$('duH'),me=DU.me;
- DU.houses.forEach(h=>{const mine=h.o===me,c=mine?['#3b82f6','#1d4ed8']:['#ef4444','#b91c1c'],sc=h.main?1.25:1,g=document.createElementNS(NS2,'g'),p=me?[DW-h.x,DH-h.y]:[h.x,h.y];
-  g.setAttribute('transform','translate('+p[0]+' '+p[1]+')');
-  g.innerHTML=`<g transform="scale(${sc})"><ellipse cy="20" rx="34" ry="8" fill="#0003"/><rect x="-24" y="-12" width="48" height="30" rx="4" fill="#fde68a" stroke="#92400e" stroke-width="2"/><path d="M-30-10L0-38 30-10Z" fill="${c[0]}" stroke="${c[1]}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-8 18V4a8 8 0 0116 0V18Z" fill="#78350f"/><g transform="translate(0 -17)"><path d="M-6-2l1-7 4 3M6-2l-1-7-4 3" fill="#fb923c"/><circle r="6" fill="#fb923c"/><circle cx="-2.2" cy="-.5" r="1.1" fill="#1f2937"/><circle cx="2.2" cy="-.5" r="1.1" fill="#1f2937"/></g>${h.main?'<path d="M-10-40l4 5 6-8 6 8 4-5-2 9h-16z" fill="#fbbf24" stroke="#b45309" stroke-width="1.2"/>':''}</g><rect style="display:none" x="-26" y="27" width="52" height="6" rx="3" fill="#0006"/><rect style="display:none" class="dhf" x="-26" y="27" width="52" height="6" rx="3" fill="${mine?'#4ade80':'#f87171'}"/>`;
-  gH.appendChild(g);DU.hE[h.id]={g,hf:g.querySelector('.dhf')}});
+ DU.houses.forEach(h=>{const mine=h.o===me,c=mine?['#3b82f6','#1d4ed8']:['#ef4444','#b91c1c'],g=document.createElementNS(NS2,'g'),p=me?[DW-h.x,DH-h.y]:[h.x,h.y];
+  g.setAttribute('transform','translate('+p[0]+' '+p[1]+')');g.innerHTML=duTw(h.main,c,mine);gH.appendChild(g);
+  DU.hE[h.id]={g,dp:g.querySelector('.dpp'),ok:g.querySelector('.dok'),ru:g.querySelector('.dru'),hf:g.querySelector('.dhf'),ht:g.querySelector('.dht'),lk:g.querySelector('.dlk'),hb:g.querySelector('.dhb'),php:h.hp,fl:0,acc:0,tc:0}});
  DU.uE=new Map()}
 const duCI=k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${fi()}${duStat(k).dc}</span>`;
 function duCardsBuild(){$('duCards').innerHTML=[0,1,2].map(i=>`<button class="du-c" data-i="${i}" data-k="" data-dc="99"></button>`).join('')+'<div class="du-n" id="duNx"><small>Следом</small><div class="du-m" id="duNc" data-k=""></div></div>'}
 function duSync(){const h=(DU.hd&&DU.hd[DU.me])||[];document.querySelectorAll('#duCards .du-c').forEach((c,i)=>{const k=h[i]||'';if(c.dataset.k!==k){c.dataset.k=k;if(k&&TW[k]){c.dataset.dc=duStat(k).dc;c.style.setProperty('--bg',TW[k].bg);c.innerHTML=duCI(k);c.classList.remove('deal');void c.offsetWidth;c.classList.add('deal')}else{c.innerHTML='';c.dataset.dc=99}}});
  if(DU.sel&&!h.includes(DU.sel))DU.sel=null;const n=(DU.nx&&DU.nx[DU.me])||'',m=$('duNc');if(m&&m.dataset.k!==n){m.dataset.k=n;if(n&&TW[n]){m.style.setProperty('--bg',TW[n].bg);m.innerHTML=duCI(n);const w=$('duNx');w.classList.remove('sw');void w.offsetWidth;w.classList.add('sw')}else m.innerHTML=''}}
 function duMkU(u){const g=document.createElementNS(NS2,'g'),mine=u.o===DU.me;
- g.innerHTML=`<ellipse cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><g transform="scale(.58)"><use href="#cd-${u.k}"/></g><rect style="display:none" x="-13" y="-35" width="26" height="4" rx="2" fill="#0007"/><rect style="display:none" class="dhf" x="-13" y="-35" width="26" height="4" rx="2" fill="${mine?'#4ade80':'#f87171'}"/>`;
- return{g,hf:g.querySelector('.dhf'),sy:0}}
-function duRPj(P){const g=$('duJ');if(!g)return;let h='';const tm=performance.now()/1000;for(const q of DU.pj||[]){const p=P(q.x,q.y),x=p[0].toFixed(1),y=p[1].toFixed(1),c=q.c;
- if(c===0)h+=`<circle cx="${x}" cy="${y}" r="6" fill="#1e293b" stroke="#a5b4fc" stroke-width="2"/><circle cx="${x-2}" cy="${y-2}" r="1.6" fill="#fff"/>`;
- else if(c===1)h+=`<text x="${x}" y="${y}" font-size="16" text-anchor="middle" dominant-baseline="central" transform="rotate(${(tm*720%360).toFixed(0)} ${x} ${y})">🪃</text>`;
- else if(c===2)h+=`<circle cx="${x}" cy="${y}" r="5" fill="#f59e0b" stroke="#b91c1c" stroke-width="2" opacity="${(.6+.4*Math.sin(tm*8)).toFixed(2)}"/>`;
- else h+=`<circle cx="${x}" cy="${y}" r="${q.r}" fill="${c===3?'#fff':'#f97316'}" fill-opacity=".3" stroke="${c===3?'#fff':'#fb923c'}" stroke-dasharray="4 3"/><text x="${x}" y="${y}" font-size="14" text-anchor="middle" dominant-baseline="central">${c===3?'🕸️':'🔥'}</text>`}g.innerHTML=h}
+ g.innerHTML=`<ellipse class="dsh" cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><ellipse cy="12" rx="13" ry="5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><g class="db"><g transform="scale(.58)"><use href="#cd-${u.k}"/></g></g><g class="dhb2" style="display:none"><rect x="-13" y="-37" width="26" height="4.6" rx="2.3" fill="#0009"/><rect class="dhf" x="-12.4" y="-36.4" width="25.2" height="3.4" rx="1.7" fill="${mine?'#4ade80':'#f87171'}"/></g>`;
+ return{g,db:g.querySelector('.db'),sh:g.querySelector('.dsh'),hb:g.querySelector('.dhb2'),hf:g.querySelector('.dhf'),sy:0,px:0,py:0,ph:0,fl:0,php:u.hp,acc:0,tc:0}}
+function duRPj(P){const g=$('duJ');if(!g)return;let h='';const tm=performance.now()/1000,me=DU.me;for(const q of DU.pj||[]){const p=P(q.x,q.y),x=+p[0].toFixed(1),y=+p[1].toFixed(1),c=q.c;
+ if(c===0)h+=`<ellipse cx="${x}" cy="${y+(q.o===me?9:-9)}" rx="4.5" ry="9" fill="#a5b4fc" opacity=".28"/><g transform="translate(${x} ${y})"><circle r="6.8" fill="#1e293b" stroke="#818cf8" stroke-width="2"/><g transform="rotate(${(tm*260%360).toFixed(0)})"><circle cx="-1.8" cy="-2.6" r="1" fill="#64748b"/><circle cx="1.6" cy="-2.8" r="1" fill="#64748b"/><circle cy="-.4" r="1" fill="#64748b"/></g><circle cx="-2.4" cy="-3" r="1.6" fill="#fff" opacity=".55"/></g>`;
+ else if(c===1)h+=`<circle cx="${x}" cy="${y}" r="9" fill="#fbbf24" opacity=".16"/><g transform="translate(${x} ${y}) rotate(${(tm*720%360).toFixed(0)})"><path d="M-9 2Q0-11 9 2L5.5 4Q0-4-5.5 4Z" fill="#fbbf24" stroke="#b45309" stroke-width="1.6" stroke-linejoin="round"/></g>`;
+ else if(c===2)h+=`<g transform="translate(${x} ${y})">${[0,45,90,135].map(a=>`<path d="M-8 0H8" stroke="#374151" stroke-width="2.4" stroke-linecap="round" transform="rotate(${a})"/>`).join('')}<circle r="5.5" fill="#4b5563" stroke="#111827" stroke-width="1.6"/><circle r="2" fill="#ef4444" opacity="${(.5+.5*Math.sin(tm*9)).toFixed(2)}"/></g>`;
+ else if(c===3)h+=`<g transform="translate(${x} ${y})"><circle r="${q.r}" fill="#fff" fill-opacity=".14" stroke="#fff" stroke-opacity=".7" stroke-width="1.4"/>${[0,1,2,3,4,5,6,7].map(i=>`<path d="M0 0L${(Math.cos(i*Math.PI/4)*q.r).toFixed(1)} ${(Math.sin(i*Math.PI/4)*q.r).toFixed(1)}" stroke="#fff" stroke-opacity=".7" stroke-width="1"/>`).join('')}<circle r="${(q.r*.36).toFixed(1)}" fill="none" stroke="#fff" stroke-opacity=".65"/><circle r="${(q.r*.68).toFixed(1)}" fill="none" stroke="#fff" stroke-opacity=".65"/></g>`;
+ else h+=`<g transform="translate(${x} ${y})"><circle r="${q.r}" fill="#f97316" fill-opacity="${(.2+.06*Math.sin(tm*8)).toFixed(2)}" stroke="#fb923c" stroke-opacity=".7" stroke-dasharray="4 3"/>${[[-9,4],[8,5],[0,-6],[-5,-10],[10,-5]].map(([a,b],i)=>`<g transform="translate(${a} ${b}) scale(${(.85+.3*Math.sin(tm*9+i*1.7)).toFixed(2)})"><path d="M0 5Q-6 1-3.5-6Q-1-2 1-10Q8-2 5.5 2Q4 5 0 5Z" fill="#fb923c" stroke="#c2410c" stroke-width="1"/><path d="M0 3Q-2 0 0-4Q2 0 0 3Z" fill="#fde047"/></g>`).join('')}</g>`}
+ g.innerHTML=h}
+function duShotSvg(s,me,P){const f=s.f,k=s.age/s.life,ty=f[0],a=P(f[1],f[2]),b=P(f[3],f[4]),own=f[5]===me,col=own?'#fde047':'#fb7185',o=(1-k).toFixed(2),sd=f[1]*3.1+f[2]*7.7,rn=n=>Math.sin(sd+n*12.9898)*.5+.5,n1=v=>(+v).toFixed(1);
+ if(ty===0){const q=Math.min(1,k*1.5),pj=f[6]|0,x=a[0]+(b[0]-a[0])*q,y=a[1]+(b[1]-a[1])*q,ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI,r=k*720;
+  if(pj===6)return `<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" opacity="${(.35*(1-k)).toFixed(2)}"/><path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#ecfeff" stroke-width="2.4" stroke-linecap="round" opacity="${o}"/>`;
+  const t0=Math.max(0,q-.35),tx=a[0]+(b[0]-a[0])*t0,ty2=a[1]+(b[1]-a[1])*t0,tc=PJC[pj]||col;
+  const H=[`<circle r="3.4" fill="${col}" stroke="#fff" stroke-width="1"/>`,
+   `<g transform="rotate(${r})"><circle r="4.4" fill="#f472b6" stroke="#be185d" stroke-width="1.2"/><path d="M-3-1q3 3 6 0M-3 1.5q3 3 6 0" stroke="#be185d" fill="none" stroke-width="1"/></g>`,
+   `<g transform="rotate(${ang+r*.4})"><path d="M-6 0Q0-6 6 0Q0 6-6 0Z" fill="#4ade80" stroke="#15803d" stroke-width="1.2"/><path d="M-5 0H5" stroke="#15803d"/></g>`,
+   `<circle r="4.2" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1.2"/><circle cx="-1.2" cy="-1.2" r="1.3" fill="#fff"/>`,
+   `<g transform="rotate(${r})"><path d="M0-5.5L1.7-1.7 5.6-1.5 2.5.9 3.4 4.8 0 2.7-3.4 4.8-2.5.9-5.6-1.5-1.7-1.7Z" fill="#fde047" stroke="#b45309" stroke-width="1"/></g>`,
+   `<circle r="5.4" fill="#1e293b" stroke="#a5b4fc" stroke-width="1.4"/><circle cx="-1.6" cy="-1.6" r="1.4" fill="#fff" opacity=".8"/><circle cx="1" r=".8" fill="#64748b"/><circle cx="2.2" cy="1.8" r=".8" fill="#64748b"/>`,'',
+   `<g transform="rotate(${ang-90})"><path d="M0 6Q-5 2-3-4Q-1-1 1-8Q7-1 5 3Q4 6 0 6Z" fill="#fb923c" stroke="#c2410c" stroke-width="1"/><path d="M0 4Q-2 1 0-3Q2 0 0 4Z" fill="#fde047"/></g>`,
+   `<circle r="4.4" fill="#f9a8d4" stroke="#be185d" stroke-width="1.2"/><circle cx="-1.4" cy="-1.4" r="1.4" fill="#fff" opacity=".8"/>`,
+   `<g transform="rotate(${ang})"><path d="M-6 0Q-1-5 4 0Q-1 5-6 0ZM4 0L8-3.5V3.5Z" fill="#fbbf24" stroke="#b45309" stroke-width="1"/><circle cx="-2" cy="-.8" r=".8" fill="#1f2937"/></g>`][pj]||`<circle r="3.4" fill="${col}" stroke="#fff"/>`;
+  return `<path d="M${n1(tx)} ${n1(ty2)}L${n1(x)} ${n1(y)}" stroke="${tc}" stroke-width="${pj===9?3:2.4}" stroke-linecap="round" opacity=".45"/><g transform="translate(${n1(x)} ${n1(y)})">${H}</g>`}
+ if(ty===1){const R=f[6]||30,e=.3+.7*k;let h=`<circle cx="${b[0]}" cy="${b[1]}" r="${n1(R*e)}" fill="${col}" fill-opacity="${(.22*(1-k)).toFixed(2)}" stroke="#fff" stroke-opacity="${o}" stroke-width="2.4"/><circle cx="${b[0]}" cy="${b[1]}" r="${n1(R*e*.55)}" fill="#fff" fill-opacity="${(.5*(1-k)).toFixed(2)}"/>`;
+  for(let i=0;i<8;i++){const an=(i*45+rn(i)*20)*Math.PI/180,d1=R*e*.6,d2=R*e*(1+.25*rn(i+9));h+=`<path d="M${n1(b[0]+Math.cos(an)*d1)} ${n1(b[1]+Math.sin(an)*d1)}L${n1(b[0]+Math.cos(an)*d2)} ${n1(b[1]+Math.sin(an)*d2)}" stroke="${col}" stroke-width="2.4" stroke-linecap="round" opacity="${o}"/>`}return h}
+ if(ty===2){const c=b[0],d=b[1],L=Math.min(1,k*3.2);let h='';[-7,0,7].forEach(x=>{const x1=c-8+x,y1=d-11,x2=x1+16*L,y2=y1+20*L;h+=`<path d="M${x1} ${y1}L${n1(x2)} ${n1(y2)}" stroke="${col}" stroke-width="5" stroke-linecap="round" opacity="${(.45*(1-k)).toFixed(2)}"/><path d="M${x1} ${y1}L${n1(x2)} ${n1(y2)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity="${o}"/>`});
+  for(let i=0;i<4;i++){const an=(i*90+45+rn(i)*30)*Math.PI/180,dd=6+14*k;h+=`<circle cx="${n1(c+Math.cos(an)*dd)}" cy="${n1(d+Math.sin(an)*dd)}" r="${n1(2.2*(1-k))}" fill="#fff" opacity="${o}"/>`}return h}
+ if(ty===3)return `<g opacity="${o}" transform="translate(${a[0]} ${n1(a[1]-14-14*k)})"><path d="M-13 0Q-9-4-5 0Q-9 4-13 0ZM-5 0L-1.5-3.2V3.2Z" fill="#fbbf24" stroke="#b45309" stroke-width=".8"/><text x="3" y="3.5" font-size="11" font-weight="900" font-family="Montserrat,sans-serif" fill="#fde047" stroke="#92400e" stroke-width="2.4" paint-order="stroke">+1</text></g>`;
+ if(ty===4){const c=b[0],d=b[1];let h=`<circle cx="${c}" cy="${d}" r="${n1(4+12*k)}" fill="#e2e8f0" opacity="${(.55*(1-k)).toFixed(2)}"/>`;for(let i=0;i<6;i++){const an=(i*60+rn(i)*40)*Math.PI/180,dd=3+17*k*(.6+rn(i+3)*.6);h+=`<rect x="${n1(c+Math.cos(an)*dd-2)}" y="${n1(d+Math.sin(an)*dd+9*k*k-2)}" width="4" height="4" rx="1" fill="${i%2?'#cbd5e1':'#94a3b8'}" opacity="${o}"/>`}return h}
+ if(ty===5){const x=a[0],y=a[1]+8,cc=own?'#60a5fa':'#f87171';let h=`<ellipse cx="${x}" cy="${y}" rx="${n1(8+22*k)}" ry="${n1(3+8*k)}" fill="none" stroke="${cc}" stroke-width="2.6" opacity="${o}"/><ellipse cx="${x}" cy="${y}" rx="${n1(5+10*k)}" ry="${n1(2+4*k)}" fill="#fff" opacity="${(.5*(1-k)).toFixed(2)}"/>`;for(let i=0;i<7;i++)h+=`<circle cx="${n1(x+(i-3)*5+(rn(i)-.5)*4)}" cy="${n1(y-6-26*k*(.5+rn(i+2)))}" r="${n1(2*(1-k)+.4)}" fill="${i%2?'#fff':cc}" opacity="${o}"/>`;return h}
+ if(ty===6){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,ch=f[6]===1;if(ch){let p=`M${a[0]} ${a[1]}`;for(let i=1;i<4;i++){const t=i/4,o2=(rn(i)*2-1)*7;p+=`L${n1(a[0]+dx*t+nx*o2)} ${n1(a[1]+dy*t+ny*o2)}`}p+=`L${b[0]} ${b[1]}`;
+   return `<path d="${p}" fill="none" stroke="#fde047" stroke-width="5" stroke-linejoin="round" opacity="${(.35*(1-k)).toFixed(2)}"/><path d="${p}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="${o}"/><circle cx="${b[0]}" cy="${b[1]}" r="${n1(3+6*k)}" fill="#fde047" opacity="${(.7*(1-k)).toFixed(2)}"/>`}
+  const M=`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`;return `<path d="${M}" stroke="#22d3ee" stroke-width="${n1(11*(1-k*.6))}" stroke-linecap="round" opacity="${(.3*(1-k)).toFixed(2)}"/><path d="${M}" stroke="#a5f3fc" stroke-width="5" stroke-linecap="round" opacity="${(.8*(1-k)).toFixed(2)}"/><path d="${M}" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="${o}"/><circle cx="${b[0]}" cy="${b[1]}" r="${n1(4+10*k)}" fill="#67e8f9" opacity="${(.6*(1-k)).toFixed(2)}"/>`}
+ if(ty===7)return `<g transform="translate(${a[0]} ${a[1]-26}) scale(${(.8+.25*Math.sin(k*20)).toFixed(2)})"><circle r="8" fill="#ef4444" stroke="#fff" stroke-width="1.6"/><path d="M0-4v5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cy="4.6" r="1.2" fill="#fff"/></g>`;
+ if(ty===8){const big=f[5],y=a[1]-18*k*(big?1.2:1),op=k<.55?1:((1-k)/.45).toFixed(2);return `<text x="${n1(a[0])}" y="${n1(y)}" text-anchor="middle" font-size="${big?15:11}" font-weight="900" font-family="Montserrat,sans-serif" fill="${f[4]===me?'#fecaca':'#fef08a'}" stroke="#7c2d12" stroke-width="3" paint-order="stroke" opacity="${op}">-${f[3]}</text>`}
+ if(ty===9){const bg=f[6]?1.5:1,c=a[0],d=a[1];let h=`<circle cx="${c}" cy="${d}" r="${n1((18+64*k)*bg)}" fill="#fde68a" fill-opacity="${(.5*(1-k)).toFixed(2)}" stroke="#fff" stroke-width="3" stroke-opacity="${o}"/>`;
+  for(let i=0;i<12;i++){const an=(i*30+rn(i)*25)*Math.PI/180,dd=(8+50*k*(.5+rn(i+4)))*bg,xx=c+Math.cos(an)*dd,yy=d+Math.sin(an)*dd+34*k*k*bg;h+=`<rect x="${n1(xx-3)}" y="${n1(yy-3)}" width="${n1(6*(1-k*.5))}" height="${n1(5*(1-k*.5))}" fill="${i%3?'#94a3b8':'#475569'}" transform="rotate(${(k*300+i*40).toFixed(0)} ${n1(xx)} ${n1(yy)})" opacity="${o}"/>`}
+  for(let i=0;i<4;i++)h+=`<circle cx="${n1(c+(i-1.5)*12*bg)}" cy="${n1(d-10-30*k*(.6+rn(i)*.6)*bg)}" r="${n1((7+14*k)*bg)}" fill="#64748b" opacity="${(.5*(1-k)).toFixed(2)}"/>`;return h}
+ return `<circle cx="${a[0]}" cy="${a[1]}" r="${n1(8+20*k)}" fill="none" stroke="#fff" stroke-width="2.5" opacity="${o}"/>`}
 function duRender(dt){const gU=$('duU'),gF=$('duF');if(!gU)return;const me=DU.me,P=(x,y)=>me?[DW-x,DH-y]:[x,y];
- DU.houses.forEach(h=>{const e=DU.hE[h.id];if(!e)return;e.hf.setAttribute('width',(52*Math.max(0,h.hp/h.max)).toFixed(1));e.g.style.opacity=h.hp>0?1:.3;e.hf.style.display=e.hf.previousElementSibling.style.display=(h.hp<h.max-.5&&h.hp>0)?'':'none'});
+ DU.houses.forEach(h=>{const e=DU.hE[h.id];if(!e)return;const a=h.hp>0,pc=Math.max(0,h.hp/h.max),dr=e.php-h.hp;
+  if(dr>0){e.acc+=dr;if(dr>=2)e.fl=.12}
+  if(e.php>0&&!a)DU.shots.push(duShot([9,h.x,h.y,0,0,h.o,h.main?1:0]));
+  e.php=h.hp;e.tc-=dt;if(!a)e.acc=0;
+  if(e.acc>=3&&e.tc<=0&&a){DU.shots.push(duShot([8,h.x+(Math.random()-.5)*26,h.y-34,Math.round(e.acc),h.o,1,0]));e.acc=0;e.tc=.35}
+  if(e.fl>0){e.fl-=dt;e.dp.setAttribute('transform','scale(1.05)')}else e.dp.removeAttribute('transform');
+  e.ok.style.display=a?'':'none';e.ru.style.display=a?'none':'';e.ok.style.opacity=e.fl>0?.78:1;
+  e.hf.setAttribute('width',(53*pc).toFixed(1));e.hb.style.display=a?'':'none';
+  const tx=Math.ceil(Math.max(0,h.hp));if(e.tx!==tx){e.tx=tx;e.ht.textContent=tx}
+  if(e.lk)e.lk.style.display=a&&duLk(h)?'':'none'});
  const seen=new Set();
  for(const u of DU.units){seen.add(u.id);let e=DU.uE.get(u.id);if(!e){e=duMkU(u);DU.uE.set(u.id,e);gU.appendChild(e.g)}
-  const p=P(u.x,u.y);e.sy=p[1];e.g.setAttribute('transform','translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')');e.hf.setAttribute('width',(26*Math.max(0,u.hp/u.max)).toFixed(1));e.hf.style.display=e.hf.previousElementSibling.style.display=(u.hp<u.max-.5&&u.hp>0)?'':'none'}
+  const p=P(u.x,u.y),pc=Math.max(0,u.hp/u.max),dr=e.php-u.hp;
+  if(dr>0){e.acc+=dr;if(dr>=1.5)e.fl=.13}e.php=u.hp;e.tc-=dt;
+  if(e.acc>=3&&e.tc<=0){DU.shots.push(duShot([8,u.x+(Math.random()-.5)*8,u.y-22,Math.round(e.acc),u.o,0,0]));e.acc=0;e.tc=.25}
+  const mv=Math.hypot(p[0]-e.px,p[1]-e.py)>.12;e.px=p[0];e.py=p[1];if(mv)e.ph+=dt*13;if(e.fl>0)e.fl-=dt;
+  e.sy=p[1];e.g.setAttribute('transform','translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')');
+  e.db.setAttribute('transform','translate(0 '+(mv?(-Math.abs(Math.sin(e.ph))*2.4).toFixed(1):0)+')'+(e.fl>0?' scale(1.1)':''));
+  e.sh.setAttribute('fill',e.fl>0?'#fff':(u.o===me?'#3b82f6':'#ef4444'));
+  e.hf.setAttribute('width',(25.2*pc).toFixed(1));e.hb.style.display=(pc<.995&&u.hp>0)?'':'none'}
  DU.uE.forEach((e,id)=>{if(!seen.has(id)){e.g.remove();DU.uE.delete(id)}});
  if(++DU.fr%6===0)[...DU.uE.values()].sort((a,b)=>a.sy-b.sy).forEach(e=>gU.appendChild(e.g));
- duRPj(P);let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}
-  const f=s.f,k=s.age/s.life,a=P(f[1],f[2]),b=P(f[3],f[4]),col=f[5]===me?'#fde047':'#fb7185';
-   if(f[0]===0){const q=Math.min(1,k*1.5),pj=f[6]|0,x=a[0]+(b[0]-a[0])*q,y=a[1]+(b[1]-a[1])*q;if(pj===6)h+=`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;else h+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pj===5?5:pj===4?3.8:3.2}" fill="${PJC[pj]||col}" stroke="#fff" stroke-width="1"/>`}
-  else if(f[0]===1)h+=`<circle cx="${b[0]}" cy="${b[1]}" r="${((f[6]||30)*(.3+.7*k)).toFixed(1)}" fill="${col}" fill-opacity="${(.25*(1-k)).toFixed(2)}" stroke="#fff" stroke-opacity="${(1-k).toFixed(2)}" stroke-width="2"/>`;
-  else if(f[0]===2)h+=`<path d="M${b[0]-7} ${b[1]-7}L${b[0]+7} ${b[1]+7}M${b[0]+7} ${b[1]-7}L${b[0]-7} ${b[1]+7}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;
-  else if(f[0]===3)h+=`<text x="${a[0]}" y="${(a[1]-14-14*k).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="800" fill="#fde047" stroke="#92400e" stroke-width=".6" opacity="${(1-k).toFixed(2)}">+1</text>`;
-  else if(f[0]===4)h+=`<circle cx="${b[0]}" cy="${b[1]}" r="${(4+12*k).toFixed(1)}" fill="#e2e8f0" opacity="${(.7*(1-k)).toFixed(2)}"/>`;
-   else if(f[0]===6)h+=`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="${f[6]?'#fde047':'#67e8f9'}" stroke-width="${f[6]?2.5:4}" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;
-   else if(f[0]===7)h+=`<text x="${a[0]}" y="${(a[1]-24).toFixed(1)}" text-anchor="middle" font-size="18" font-weight="900" fill="#ef4444" stroke="#fff" stroke-width=".8">!</text>`;
-   else h+=`<circle cx="${a[0]}" cy="${a[1]}" r="${(8+20*k).toFixed(1)}" fill="none" stroke="#fff" stroke-width="2.5" opacity="${(1-k).toFixed(2)}"/>`}
- gF.innerHTML=h}
+ duRPj(P);if(DU.shots.length>150)DU.shots.splice(0,DU.shots.length-150);
+ let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}h+=duShotSvg(s,me,P)}gF.innerHTML=h}
 let banT=0;
 function duBan(t,ms){const b=$('duBan');b.textContent=t;b.classList.add('on');clearTimeout(banT);banT=setTimeout(()=>b.classList.remove('on'),ms||1200)}
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function duHud(){duSync();const me=DU.me,el=DU.el[me],al=o=>DU.houses.filter(h=>h.o===o&&h.hp>0).length;
+function duTop(f){const me=DU.me,al=o=>DU.houses.filter(h=>h.o===o).sort((a,b)=>a.l-b.l),key=DU.houses.map(h=>h.hp>0?1:0).join('')+me;
+ if(!f&&DU.tk===key)return;DU.tk=key;
+ const pp=o=>al(o).map(h=>`<i class="${h.main?'m ':''}${h.hp>0?'on':''}"></i>`).join(''),[a,b]=duCrowns();
+ $('duPpL').innerHTML=pp(me);$('duPpR').innerHTML=pp(1-me);$('duCrL').textContent=me===0?a:b;$('duCrR').textContent=me===0?b:a}
+function duNames(){const a=myName(),b=DU.bot?'Бот':ptName();$('duNmL').textContent=a;$('duNmR').textContent=b;$('duAvL').textContent=(a[0]||'?').toUpperCase();$('duAvR').textContent=(b[0]||'?').toUpperCase()}
+function duHud(){duSync();const me=DU.me,el=DU.el[me];
  $('duElB').style.width=(el/10*100).toFixed(1)+'%';$('duElN').textContent=Math.floor(el);
  document.querySelectorAll('#duCards .du-c').forEach(c=>{c.classList.toggle('off',el<+c.dataset.dc);c.classList.toggle('on',DU.sel===c.dataset.k)});
- $('duT').textContent='🏠 '+al(me)+' : '+al(1-me)+' 🏠';
- $('duClk').textContent=DU.st==='cd'?'…':fmt((DU.t>=180?240:180)-DU.t);
- $('duZone').setAttribute('opacity',DU.sel&&DU.st==='play'?'.22':'0');
+ duTop();
+ const ck=$('duClk');ck.textContent=DU.st==='cd'?'...':fmt((DU.t>=DUT1?DUT2:DUT1)-DU.t);ck.classList.toggle('ot',!!DU.ot);
+ $('duZone').setAttribute('opacity',DU.sel&&DU.st==='play'?'.2':'0');
  if(DU.st==='cd'){const b=$('duBan');if(DU.cd<=3.5){b.textContent=Math.max(1,Math.ceil(DU.cd));b.classList.add('on')}else b.classList.remove('on')}const di=$('duIntro');if(di)di.classList.toggle('off',!(DU.st==='cd'&&DU.cd>3.5))}
+const DUEM=['love','joy','proud','surprised','play','sad','angry','thanks'];let duEmT=0;
+const duEmoHtml=(k,px)=>{try{return emoFace(k,px)}catch{return''}};
+function duEmoBuild(){$('duEmp').innerHTML=DUEM.map(k=>`<button data-em="${k}" aria-label="${k}">${duEmoHtml(k,34)}</button>`).join('')}
+function duEmote(who,k){if(!DUEM.includes(k))return;const w=$('duSvg').parentNode;w.querySelectorAll('.du-em.'+(who?'o':'m')).forEach(x=>x.remove());const d=document.createElement('div');d.className='du-em '+(who?'o':'m');d.innerHTML=duEmoHtml(k,46);w.appendChild(d);setTimeout(()=>d.remove(),2600)}
+function duEmoSend(k){if(!DUEM.includes(k)||Date.now()<duEmT)return;duEmT=Date.now()+1400;$('duEmp').classList.remove('on');duEmote(0,k);sfx('click');
+ if(DU.bot){if(Math.random()<.6)setTimeout(()=>{if(DU.on)duEmote(1,DUEM[Math.floor(Math.random()*DUEM.length)])},900+Math.random()*900)}else csend('d-em',{ds:DU.sid,e:k})}
+function duPz(open){const z=$('duPz');if(!open){z.classList.remove('on');DU.pz=0;return}
+ DU.pz=DU.bot?1:0;z.innerHTML=`<div class="cd-card"><h3>${DU.bot?'Пауза':'Меню дуэли'}</h3><p>${DU.bot?'Игра остановлена. Можно продолжить или выйти.':'Бой идёт, пока ты в меню: партнёр продолжает играть.'}<br>Если выйти сейчас, награды не будет.</p><button class="cd-btn" data-du="cont">Продолжить</button><button class="cd-btn g" data-du="quit">Выйти</button></div>`;z.classList.add('on')}
 function duGuest(dt){if(DU.st==='cd')DU.cd=Math.max(0,DU.cd-dt);else if(DU.st==='play')DU.t+=dt;
  for(const u of DU.units)if(u.tx!=null){const k=Math.min(1,dt*10);u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}
  for(const q of DU.pj||[])if(q.tx!=null){const k=Math.min(1,dt*10);q.x+=(q.tx-q.x)*k;q.y+=(q.ty-q.y)*k}
@@ -7468,21 +7645,21 @@ function duSnapIn(p){if(DU.res)return;DU.snT=performance.now();const was=DU.st;D
  p.h.forEach((hp,i)=>{if(DU.houses[i])DU.houses[i].hp=hp});
  const m=new Map(DU.units.map(u=>[u.id,u]));DU.units=p.u.map(a=>{let u=m.get(a[0]);if(!u)u={id:a[0],k:a[1],o:a[2],x:a[3],y:a[4]};u.tx=a[3];u.ty=a[4];u.hp=a[5];u.max=a[6];return u});
  if(p.hd){DU.hd=p.hd;DU.nx=p.nx||[]}{const pm=new Map((DU.pj||[]).map(q=>[q.id,q]));DU.pj=(p.j||[]).map(a=>{let q=pm.get(a[0]);if(!q)q={id:a[0],x:a[3],y:a[4]};q.c=a[1];q.o=a[2];q.tx=a[3];q.ty=a[4];q.r=a[5];return q})}
- (p.f||[]).forEach(f=>DU.shots.push(duShot(f)));if(!DU.ot&&p.t>=180){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}}
+ (p.f||[]).forEach(f=>DU.shots.push(duShot(f)));if(!DU.ot&&p.t>=DUT1){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}}
 function duFrame(ts){DU.raf=0;if(!DU.on||cur!=='catdef'||VIEW!=='duel')return;const dt=Math.min(.05,(ts-DU.last)/1000||0);DU.last=ts;
- try{if(DU.host){duStep(dt);DU.sa+=dt;if(!DU.bot&&DU.sa>=.125){DU.sa=0;duSnap()}}else duGuest(dt);duRender(dt);duHud()}catch(e){console.error('duel',e)}
+ try{if(DU.host){if(!DU.pz)duStep(dt);DU.sa+=dt;if(!DU.bot&&DU.sa>=.125){DU.sa=0;duSnap()}}else duGuest(dt);duRender(dt);duHud()}catch(e){console.error('duel',e)}
  DU.raf=requestAnimationFrame(duFrame)}
-const DMN=[['🌳','Зелёный луг','река и деревянные мостики','#bbf7d0'],['⛄','Снежные горы','лёд и сугробы','#e0f2fe'],['🏜️','Пустыня','сухой каньон и камни','#fde68a'],['🌆','Ночной город','дорога и зебры','#cbd5e1']];
-const DTIP=['Котики идут по ближайшей тропе — ставь их ближе к нужной линии','Поставил котика — тут же приходит следующая карта','Сломай главный домик — и победа','Инженеры дают рыбки, но сами не дерутся'];
-function duIntro(){const el=$('duIntro');if(!el)return;const me=DU.me,bot=DU.bot,pt=CQ.pt||{},nm=[myName(),bot?'Бот 🤖':ptName()],mine=DU.tm[me]&&DU.tm[me].length?DU.tm[me]:SV.team.slice(0,6),opp=bot?DU.tm[1]:((pt.tm&&pt.tm.length?pt.tm:DU.tm[1-me])||[]),
+const DMN=DMAPS;
+const DTIP=['Котики идут к ближайшей боковой башне — ставь их ближе к нужной линии','Сначала ломай боковые башни: главная под защитой, пока они стоят','Поставил котика — тут же приходит следующая карта','Инженеры дают рыбки, но сами не дерутся'];
+function duIntro(){const el=$('duIntro');if(!el)return;const me=DU.me,bot=DU.bot,pt=CQ.pt||{},nm=[myName(),bot?'Бот':ptName()],mine=DU.tm[me]&&DU.tm[me].length?DU.tm[me]:SV.team.slice(0,6),opp=bot?DU.tm[1]:((pt.tm&&pt.tm.length?pt.tm:DU.tm[1-me])||[]),
  st=[SV.du.w+' поб. · '+SV.du.l+' пор.',bot?'тренировка':(pt.dw==null?'новичок?':pt.dw+' поб. · '+(pt.dl||0)+' пор.')];
  const sq=a=>{a=a.filter(k=>TW[k]).slice(0,6);const c=a.length?Math.round(a.reduce((x,k)=>x+duStat(k).dc,0)/a.length*10)/10:0;return `<div class="di-sq">${a.map(k=>`<div style="--b:${TW[k].bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg></div>`).join('')}</div><small>средняя цена ${fi()} ${c}</small>`};
- const cards=[];for(let r=0;r<5;r++)DMN.forEach(m=>cards.push(`<div class="di-c" style="--b:${m[3]}"><i>${m[0]}</i>${m[1]}</div>`));
+ const cards=[];for(let r=0;r<5;r++)DMAPS.forEach(m=>cards.push(`<div class="di-c" style="--b:#f1f5f9"><i class="di-sw" style="--s:${m.g[0]};--t:${m.g[1]};--m:${m.mid[1]}"></i>${m.n}</div>`));
  el.classList.remove('off');el.innerHTML=`<div class="di-h"><small>ДУЭЛЬ</small><b>Выбираем арену…</b></div><div class="di-vp" id="diVp"><div class="di-st" id="diSt">${cards.join('')}</div><u class="di-pin"></u></div><div class="di-nm" id="diNm">&nbsp;</div><div class="di-vs"><div class="di-p b"><b>${esc(nm[0])}</b><em>${st[0]}</em>${sq(mine)}</div><span>VS</span><div class="di-p r"><b>${esc(nm[1])}</b><em>${st[1]}</em>${sq(opp)}</div></div><small class="di-tip">${DTIP[Math.floor(Math.random()*DTIP.length)]}</small>`;
- const stp=$('diSt'),vp=$('diVp');setTimeout(()=>{const t=stp.children[12+DU.map];if(!t)return;stp.style.transform='translateX('+(-(t.offsetLeft+t.offsetWidth/2)+vp.clientWidth/2)+'px)';setTimeout(()=>{t.classList.add('win');$('diNm').textContent=DMN[DU.map][0]+' '+DMN[DU.map][1]+' · '+DMN[DU.map][2];const h=el.querySelector('.di-h b');if(h)h.textContent='Арена выбрана!'},3400)},80)}
-function duSetup(){DU.pj=[];DU.pid=1;DU.map=(+DU.sid||0)%4;const mk=p=>{const a=(DU.tm[p]||[]).filter(k=>TW[k]).slice(0,6);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return{h:a.slice(0,3),q:a.slice(3)}};DU.dk=[mk(0),mk(1)];DU.hd=DU.dk.map(d=>d.h);DU.nx=DU.dk.map(d=>d.q[0])}
+ const stp=$('diSt'),vp=$('diVp');setTimeout(()=>{const t=stp.children[DMAPS.length*2+DU.map];if(!t)return;stp.style.transform='translateX('+(-(t.offsetLeft+t.offsetWidth/2)+vp.clientWidth/2)+'px)';setTimeout(()=>{t.classList.add('win');$('diNm').textContent=DMAPS[DU.map].n+' · '+DMAPS[DU.map].d;const h=el.querySelector('.di-h b');if(h)h.textContent='Арена выбрана!'},3400)},80)}
+function duSetup(){DU.pj=[];DU.pid=1;DU.map=(+DU.sid||0)%DMAPS.length;const mk=p=>{const a=(DU.tm[p]||[]).filter(k=>TW[k]).slice(0,6);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return{h:a.slice(0,3),q:a.slice(3)}};DU.dk=[mk(0),mk(1)];DU.hd=DU.dk.map(d=>d.h);DU.nx=DU.dk.map(d=>d.q[0])}
 function duReset(){DU.on=1;DU.starting=0;DU.st='cd';DU.cd=8.2;DU.t=0;DU.el=[5,5];DU.units=[];DU.shots=[];DU.out=[];DU.nid=1;DU.sel=null;DU.paid=0;DU.res=null;DU.houses=duHouses();DU.bt=4;DU.snT=performance.now();DU.sa=0;DU.ot=0;duSetup();
- view('duel');$('cdDuel').classList.add('on');$('duOv').classList.remove('on');$('duBan').classList.remove('on');duBuild();duCardsBuild();duIntro();DU.last=performance.now();cancelAnimationFrame(DU.raf);DU.raf=requestAnimationFrame(duFrame);coTrack()}
+ view('duel');$('cdDuel').classList.add('on');$('duOv').classList.remove('on');$('duBan').classList.remove('on');duBuild();duCardsBuild();duNames();duTop(1);duIntro();$('duPz').classList.remove('on');$('duEmp').classList.remove('on');DU.pz=0;DU.last=performance.now();cancelAnimationFrame(DU.raf);DU.raf=requestAnimationFrame(duFrame);coTrack()}
 function duStop(){cancelAnimationFrame(DU.raf);DU.raf=0;DU.on=0;DU.st='idle';DU.rdy=0;DU.starting=0;DU.pend=0;$('cdDuel').classList.remove('on');view('menu')}
 function duLeave(){duStop();MODE='duel';TAB='u';coTrack();menu()}
 function duBotStart(){if(DU.on)return;DU.bot=1;DU.host=1;DU.me=0;DU.sid=Date.now();DU.tm[0]=SV.team.slice(0,6);
@@ -7495,6 +7672,7 @@ function duMsg(p){const k=p.k;
  if(k==='d-start'){if(DU.on){if(p.ds===DU.sid&&!DU.host)csend('d-gr',{ds:DU.sid,tm:DU.tm[1]});return}if(!DU.rdy)return;return duGuestStart(p.ds)}
  if(k==='d-gr'){if(DU.host&&DU.pend&&p.ds===DU.pend){DU.pend=0;if(p.tm&&p.tm.length)DU.tm[1]=p.tm.filter(c=>TW[c]).slice(0,6);duReset()}return}
  if(!DU.on||p.ds!==DU.sid)return;
+ if(k==='d-em'){duEmote(1,p.e);return}
  if(k==='d-bye')return duAbort('Партнёр вышел из дуэли. Награды нет.');
  if(DU.host){if(k==='d-pl')duPlace(1,p.c,p.x,p.y);return}
  if(k==='d-s')return duSnapIn(p);if(k==='d-fin')return duFinish(p.res)}
@@ -7504,15 +7682,15 @@ coTrack=function(){if(!CQ.ch||!CQ.sub)return;try{CQ.ch.track({u:GS().uid,n:myNam
 {const g0=window.go;window.go=function(s){if(cur==='catdef'&&s!=='catdef'&&DU.on){try{if(!DU.res&&!DU.bot)csend('d-bye',{ds:DU.sid})}catch{}duStop()}return g0.apply(this,arguments)}}
 
 /* ---------- лобби дуэли ---------- */
-function duelH(){duFix();const ok=GS().room&&GS().uid,pt=CQ.pt,on=!!pt,sq=a=>`<div class="cq-sq">${a.filter(k=>TW[k]).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`;let h='';
- if(ok){h+=`<div class="cq-pt"><span class="cq-av">${esc((ptName()[0]||'?').toUpperCase())}</span><div><b>${esc(ptName())}</b><small>${!CQ.sub?'подключаемся…':!on?'пока не в игре — позови 💌':pt.ing?'сейчас в бою':pt.dr?'готов(а) к дуэли ✓':'в лобби'}</small></div><span class="cq-dot${on?' on':''}"></span></div>`;if(!on)h+='<button class="cd-btn g cq-go" data-du="inv">Позвать в чате 💌</button>'}
+function duelH(){duFix();const ok=GS().room&&GS().uid,pt=CQ.pt,on=!!pt,sq=a=>`<div class="cq-sq">${a.filter(k=>TW[k]).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`,ri=(n,t)=>`<span class="du-rl"><span class="du-ic">${DUI[n]}</span><span>${t}</span></span>`;let h='';
+ if(ok){h+=`<div class="cq-pt"><span class="cq-av">${esc((ptName()[0]||'?').toUpperCase())}</span><div><b>${esc(ptName())}</b><small>${!CQ.sub?'подключаемся…':!on?'пока не в игре':pt.ing?'сейчас в бою':pt.dr?'готов(а) к дуэли':'в лобби'}</small></div><span class="cq-dot${on?' on':''}"></span></div>`;if(!on)h+='<button class="cd-btn g cq-go" data-du="inv">Позвать в чате</button>'}
  else h+='<p class="cq-rl">Дуэль с партнёром работает в паре: сначала создайте комнату в приложении. А пока можно потренироваться с ботом.</p>';
  h+=`<p class="tm-h">Твой отряд · победы ${SV.du.w} · поражения ${SV.du.l}</p>${sq(SV.team.slice(0,6))}`;
  if(pt&&pt.tm&&pt.tm.length)h+=`<p class="tm-h">Отряд ${esc(ptName())}</p>${sq(pt.tm)}`;
  h+='<button class="cd-btn g cq-go" data-t="t">Изменить отряд</button>';
  if(ok)h+=`<button class="cd-btn cq-go" data-du="rdy">${DU.rdy?'Отменить готовность':'Готов к дуэли!'}</button>`;
- h+='<button class="cd-btn g cq-go" data-du="bot">Тренировка с ботом 🤖</button>';
- h+=`<div class="cq-rl">⚔️ Три линии, у каждого три кошачьих домика. Сломай главный — и победа.<br>🐟 Рыбки копятся сами: выбери котика внизу и тапни по своей половине поля.<br>🛡 Котики сначала бьют врагов, потом домики. Танки идут сразу ломать домики.<br>⏱ Не успели? Побеждает тот, кто сломал больше домиков.<br>🏆 Победа: +25 золотых рыбок, поражение: +5.</div>`;return h}
+ h+='<button class="cd-btn g cq-go" data-du="bot">Тренировка с ботом</button>';
+ h+=`<div class="cq-rl">${ri('swords','Три линии, у каждого три башни. Главная башня под защитой, пока стоят две боковые.')}${ri('fish','Рыбки копятся сами: выбери котика внизу и тапни по своей половине поля.')}${ri('shield','Котики сначала бьют врагов, потом боковые башни и только затем главную. Танки идут сразу к башням.')}${ri('clock','Не успели? Побеждает тот, кто сломал больше башен.')}${ri('cup','Победа: +25 золотых рыбок, поражение: +5.')}${ri('face','Кнопка с лицом у шкалы рыбок: кидай эмоции партнёру.')}</div>`;return h}
 function duLobbyUi(){const b=$('cdBody');if(!b||VIEW!=='menu'||MODE!=='duel'||TAB!=='u')return;const sc=b.scrollTop;b.innerHTML=duelH();b.scrollTop=sc}
 
 /* ---------- кнопки ---------- */
@@ -7520,19 +7698,23 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-md],[da
  if(d.md){MODE=d.md;TAB={story:'w',inf:'i',duo:'v',duel:'u'}[d.md];sfx('click');return menu()}
  if(d.du==='rdy'){if(!CQ.ch||!CQ.sub){say('Подключаемся… попробуй ещё раз');return}DU.rdy=!DU.rdy;coTrack();duLobbyUi();sfx('click');if(DU.rdy&&!CQ.pt)say('Ждём партнёра в «Дуэли»');duCheckStart();return}
  if(d.du==='bot')return duBotStart();
- if(d.du==='inv'){try{bSend('chat',{t:'⚔️ Зову на дуэль в Cat Defense → «Дуэль»! Заходи 💌',n:myName(),at:Date.now()});say('Приглашение отправлено в чат')}catch{say('Не получилось отправить')}}});
-$('cdDuel').addEventListener('click',e=>{const q=e.target.closest('#duQuit');
- if(q){if(DU.res){duLeave();return}if(!confirm('Выйти из дуэли? Награды не будет.'))return;if(!DU.bot)csend('d-bye',{ds:DU.sid});duLeave();return}
+ if(d.du==='inv'){try{bSend('chat',{t:'Зову на дуэль в Cat Defense: режим «Дуэль». Заходи!',n:myName(),at:Date.now()});say('Приглашение отправлено в чат')}catch{say('Не получилось отправить')}}});
+$('cdDuel').addEventListener('click',e=>{
+ if(e.target.closest('#duQuit')){if(DU.res){duLeave();return}sfx('click');duPz(!$('duPz').classList.contains('on'));return}
+ const em=e.target.closest('[data-em]');if(em){unlock();return duEmoSend(em.dataset.em)}
+ if(e.target.closest('#duEmB')){sfx('click');const p=$('duEmp');if(!p.children.length)duEmoBuild();p.classList.toggle('on');return}
  const c=e.target.closest('.du-c');
- if(c){unlock();if(DU.st!=='play'){sfx('deny');return say('Дуэль ещё не началась')}const k=c.dataset.k;if(!k)return;if(DU.el[DU.me]<+c.dataset.dc){sfx('deny');return say('Не хватает рыбок 🐟')}DU.sel=DU.sel===k?null:k;sfx('click');return duHud()}
+ if(c){unlock();$('duEmp').classList.remove('on');if(DU.st!=='play'){sfx('deny');return say('Дуэль ещё не началась')}const k=c.dataset.k;if(!k)return;if(DU.el[DU.me]<+c.dataset.dc){sfx('deny');return say('Не хватает рыбок')}DU.sel=DU.sel===k?null:k;sfx('click');return duHud()}
  const du=e.target.closest('[data-du]');if(!du)return;
+ if(du.dataset.du==='cont')return duPz(0);
+ if(du.dataset.du==='quit'){duPz(0);if(!DU.res&&!DU.bot)csend('d-bye',{ds:DU.sid});return duLeave()}
  if(du.dataset.du==='lobby')return duLeave();
  if(du.dataset.du==='again'){DU.on=0;duBotStart()}});
-$('duSvg').addEventListener('pointerdown',e=>{unlock();if(DU.st!=='play'||!DU.sel)return;const r=$('duSvg').getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*DW,vy=(e.clientY-r.top)/r.height*DH;
- if(vy<344){sfx('deny');return say('Ставь котиков на своей половине')}
+$('duSvg').addEventListener('pointerdown',e=>{unlock();$('duEmp').classList.remove('on');if(DU.st!=='play'||!DU.sel)return;const r=$('duSvg').getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*DW,vy=(e.clientY-r.top)/r.height*DH;
+ if(vy<MID+26){sfx('deny');return say('Ставь котиков на своей половине')}
  const cx=DU.me?DW-vx:vx,cy=DU.me?DH-vy:vy,k=DU.sel;
- if(DU.host){if(!duPlace(0,k,cx,cy)){sfx('deny');return say('Не хватает рыбок 🐟')}}
- else{if(DU.el[1]<duStat(k).dc){sfx('deny');return say('Не хватает рыбок 🐟')}csend('d-pl',{ds:DU.sid,c:k,x:Math.round(cx),y:Math.round(cy)});DU.shots.push(duShot([5,Math.round(cx),Math.round(cy),Math.round(cx),Math.round(cy),1,0]))}
+ if(DU.host){if(!duPlace(0,k,cx,cy)){sfx('deny');return say('Не хватает рыбок')}}
+ else{if(DU.el[1]<duStat(k).dc){sfx('deny');return say('Не хватает рыбок')}csend('d-pl',{ds:DU.sid,c:k,x:Math.round(cx),y:Math.round(cy)});DU.shots.push(duShot([5,Math.round(cx),Math.round(cy),Math.round(cx),Math.round(cy),1,0]))}
  sfx('place');DU.sel=null;duHud()});
 }
 
