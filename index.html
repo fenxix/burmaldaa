@@ -5218,7 +5218,7 @@ Object.assign(SYM,{
  bomb:'<circle r="9" fill="#1f2937"/><rect x="-3" y="-13" width="6" height="5" fill="#475569"/><path d="M0-13Q4-18 8-16" stroke="#f97316" stroke-width="2" fill="none"/><circle cx="-3" cy="-3" r="2.200" fill="#64748b"/>'
 });
 Object.assign(TW,{ // kind — особая атака (см. KIND), rv — радиус для показа на поле
- bowler:{n:'Боря',role:'Боулер',kind:'roll',cost:130,pr:330,range:80,cd:3.2,dmg:5,len:300,bg:'#e0e7ff',inf:'Пускает шар по дороге: сбивает всех зомби на пути',st:'Работал в боулинге и знал одно: если шар катится, кегли падают.'},
+ bowler:{n:'Боря',role:'Боулер',kind:'roll',cost:130,pr:330,range:80,cd:15,dmg:50,balls:3,bg:'#e0e7ff',inf:'Раз в 15 секунд выкатывает из миски 3 шара навстречу зомби: шар сбивает зомби, пока не потеряет силу',st:'Работал в боулинге и знал одно: если шар катится, кегли падают.'},
  miner:{n:'Тик',role:'Сапёр',kind:'mine',cost:100,pr:280,range:90,cd:3.2,dmg:9,aoe:38,zmax:3,bg:'#fef3c7',inf:'Ставит мины на дорогу: взрыв по площади, когда зомби наступят',st:'Чинил дорогу, нашёл старые мины и придумал, куда их девать.'},
  boomer:{n:'Буми',role:'Бумеранг',kind:'bmr',cost:115,pr:330,range:100,cd:1.7,dmg:2.6,sp:340,bg:'#ffedd5',inf:'Бумеранг летит вперёд и назад, задевая всех на пути',st:'Однажды бросил бумеранг и ждал целый день, пока тот вернётся.'},
  volt:{n:'Вольт',role:'Рельса',kind:'rail',cost:150,pr:420,range:120,cd:3,dmg:8,bg:'#cffafe',inf:'Мгновенный луч пробивает всех зомби на линии',st:'Собрал рельсотрон из старой микроволновки и двух гирлянд.'},
@@ -5416,16 +5416,27 @@ try{Object.assign(PL,{catdef:'🐱 в Cat Defense'})}catch{}
 const defSV=()=>({g:20,own:['murzik','barsik'],team:['murzik','barsik'],wu:[],lv:{},ep:[],ach:{},kills:0,up:0,pf:0,fm:{},cs:[]});
 let SV=(()=>{try{return Object.assign(defSV(),JSON.parse(lg('cd_save')||'{}'))}catch{return defSV()}})();
 /* ---------- облако: прогресс хранится в Supabase (таблица couple_catdef), локально остаётся копией ---------- */
-const CL={t:0,ok:0,busy:0},clUid=()=>{try{return S&&S.uid}catch{return null}};
-function clPush(now){const u=clUid();if(!u||!CL.ok)return;clearTimeout(CL.t);const go=()=>{try{sb.from('couple_catdef').upsert({user_id:u,data:SV,updated_at:new Date().toISOString()}).then(()=>{},()=>{})}catch{}};now?go():CL.t=setTimeout(go,1500)}
+const CL={t:0,ok:0,busy:0,fail:0,warned:0,rt:0},clUid=()=>{try{return S&&S.uid}catch{return null}};
+const clKey=()=>{try{const n=String((S.me&&S.me.name)||'').trim();return S.room&&n?{room_id:String(S.room),name:n}:null}catch{return null}};
+const clReady=()=>!!(clUid()&&clKey());
+function clFail(e){CL.fail++;try{console.warn('catdef cloud',e)}catch{}if(!CL.warned){CL.warned=1;try{say('Cat Defense: не удалось связаться с Supabase, прогресс пока только на этом устройстве')}catch{}}clearTimeout(CL.rt);CL.rt=setTimeout(()=>{if(CL.ok)clPush(1);else clSync()},30000)}
+function clPush(now){if(!CL.ok||!clReady())return;clearTimeout(CL.t);const go=async()=>{const u=clUid(),k=clKey();if(!u||!k)return;const at=new Date().toISOString();let ok=0,err=null;
+ try{const r=await sb.from('couple_catdef_room').upsert({room_id:k.room_id,name:k.name,data:SV,updated_at:at},{onConflict:'room_id,name'});if(r.error)err=r.error;else ok=1}catch(e){err=e}
+ try{const r=await sb.from('couple_catdef').upsert({user_id:u,data:SV,updated_at:at});if(r.error)err=err||r.error;else ok=1}catch(e){err=err||e}
+ if(ok){CL.fail=0}else clFail(err)};now?go():CL.t=setTimeout(go,1500)}
 function clMerge(c){const U=(a,b)=>[...new Set([...(a||[]),...(b||[])])],mx=(a,b)=>{const o=Object.assign({},a);for(const k in b)o[k]=Math.max(o[k]||0,b[k]||0);return o};
  SV.g=(c.ts||0)>(SV.ts||0)?(c.g||0):SV.g;SV.own=U(SV.own,c.own);SV.wu=U(SV.wu,c.wu);SV.ep=U(SV.ep,c.ep);SV.cs=U(SV.cs,c.cs);SV.lv=mx(SV.lv,c.lv);SV.ach=Object.assign({},c.ach,SV.ach);SV.fm=Object.assign({},c.fm,SV.fm);
  ['kills','up','pf'].forEach(k=>SV[k]=Math.max(SV[k]||0,c[k]||0));if((SV.team||[]).length<=2&&Array.isArray(c.team)&&c.team.length)SV.team=c.team;
  SV.team=SV.team.filter(k=>TW[k]&&SV.own.includes(k)).slice(0,TMAX);if(!SV.team.length)SV.team=SV.own.slice(0,TMAX)}
-async function clSync(){const u=clUid();if(!u||CL.busy)return;CL.busy=1;try{const {data,error}=await sb.from('couple_catdef').select('data').eq('user_id',u).maybeSingle();if(error)throw error;if(data&&data.data&&typeof data.data==='object')clMerge(data.data);CL.ok=1;svs();if(VIEW==='menu')menu()}catch(e){console.warn('catdef cloud',e)}CL.busy=0}
-const clWait=every(()=>{if(clUid()){clearEvery(clWait);clSync()}},2000);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)clPush(1);else if(CL.ok)clSync()});
-const svs=()=>{SV.ts=Date.now();ls('cd_save',JSON.stringify(SV));clPush()};
+async function clSync(){if(CL.busy||!clReady())return;CL.busy=1;try{const k=clKey();let a=null,b=null,e1=null,e2=null;
+ try{const r=await sb.from('couple_catdef_room').select('data').eq('room_id',k.room_id).eq('name',k.name).maybeSingle();e1=r.error;a=r.data}catch(e){e1=e}
+ try{const r=await sb.from('couple_catdef').select('data').eq('user_id',clUid()).maybeSingle();e2=r.error;b=r.data}catch(e){e2=e}
+ if(e1&&e2)throw e1;
+ [a,b].filter(d=>d&&d.data&&typeof d.data==='object').map(d=>d.data).sort((x,y)=>(x.ts||0)-(y.ts||0)).forEach(d=>clMerge(d));
+ CL.ok=1;svs();clPush(1);if(VIEW==='menu')menu()}catch(e){clFail(e)}CL.busy=0}
+const clWait=every(()=>{if(clReady()){clearEvery(clWait);clSync()}},2000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clPush(1);else clSync()});window.addEventListener('pagehide',()=>clPush(1));
+const svs=()=>{SV.ts=Date.now();try{SV.pr={epv:EPV,auto:AUTO?1:0,spd:SPD,shs:SHS,mute:mute?1:0}}catch{}ls('cd_save',JSON.stringify(SV));clPush()};
 if(!Array.isArray(SV.ep))SV.ep=[];if(!SV.ach||typeof SV.ach!=='object')SV.ach={};if(!SV.fm||typeof SV.fm!=='object')SV.fm={};if(!Array.isArray(SV.cs))SV.cs=[];if(!Array.isArray(SV.team)||!SV.team.length)SV.team=SV.own.slice(0,TMAX);SV.team=SV.team.filter(k=>SV.own.includes(k)).slice(0,TMAX);
 const done=w=>[0,1,2,3,4].every(l=>(SV.lv[w+'-'+l]||0)>0),lvOpen=(w,l)=>SV.wu.includes(w)&&(l===0||(SV.lv[w+'-'+(l-1)]||0)>0);
 function badge(){const b=$('cdBadge');if(!b)return;const n=Object.values(SV.lv).filter(v=>v>0).length;b.textContent=n?`Пройдено уровней: ${n}/${WORLDS.length*5}`:'Новая игра'}
@@ -5475,13 +5486,13 @@ function swipe(t){sfx('paw');ring(t.x,t.y,t.cf.range,'#f9a8d4');const p=mk('g',{
 function boom(p){sfx('boom');ring(p.x,p.y,p.aoe,'#4ade80');puff(p.x,p.y,'#86efac',7);G.en.forEach(e=>{if(!e.dead&&dist(e,p)<=p.aoe+e.r){dmg(e,p.dmg,p.src);if(p.slow){e.slow=1.8;e.sf=p.slow}}})}
 
 /* ---------- игровая логика (шаг симуляции) ---------- */
-function nextWave(early){if(G.state!=='break')return;if(early&&(AUTO||G.co)&&!(G.co&&!CQ.host)){const eb=Math.ceil(G.cd);G.fish+=eb;if(G.co)G.pf+=eb}G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;t.dd=(t.dd||0)+t.cf.gain;payTo(t,t.cf.gain);pop(t.x,t.y-24,'+'+t.cf.gain,1)}});sfx('wave');vib(30)}
+function nextWave(early){if(G.state!=='break')return;if(early&&(AUTO||G.co)&&!(G.co&&!CQ.host)){const eb=Math.ceil(G.cd);G.fish+=eb;if(G.co)G.pf+=eb}G.wave++;G.state='wave';G.wt=0;G.q=queue(G.wave-1);ban(G.wave===MAXW&&LV.boss?'Босс: Доктор Пёс!':'Волна '+G.wave);G.tw.forEach(t=>{if(t.cf.gain){t.kick=1;t.dd=(t.dd||0)+t.cf.gain;payTo(t,t.cf.gain);pop(t.x,t.y-24,'+'+t.cf.gain,1)}});G.tw.forEach(t=>{if(t.cf.kind==='roll')t.cd=0});sfx('wave');vib(30)}
 /* ---------- новые атаки: путь, мины, бумеранг, луч, молния, шок, шипы, зоны, бомбёжка, яд, аура ---------- */
 function slowE(e,t,f){if(e.c.sum)f=Math.max(f,.4);if(!(e.slow>0)||f<=(e.sf==null?1:e.sf))e.sf=f;e.slow=Math.max(e.slow>0?e.slow:0,t)}
 function poison(e,dps,t,src){if(e.dead)return;e.psn={dps:Math.max(dps,e.psn?e.psn.dps:0),t,src,pf:e.psn?e.psn.pf:0}}
 function nearD(t){if(t.pd!=null)return t.pd;let b=0,bd=1e9;for(let d=0;d<=TOT;d+=6){const p=pos(d),q=Math.hypot(p[0]-t.x,p[1]-t.y);if(q<bd){bd=q;b=d}}return t.pd=b}
 const KIND={
- roll(t,tg){const cf=t.cf,d0=Math.max(0,nearD(t)-60),g=mk('g',{},L.pr);use('bball',g);G.rl.push({d:d0,end:Math.min(TOT,d0+(cf.len||300)),sp:230,dmg:cf.dmg*(t.bd||1),src:t,hit:new Set(),g,rot:0,x:t.x,y:t.y});sfx('whoosh')},
+  roll(t,tg){const cf=t.cf,n=Math.max(1,Math.round(cf.balls||3)),pool=cf.dmg*(t.bd||1);for(let i=0;i<n;i++)G.rl.push({d:TOT-8,sp:150,pool,max:pool,src:t,hit:new Set(),g:null,rot:0,w:i*.55+.05,x:0,y:0});const p0=pos(Math.max(0,TOT-8));ring(p0[0],p0[1],26,'#a5b4fc');sfx('whoosh')},
  mine(t,tg){const cf=t.cf;if(G.mn.filter(m=>m.t===t).length>=(cf.zmax||3))return false;const d=Math.min(TOT-6,tg.d+22),p=pos(d),g=mk('g',{transform:`translate(${p[0]} ${p[1]})`},L.zn);use('mine',g);G.mn.push({t,x:p[0],y:p[1],dmg:cf.dmg*(t.bd||1),aoe:cf.aoe,src:t,g});sfx('mine');puff(p[0],p[1],'#9ca3af',3)},
  bmr(t,tg){const cf=t.cf,dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,R=cf.range*1.25,g=mk('g',{},L.pr);use('boomr',g);G.bm.push({t,x:t.x,y:t.y-6,tx:t.x+dx/l*R,ty:t.y+dy/l*R,ph:0,sp:cf.sp||340,dmg:cf.dmg*(t.bd||1),hit:new Set(),g,rot:0,src:t});sfx('whoosh')},
  rail(t,tg){const cf=t.cf,dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,R=cf.range*1.4,x2=t.x+ux*R,y2=t.y-6+uy*R,m=cf.dmg*(t.bd||1);
@@ -5504,8 +5515,9 @@ const KIND={
 function stepX(dt){
  G.tw.forEach(t=>{t.bd=1+.12*(t.ln||0);t.bs=1+.04*(t.ln||0)});
  G.tw.forEach(b=>{const a=b.cf.aura;if(!a)return;G.tw.forEach(t=>{if(t!==b&&!t.cf.aura&&dist(t,b)<=b.cf.range){t.bd+=a.dm;t.bs+=a.sp}});b.ap=(b.ap||0)-dt;if(b.ap<=0&&G.state==='wave'){b.ap=3;ring(b.x,b.y,b.cf.range*.9,'#f0abfc')}});
- G.rl.forEach(r=>{r.d+=r.sp*dt;const p=pos(Math.min(r.d,TOT));r.x=p[0];r.y=p[1];r.rot+=dt*500;r.g.setAttribute('transform',`translate(${r.x.toFixed(1)} ${r.y.toFixed(1)}) scale(1.5) rotate(${r.rot.toFixed(0)})`);
-  G.en.forEach(e=>{if(!e.dead&&!r.hit.has(e)&&dist(e,r)<e.r+13){r.hit.add(e);dmg(e,r.dmg,r.src);puff(e.x,e.y,'#c7d2fe',4);sfx('pop')}});if(r.d>=r.end){r.done=1;r.g.remove()}});G.rl=G.rl.filter(r=>!r.done);
+  G.rl.forEach(r=>{if(r.w>0){r.w-=dt;if(r.w>0)return}if(!r.g){r.g=mk('g',{},L.pr);use('bball',r.g)}r.d-=r.sp*dt;const p=pos(Math.max(0,r.d));r.x=p[0];r.y=p[1];r.rot-=dt*420;const sc=.8+.8*Math.max(0,r.pool)/r.max;r.g.setAttribute('transform',`translate(${r.x.toFixed(1)} ${r.y.toFixed(1)}) scale(${sc.toFixed(2)}) rotate(${r.rot.toFixed(0)})`);
+  G.en.forEach(e=>{if(r.done||e.dead||r.hit.has(e)||dist(e,r)>=e.r+13)return;r.hit.add(e);const h0=e.hp;dmg(e,Math.min(r.pool,Math.max(0,e.hp)),r.src);const used=Math.max(0,h0-e.hp);if(used>0){r.pool-=used;puff(e.x,e.y,'#c7d2fe',4);sfx('pop')}if(r.pool<=.01){r.done=1;puff(r.x,r.y,'#a5b4fc',8);r.g.remove()}});
+  if(!r.done&&r.d<=0){r.done=1;r.g.remove()}});G.rl=G.rl.filter(r=>!r.done);
  G.bm.forEach(b=>{const tx=b.ph?b.t.x:b.tx,ty=b.ph?b.t.y-6:b.ty,dx=tx-b.x,dy=ty-b.y,d=Math.hypot(dx,dy),sp=b.sp*dt;
   if(d<=sp){b.x=tx;b.y=ty;if(b.ph||!G.tw.includes(b.t)){b.done=1;b.g.remove();return}b.ph=1;b.hit.clear()}else{b.x+=dx/d*sp;b.y+=dy/d*sp}
   b.rot+=dt*720;b.g.setAttribute('transform',`translate(${b.x.toFixed(1)} ${b.y.toFixed(1)}) scale(1.3) rotate(${b.rot.toFixed(0)})`);
@@ -5529,6 +5541,7 @@ function step(dt){
  G.tw.forEach(t=>{t.cd-=dt*(t.bs||1);if(t.cd>0)return;const cf=t.cf;
    if(cf.aura){t.cd=1;return}
    if(cf.gain){t.cd=9;return}
+    if(cf.kind==='roll'){if(G.state!=='wave'){t.cd=.25;return}t.cd=cf.cd;t.kick=1;KIND.roll(t);return}
    if(cf.inc){if(G.state!=='wave'){t.cd=1;return}t.cd=cf.cd;const n=Math.round(cf.inc);payTo(t,n);t.dd=(t.dd||0)+n;t.kick=1;pop(t.x,t.y-24,'+'+n,1);sfx('coin');return}
    const fnd=()=>{let tg=null;G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=cf.range+e.r*.5&&(!tg||e.d>tg.d))tg=e});return tg};
    if(t.wd){/* Лилу: замах закончился — удар */t.wd=0;t.cd=cf.cd;const w=t.wt,R=cf.range*1.4,tg=w&&!w.dead&&dist(w,t)<=R+w.r?w:fnd();if(tg){t.kick=1;sfx('paw');vib(20);ring(tg.x,tg.y,32,'#9ca3af');puff(tg.x,tg.y,'#e5e7eb',8);dmg(tg,cf.dmg*(t.bd||1),t);G.en.slice().forEach(e=>{if(e!==tg&&!e.dead&&dist(e,tg)<=34)dmg(e,cf.dmg*(t.bd||1)*.5,t)})}return}
@@ -5574,7 +5587,7 @@ function grid(){const g=$('cdGrid');if(!G.pick)return show(g,0);show(g,1);let h=
 const upc=t=>Math.round(TW[t.k].cost*(.35+.35*t.lv)),upg=(k,lv,ev)=>{const b=ev?evoCfg(TWB[k],ev):TW[k],m=lv-1;return Object.assign({},b,{dmg:b.dmg&&b.dmg*(1+.45*m),range:b.range*(1+.06*m),cd:b.cd*(1-.1*m),gain:b.gain&&b.gain*(1+.5*m),inc:b.inc&&b.inc*(1+.5*m),psn:b.psn&&b.psn*(1+.45*m),stun:b.stun&&b.stun*(1+.15*m),kb:b.kb&&b.kb*(1+.15*m),zdps:b.zdps&&b.zdps*(1+.45*m),zl:b.zl&&b.zl*(1+.1*m),zr:b.zr&&b.zr*(1+.08*m),len:b.len&&b.len*(1+.1*m),aura:b.aura&&{dm:b.aura.dm*(1+.4*m),sp:b.aura.sp*(1+.4*m)}})},
 rv=c=>c.rv||c.range;
 const n1=v=>String(Math.round(v*10)/10),n2=v=>String(Math.round(v*100)/100);
-function infoX(c){const x=[];if(c.aoe&&c.kind!=='air')x.push('взрыв '+Math.round(c.aoe));if(c.psn)x.push('яд '+n1(c.psn)+'/с');if(c.stun)x.push('стан '+n1(c.stun)+'с');if(c.kb)x.push('отброс '+Math.round(c.kb));if(c.zdps)x.push('огонь '+n1(c.zdps)+'/с');if(c.jumps)x.push('прыжков '+c.jumps);if(c.slow&&!c.zslow)x.push('замедл. '+Math.round((1-c.slow)*100)+'%');if(c.zslow)x.push('замедл. '+Math.round((1-c.zslow)*100)+'%');if(c.kind==='roll'||c.kind==='rail'||c.kind==='bmr')x.push('пробивает всех');return x.length?' · '+x.join(' · '):''}
+function infoX(c){const x=[];if(c.aoe&&c.kind!=='air')x.push('взрыв '+Math.round(c.aoe));if(c.psn)x.push('яд '+n1(c.psn)+'/с');if(c.stun)x.push('стан '+n1(c.stun)+'с');if(c.kb)x.push('отброс '+Math.round(c.kb));if(c.zdps)x.push('огонь '+n1(c.zdps)+'/с');if(c.jumps)x.push('прыжков '+c.jumps);if(c.slow&&!c.zslow)x.push('замедл. '+Math.round((1-c.slow)*100)+'%');if(c.zslow)x.push('замедл. '+Math.round((1-c.zslow)*100)+'%');if(c.kind==='roll')x.push((c.balls||3)+' шара из миски');else if(c.kind==='rail'||c.kind==='bmr')x.push('пробивает всех');return x.length?' · '+x.join(' · '):''}
 function infoStats(t){const a=t.cf,b=t.lv<3?upg(t.k,t.lv+1,t.ev):null,pr=(x,y,f)=>b?`${f(x)} <em>→ ${f(y)}</em>`:f(x),pc=v=>'+'+Math.round(v*100)+'%',R=[];
  if(a.gain)R.push(['Доход/волну',pr(a.gain,b&&b.gain,n1)]);else if(a.inc)R.push(['Доход/'+n1(a.cd)+'с',pr(a.inc,b&&b.inc,n1)]);else if(a.aura)R.push(['Бонус урона',pr(a.aura.dm,b&&b.aura.dm,pc)]);else if(a.zt==='fire')R.push(['Огонь/с',pr(a.zdps,b&&b.zdps,n1)]);else if(a.zt==='web')R.push(['Паутина, с',pr(a.zl,b&&b.zl,n1)]);else R.push(['Урон',pr(a.dmg,b&&b.dmg,n1)]);
  R.push(['Радиус',a.range>=900?'вся карта':a.range>0?pr(a.range,b&&b.range,Math.round):'—']);
@@ -6654,7 +6667,7 @@ function coRelink(quiet){const g=$('cdLk');if(!g)return;G.tw.forEach(t=>t.ln=0);
 /* ---------- награды и экран итогов ---------- */
 function coPay(res){if(CQ.paid)return CQ.pay;CQ.paid=1;fixSV();fixCo();const m=COM.find(x=>x.id===res.id),first=!(SV.co[m.id]>0),mat={};let gold=0;
  if(res.win){gold=m.rw+res.st*m.bs+(first?m.rw:0);SV.co[m.id]=Math.max(SV.co[m.id]||0,res.st);mat.yarn=2+res.st;mat.gf=1+(m.ep===2?1:0)+(res.st===3?1:0);mat.bell=1+(res.st>=2?1:0);if(m.id==='c5'||m.id==='c6')mat.dust=1+(res.st===3?1:0)}
- else if(m.inf){const wc=Math.max(0,res.wave-1);gold=Math.min(150,Math.floor(wc*.8));if(wc>=1)mat.yarn=1+Math.floor(wc/6);if(wc>=10)mat.bell=Math.floor(wc/10);if(wc>=12)mat.gf=Math.floor(wc/12);if(wc>=20)mat.dust=Math.floor(wc/20);const sr=wc>=50?3:wc>=25?2:wc>=10?1:0;if(sr)SV.co[m.id]=Math.max(SV.co[m.id]||0,sr);SV.cinf=Math.max(SV.cinf||0,wc)}else gold=Math.max(0,Math.floor((res.wave-1)/3));
+ else if(m.inf){const wc=Math.max(0,res.wave-1);gold=wc*4;if(wc>=1)mat.yarn=1+Math.floor(wc/6);if(wc>=10)mat.bell=Math.floor(wc/10);if(wc>=12)mat.gf=Math.floor(wc/12);if(wc>=20)mat.dust=Math.floor(wc/20);const sr=wc>=50?3:wc>=25?2:wc>=10?1:0;if(sr)SV.co[m.id]=Math.max(SV.co[m.id]||0,sr);SV.cinf=Math.max(SV.cinf||0,wc)}else gold=Math.max(0,Math.floor((res.wave-1)/3));
  SV.g+=gold;for(const k in mat)SV.mat[k]=(SV.mat[k]||0)+mat[k];SV.cow=(SV.cow||0)+Math.max(0,res.wave-(res.win?0:1));SV.cpm=Math.max(SV.cpm||0,res.pr||0);SV.kills=(SV.kills||0)+(res.kl||0);
  svs();achCheck();badge();return CQ.pay={gold,mat,first}}
 function coEnd(res){if(CQ.ended||!res)return;CQ.ended=1;G.state='over';const pay=coPay(res),me=CQ.me,mv=res.sd[0]>=res.sd[1]?0:1;
@@ -6839,7 +6852,7 @@ const EVX={
  grok:['u','дубина оглушает ближних зомби',XZ(.6)],
  wing:['b','тяжёлые кости отбрасывают зомби назад',XK(10)],
  amber:['u','густая смола: сильнее замедляет, шире площадь',ALL(XS(.3),AO(1.2))],
- bowler:['b','шар катится дальше и оглушает',ALL(c=>{c.len=(c.len||300)*1.5},XZ(.5))],
+ bowler:['b','на один шар больше в залпе, и шары оглушают зомби',ALL(c=>{c.balls=(c.balls||3)+1},XZ(.5))],
  miner:['u','мины с ядом, и ставить их можно больше',ALL(PSN(1.6,4),c=>{c.zmax=(c.zmax||3)+1})],
  boomer:['b','бумеранг с зазубринами: яд на пути',PSN(1.4,4)],
  volt:['u','луч бьёт дальше и оглушает',ALL(c=>{c.range*=1.15},XZ(.5))],
@@ -6860,7 +6873,7 @@ evoCfg=function(b,e){const c=Object.assign({},b),eco=c.gain||c.inc,X=EVX[KEYOF.g
  if(e>=5){if(eco){c.gain&&(c.gain*=1.25);c.inc&&(c.inc*=1.25)}else if(c.kind==='aura')c.aura={dm:c.aura.dm*1.2,sp:c.aura.sp*1.2};else step(5)}
  return c};
 evoText=function(b,l){const X=EVX[KEYOF.get(b)]||EVDEF,eco=b.gain||b.inc;
- if(l<4)return '+'+16*l+'% урона'+(l>1?', дальше и быстрее':'')+(l===3?', золотое сияние':'');
+ if(l<4){if(eco)return '+'+20*l+'% дохода'+(l===3?', золотое сияние':'');if(!b.dmg)return 'Радиус больше'+(l>1?', быстрее':'')+(l===3?', золотое сияние':'');return '+'+16*l+'% урона'+(l>1?', дальше и быстрее':'')+(l===3?', золотое сияние':'')}
  if(eco)return l===4?'Двойной улов: доход ×1.4':'Легенда: доход ещё +25%';
  if(b.kind==='aura')return l===4?'Аура сильнее на 35%':'Легенда: аура ещё +20%';
  const w=evoWhat(X,l);
@@ -6933,7 +6946,7 @@ function startInf(id){if(CQ.on||W!==360)coReset();const m=INFM.find(x=>x.id===id
 /* чем дальше волна, тем быстрее растёт крепость зомби */
 {const nw1=nextWave;nextWave=function(early){const was=G.state;nw1.apply(this,arguments);if(was==='break'&&G.state==='wave'&&LV.inf&&LV.infHm)LV.hm=LV.infHm*(1+G.wave/45)}}
 function infPay(w){if(G.infPaid)return G.inf;G.infPaid=1;fixSV();const id=LV.inf,old=SV.inf[id]||0,rec=w>old,mat={};
- const gold=Math.min(200,Math.floor(w*1.2))+(rec&&w>=5?10:0);
+ const gold=w*4+(rec&&w>=5?10:0);
  if(w>=1)mat.yarn=1+Math.floor(w/5);if(w>=8)mat.bell=Math.floor(w/8);if(w>=10)mat.gf=Math.floor(w/10);if(w>=20)mat.dust=Math.floor(w/20);
  SV.g+=gold;for(const k in mat)SV.mat[k]=(SV.mat[k]||0)+mat[k];if(rec)SV.inf[id]=w;svs();achCheck();badge();return G.inf={w,gold,mat,rec,old}}
 {const f1=finish;finish=function(win){if(!LV.inf||G.co)return f1.apply(this,arguments);if(G.state==='over')return;const w=Math.max(0,G.wave-1);f1.call(this,false);infPay(w)}}
@@ -6947,7 +6960,7 @@ $('cdOv').addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!
  if(k==='menu'&&LV.inf&&!G.co&&(G.state==='wave'||G.state==='break')&&G.wave>=1){const r=infPay(Math.max(0,G.wave-(G.state==='wave'?1:0)));if(r&&r.gold>0)say('Награда за '+r.w+' волн: +'+r.gold+' золотых рыбок')}},true);
 {const mn1=menu;menu=function(){if(VIEW==='menu'&&LV&&!(G&&G.co)){LV.mar=0;LV.inf=0}return mn1.apply(this,arguments)}}
 {const wh1=worldsH;worldsH=function(){const h=wh1.apply(this,arguments);fixSV();
- return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда за отбитые волны</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div>`+h}}
+ return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div>`+h}}
 $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-p="inf"]');if(!b||b.disabled)return;unlock();sfx('click');startInf(b.dataset.id)});
 /* «Вдвоём»: волны без конца в общей вылазке */
 {const mc1=mkCo;mkCo=function(m){return m.inf?infWaves({ep:false,d:1,D:1.5}):mc1.apply(this,arguments)}}
@@ -7129,16 +7142,16 @@ heart:(a,b)=>`<path d="M0 7C-10 0-7-8 0-4 7-8 10 0 0 7Z" fill="${a}"/><circle cx
 pump:(a,b)=>`<ellipse cy="1" rx="8" ry="6.5" fill="${a}"/><path d="M0-6V-9" stroke="${b}" stroke-width="2"/><path d="M-4-1l2 2 2-2 2 2 2-2" stroke="#451a03" stroke-width="1.4" fill="none"/>`,
 ankh:(a,b)=>`<ellipse cy="-4" rx="3.6" ry="4.4" fill="none" stroke="${a}" stroke-width="2.2"/><path d="M0 0V9M-5 3H5" stroke="${a}" stroke-width="2.4" stroke-linecap="round"/><circle cy="-4" r="1" fill="${b}"/>`};
 const TH3=[
-['sakura','Сакура','🌸',330,1.1,1.1,'flower','#f9a8d4','#fde047',['#be185d','#fbcfe8','#fff','#f472b6'],['murka','fairy','jelly','ninja','tora','lila']],
-['autumn','Осень','🍂',20,1.2,.95,'leaf','#f97316','#92400e',['#9a3412','#fed7aa','#fde68a','#ea580c'],['barsik','tigra','lynx','garden','amber','witchy']],
-['shroom','Грибы','🍄',5,1.3,1,'shroom','#ef4444','#fef3c7',['#991b1b','#fecaca','#fff','#dc2626'],['toxic','garden','thorn','miner','witchy','fairy']],
-['gems','Самоцветы','💎',180,1.4,1.1,'gem','#22d3ee','#0e7490',['#0e7490','#a5f3fc','#e0f2fe','#06b6d4'],['frost','iney','sphinx','beep','snowl','kosm']],
-['rain','Дождь','☔',215,.8,.85,'drop','#60a5fa','#e0f2fe',['#1e3a8a','#bfdbfe','#e0f2fe','#3b82f6'],['splash','storm','cloudy','volt','pushok','owly']],
-['music','Музыка','🎵',280,1.3,1,'note','#a855f7','#fde047',['#581c87','#e9d5ff','#fde047','#9333ea'],['bard','spark','biz','bowler','baker','zen']],
-['bakery','Пекарня','🥐',35,1.1,1.05,'bun','#f59e0b','#92400e',['#92400e','#fde68a','#fffbeb','#d97706'],['chef','baker','pushok','sumo','jelly','murzik']],
-['safari','Сафари','🦁',60,1.1,1,'paw','#92400e','#fde68a',['#78350f','#fde68a','#fef3c7','#b45309'],['lion','gosha','lynx','tigra','bagi','cowboy']],
-['love','Валентинка','💗',345,1.4,1.05,'heart','#f43f5e','#fff',['#9f1239','#fecdd3','#fff','#e11d48'],['murka','jelly','fairy','bard','lila','gummy']],
-['hallo','Хэллоуин','🎃',25,1.3,.8,'pump','#f97316','#16a34a',['#431407','#fdba74','#fb923c','#7c2d12'],['witchy','bagi','owly','ninja','spidey','dynamo']],
+['sakura','Сакура','🌸',330,1.1,1.1,'flower','#f9a8d4','#fde047',['#be185d','#fbcfe8','#fff','#f472b6'],['murka','fairy','jelly','ninja','tora','boomer','gummy','lila']],
+['autumn','Осень','🍂',20,1.2,.95,'leaf','#f97316','#92400e',['#9a3412','#fed7aa','#fde68a','#ea580c'],['barsik','tigra','lynx','garden','amber','ember','zen','witchy']],
+['shroom','Грибы','🍄',5,1.3,1,'shroom','#ef4444','#fef3c7',['#991b1b','#fecaca','#fff','#dc2626'],['toxic','garden','thorn','miner','witchy','archer','fairy']],
+['gems','Самоцветы','💎',180,1.4,1.1,'gem','#22d3ee','#0e7490',['#0e7490','#a5f3fc','#e0f2fe','#06b6d4'],['frost','iney','sphinx','beep','snowl','jack','ramz','kosm']],
+['rain','Дождь','☔',215,.8,.85,'drop','#60a5fa','#e0f2fe',['#1e3a8a','#bfdbfe','#e0f2fe','#3b82f6'],['splash','storm','cloudy','volt','pushok','jack','snowl','owly']],
+['music','Музыка','🎵',280,1.3,1,'note','#a855f7','#fde047',['#581c87','#e9d5ff','#fde047','#9333ea'],['bard','spark','biz','bowler','baker','beep','zen']],
+['bakery','Пекарня','🥐',35,1.1,1.05,'bun','#f59e0b','#92400e',['#92400e','#fde68a','#fffbeb','#d97706'],['chef','baker','pushok','sumo','jelly','flame','murzik']],
+['safari','Сафари','🦁',60,1.1,1,'paw','#92400e','#fde68a',['#78350f','#fde68a','#fef3c7','#b45309'],['lion','gosha','lynx','tigra','bagi','drake','grok','cowboy']],
+['love','Валентинка','💗',345,1.4,1.05,'heart','#f43f5e','#fff',['#9f1239','#fecdd3','#fff','#e11d48'],['murka','jelly','fairy','bard','lila','cloudy','lion','gummy']],
+['hallo','Хэллоуин','🎃',25,1.3,.8,'pump','#f97316','#16a34a',['#431407','#fdba74','#fb923c','#7c2d12'],['witchy','bagi','owly','ninja','spidey','ember','bast','dynamo']],
 ['pharaoh','Фараон','🏺',45,1.3,1,'ankh','#fbbf24','#2563eb',['#92400e','#fef3c7','#fbbf24','#2563eb'],['sphinx','tora','barsik','gosha','bast','ramz']]];
 TH3.forEach(([id,n,e,hue,sat,br,sh,a,b,yp,cats])=>{const s=SH3[sh](a,b);THEMES[id]={n,e,hue,sat,br,acc:`<g transform="translate(15 -26)">${s}</g><g transform="translate(-19 -8) scale(.6)">${s}</g>`,cats};YP[id]=yp;
  YX[id]=`<g transform="translate(0 -56) scale(2.6)">${s}</g><g transform="translate(-26 -12) scale(1.3)" opacity=".85">${s}</g><g transform="translate(26 6) scale(1.1)" opacity=".85">${s}</g>`;
@@ -7178,6 +7191,23 @@ bast:[mvV('Бастет просидела в храме тысячу лет и 
 ramz:[mvV('Рамзес правил Египтом ровно до того момента, пока не понял, что это слишком много бумаг. Тогда он занялся обороной.','egypt',spr('ramz',180,360,2.6,'a-bob')),mvV('Его золотая волна бьёт по всем вокруг. Рамзес говорит, что это не удар, а налог.','egypt',spr('ramz',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))]});
 /* --- переключатель, карточка и открытие Эпохи III --- */
 
+Object.assign(CF,{
+lynx:[mvV('Рысик слышал зомби за километр и поэтому всегда ходил на цыпочках. Говорит, что тишина — лучшее оружие охотника.','night',spr('lynx',180,360,2.6,'a-bob')),mvV('Когда нежить пошла по тропе, он замер, прицелился и выстрелил. Ни одного промаха. Так Рысик попал в отряд и стал его лучшими глазами.','egypt',spr('lynx',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+bagi:[mvV('Багира жила в тени старого храма. Её никто никогда не видел, только иногда замечали два жёлтых огонька в темноте.','tomb',spr('bagi',180,360,2.6,'a-bob')),mvV('Мумии шли по тропе и вдруг начали падать одна за другой. «Кто это?» — спросили они. Багира уже была в отряде.','tomb',spr('bagi',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+gosha:[mvV('Гоша ничего не умеет делать медленно. Даже миску он допивает на бегу, а потом бежит за добавкой.','home',spr('gosha',180,360,2.6,'a-bob')+spr('fish',90,420,3,'a-jump')),mvV('Зомби только заносили лапу, а Гоша уже сделал десять бросков. Его взяли в отряд за скорость и за то, что он не пропускает ужин.','street',spr('gosha',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+lion:[mvV('Лео считает весь двор своим королевством. Прохожие кланяются, голуби расступаются, а миска всегда стоит у него на почётном месте.','egypt',spr('lion',180,360,2.6,'a-bob')),mvV('Когда зомби вошли в королевство без стука, Лео издал рык, от которого задрожали пирамиды. Теперь он королевская гвардия в отряде.','egypt',spr('lion',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+snowl:[mvV('Снежок живёт высоко в горах, где ветер свистит громче всех. Больше всего на свете он любит поспать в тёплом сугробе.','snow',spr('snowl',180,360,2.6,'a-bob')),mvV('Зомби разбудили его посреди сна. Снежок чихнул, и снежный шар накрыл всю дорогу. С тех пор он стережёт отряд, но только днём.','snow',spr('snowl',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+zen:[mvV('Дзен сидит посреди двора и медитирует. Ему всё равно, что вокруг шумят, он слушает, как капает молоко в миску.','home',spr('zen',180,360,2.6,'a-bob')),mvV('Зомби медитировать не умеют. Дзен открыл глаза, вздохнул и хлопнул лапами. Волна покоя прокатилась по дороге. «Спокойствие», — сказал он.','street',spr('zen',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+witchy:[mvV('Ведьмочка варит зелья из того, что найдёт в холодильнике. Рецепты она держит в секрете, а вкус не обсуждает.','night',spr('witchy',180,360,2.6,'a-bob')+spr('star',270,300,2.4,'a-spin')),mvV('Зомби получили зелье и позеленели ещё сильнее. «Не нравится — не пей», — сказала Ведьмочка и осталась в отряде главным химиком.','tomb',spr('witchy',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+beep:[mvV('Бип собран из старого пульта и двух батареек. Он мурчит на частоте сорок четыре герца и очень этим гордится.','home',spr('beep',180,360,2.6,'a-bob')),mvV('Зомби не понимали, откуда летят звёзды, а Бип просто считал и стрелял. Он ни разу не ошибся и остался в отряде навсегда.','street',spr('beep',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+ember:[mvV('Пепел родился в камине и с тех пор любит только тёплые места. Холодную погоду он считает личным оскорблением.','night',spr('ember',180,360,2.6,'a-bob')+spr('fire',90,430,3,'a-jump')),mvV('Мумии любят сухие бинты, а Пепел любит огонь. Он поджёг тропу, и нежить побежала на ходу. В отряд его взяли с одним условием: не сжигать миску.','egypt',spr('ember',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+jack:[mvV('Джек летает над двором на бумажном самолётике. Говорит, что оттуда видно всё: и зомби, и ужин, и соседского кота.','home',spr('jack',180,360,2.6,'a-bob')),mvV('Он увидел самую густую толпу и сбросил бомбу. Взрыв! Сверху всё выглядит маленьким, зато работает по-настоящему. Джек вернулся к ужину и остался в отряде.','street',spr('jack',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+owly:[mvV('Сыч не спит по ночам и считает звёзды. Днём он тоже не спит: ловит зомби в прицел и ждёт, когда они подойдут.','night',spr('owly',180,360,2.6,'a-bob')+spr('star',270,280,2.4,'a-spin')),mvV('Один выстрел, один зомби. Остальные решили, что мудрее держаться подальше. Так Сыч стал главным снайпером отряда.','night',spr('owly',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+cloudy:[mvV('Облачко мягкая и пушистая, и всё у неё происходит очень медленно. Даже чихает она долго и с чувством.','snow',spr('cloudy',180,360,2.6,'a-bob')),mvV('Зомби подошли слишком близко и вдруг тоже стали медленными. «Это заразно», — сказала Облачко. Её взяли в отряд охранять тропу.','snow',spr('cloudy',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+gummy:[mvV('Жвачка надувает пузыри размером с самого зомби. Пузыри лопаются очень липко, а потом их приходится отмывать неделю.','home',spr('gummy',180,360,2.6,'a-bob')+spr('gel',90,430,3,'a-bob')),mvV('Зомби застряли в розовых пузырях и не смогли дойти до миски. Жвачка победила, а отряд получил липкого, но очень надёжного защитника.','street',spr('gummy',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+tora:[mvV('Тора молчит весь день. Если он вдруг говорит, это значит, что кто-то очень сильно его разозлил.','night',spr('tora',180,360,2.6,'a-bob')),mvV('Один удар, и зомби отлетел через всю дорогу. «Достаточно», — сказал Тора. Его слова считают за целую речь, а удары за три.','egypt',spr('tora',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+baker:[mvV('Бублик печёт на рассвете, пока весь двор спит. У его булочек тонкая корочка и очень твёрдое сердце.','home',spr('baker',180,360,2.6,'a-bob')+spr('bone',290,420,2.4,'a-bob')),mvV('Зомби шли за свежим запахом, а получили бубликами по голове. Бублик считает, что хлеб нужно защищать, и теперь делает это в отряде.','street',spr('baker',180,360,2.6,'a-bob')+spr('armor',0,440,1.6,'a-march'))],
+});
 FSET.d=()=>['e3','w10','w11','w12','w13','w14','fin3'];FOK.d=()=>E3W.every(done);
 FINFO.d=['Эпоха III · Страна фараонов','7 глав · от дюн до гробницы','#fbbf24','Пройди все миры Эпохи III'];
 function openEp3(){if(SV.ep.includes(3))return true;if(!done(9)){sfx('deny');say('Сначала пройди все миры Эпохи II');return false}
@@ -7240,7 +7270,7 @@ const hubH=()=>{duFix();const n=Object.values(SV.lv).filter(v=>v>0).length,ib=Ma
  +C('inf','#fb923c','∞','Бесконечный режим','Волны без конца: сколько продержишься',ib?'рекорд '+ib:'∞')
  +C('duo','#f472b6','🐾','Вдвоём','Общая карта вместе с партнёром: вылазки и бесконечный дозор','вместе')
  +C('duel','#38bdf8','⚔️','Дуэль','Против партнёра: 3 линии и кошачьи домики. Сломай главный!',SV.du.w?SV.du.w+' поб.':'новое')+`</div>`};
-const infH=()=>{fixSV();return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда за отбитые волны</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div><p class="tm-h">Твой отряд</p><div class="cq-sq">${SV.team.slice(0,6).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`};
+const infH=()=>{fixSV();return `<div class="mr"><b>Бесконечный режим ∞</b><small>Волны без конца: зомби крепнут, каждые 10 волн приходит Доктор Пёс. Награда: 4 золотые рыбки за каждую отбитую волну</small>${INFM.map(m=>{const ok=m.need(),b=SV.inf[m.id]||0;return `<button class="mr-b${b?' ok':''}" data-p="inf" data-id="${m.id}" ${ok?'':'disabled'}><span><b>${m.n}</b><small>${ok?'Рекорд: '+b+' волн':m.req}</small></span><em>${ok?'∞':'🔒'}</em></button>`}).join('')}</div><p class="tm-h">Твой отряд</p><div class="cq-sq">${SV.team.slice(0,6).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`};
 /* в «Истории» бесконечного режима больше нет */
 {const w0=worldsH;worldsH=function(){return w0.apply(this,arguments).replace(/<div class="mr"><b>Бесконечный режим[\s\S]*?<\/div>/,'')}}
 {const e0=enter;enter=function(){MODE='hub';TAB='w';return e0.apply(this,arguments)}}
@@ -7422,6 +7452,23 @@ $('duSvg').addEventListener('pointerdown',e=>{unlock();if(DU.st!=='play'||!DU.se
  sfx('place');DU.sel=null;duHud()});
 }
 
+/* ---------- облако: сливаем ВСЕ поля прогресса, а не только основные ---------- */
+{const HANDLED=new Set(['ts','g','team','dl','sk','mat','own','wu','ep','cs','lv','ach','fm','kills','up','pf','evo','skins','inf','co','cow','cpm','csal','cinf','pr']),
+ DAYK=new Set(['dl','dqd']),isO=v=>v&&typeof v==='object'&&!Array.isArray(v),simple=o=>Object.values(o).every(v=>typeof v==='number'||typeof v==='boolean'),
+ cmpK=(a,b)=>{const x=+a,y=+b;return isFinite(x)&&isFinite(y)?x-y:String(a)<String(b)?-1:String(a)>String(b)?1:0};
+ const cm9=clMerge;clMerge=function(c){const newer=(c.ts||0)>(SV.ts||0);cm9.apply(this,arguments);try{
+  Object.keys(c).forEach(k=>{if(HANDLED.has(k)){if(!DAYK.has(k))return}const b=c[k],a=SV[k];if(b===undefined||b===null)return;
+   if(DAYK.has(k)){if(a==null||cmpK(b,a)>0)SV[k]=b;return}
+   if(Array.isArray(b)){SV[k]=Array.isArray(a)&&[...a,...b].every(v=>v===null||typeof v!=='object')?[...new Set([...a,...b])]:(newer||a==null?b:a);return}
+   if(typeof b==='number'){SV[k]=Math.max(+a||0,b);return}
+   if(isO(b)){if(isO(a)&&simple(a)&&simple(b)){const o=Object.assign({},a);for(const x in b)o[x]=typeof b[x]==='number'?Math.max(+o[x]||0,b[x]):(o[x]||b[x]);SV[k]=o}else SV[k]=newer||a==null?b:a;return}
+   SV[k]=newer||a==null?b:a});
+  const p=c.pr;if(isO(p)){if(lg('cd_epv')==null&&p.epv>=1&&p.epv<=3){EPV=+p.epv;ls('cd_epv',String(EPV))}
+   if(lg('cd_auto')==null&&p.auto!=null){AUTO=!!+p.auto;ls('cd_auto',AUTO?'1':'0');autoUi()}
+   if(lg('cd_spd')==null&&(p.spd===1||p.spd===2)){SPD=+p.spd;ls('cd_spd',String(SPD));spdUi()}
+   if(lg('cd_shs')==null&&typeof p.shs==='string'){SHS=p.shs;ls('cd_shs',SHS)}
+   if(lg('cd_mute')==null&&p.mute!=null){mute=!!+p.mute;ls('cd_mute',mute?'1':'0');sndIcon()}}
+  fixSV();evoApply();paintAll()}catch(e){console.warn('catdef merge2',e)}}}
 spdUi();reset();card();
 }catch(e){console.error('catdef',e)}})();
 </script>
@@ -7753,7 +7800,7 @@ function show(){if(document.getElementById('qpop'))return;var r=qCur(),q=qToday(
 d.innerHTML='<div class="qp"><small style="opacity:.75">Вопрос '+(r+1)+' из '+QMAX+' · они приходят в течение дня</small><h3>'+esc(q[0])+'</h3>'+q[1].map(function(o,i){return'<button class="o" data-i="'+i+'">'+esc(o)+'</button>'}).join('')+'<button class="x">Позже</button></div>';
 d.onclick=function(e){var b=e.target.closest('button');if(!b){if(e.target===d)d.remove();return}if(b.dataset.i!==undefined){try{qr=null}catch(x){}qAns(+b.dataset.i)}d.remove()};document.body.appendChild(d)}
 (function tick(){try{var p=document.getElementById('petCard');
-if(!document.hidden&&typeof S!=='undefined'&&S.room&&S.uid&&Array.isArray(S.quiz)&&p&&p.children.length&&cur!=='welcome'&&cur!=='quiz'){if(++ready>=2){var d=dayKey(),k='qpop_'+d+'_'+QREL(),r=qCur();if(ls(k)!=='1'){ls(k,'1');if(!S.quiz.some(function(x){return x.day===d&&x.user_id===S.uid&&(x.round||0)===r}))show()}}}}catch(e){}
+if(!document.hidden&&typeof S!=='undefined'&&S.room&&S.uid&&Array.isArray(S.quiz)&&p&&p.children.length&&cur==='home'&&!document.getElementById('qpop')){if(++ready>=2){var d=dayKey(),k='qpop_'+d+'_'+QREL(),r=qCur();if(ls(k)!=='1'){ls(k,'1');if(!S.quiz.some(function(x){return x.day===d&&x.user_id===S.uid&&(x.round||0)===r}))show()}}}}catch(e){}
 setTimeout(tick,12000)})();
 /* ===== Угадайка: все ответы за сегодня (свои и партнёра) ===== */
 var dq=window.drawQuiz;if(typeof dq==='function')window.drawQuiz=function(){var r=dq.apply(this,arguments);try{if(cur==='quiz')hist()}catch(e){}return r};
