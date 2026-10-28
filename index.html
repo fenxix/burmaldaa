@@ -7249,7 +7249,14 @@ const st9=document.createElement('style');st9.textContent=`
 .du-eb{flex:1;height:12px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden}
 .du-eb i{display:block;height:100%;width:50%;background:linear-gradient(90deg,#fb923c,#f43f5e);border-radius:8px}
 .du-el b{min-width:22px;font:800 14px Montserrat,sans-serif;text-align:right}
-.du-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.du-cards{display:grid;grid-template-columns:repeat(3,1fr) .62fr;gap:7px;align-items:end}
+.du-c{min-height:84px}.du-c svg{width:42px!important;height:48px!important}.du-c b{font-size:10px!important}
+.du-c.deal{animation:duDeal .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes duDeal{0%{transform:translateY(46px) scale(.55) rotate(-9deg);opacity:0;filter:brightness(2.2)}55%{opacity:1}100%{transform:none;filter:none}}
+.du-n{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px;font-weight:800;opacity:.85}
+.du-m{display:flex;flex-direction:column;align-items:center;padding:3px 1px;border-radius:10px;background:var(--bg);color:#1f2937;width:100%;min-height:50px;transform:scale(.9)}
+.du-m svg{width:26px;height:30px}.du-m b{font-size:7.5px}.du-m span{display:flex;align-items:center;gap:2px;font-size:9px;font-weight:800}.du-m span svg{width:9px;height:9px}
+.du-n.sw .du-m{animation:duNx .45s ease-out}@keyframes duNx{0%{transform:translateX(-22px) scale(.5);opacity:0}100%{transform:scale(.9);opacity:1}}
 .du-c{display:flex;flex-direction:column;align-items:center;padding:4px 1px 3px;border-radius:12px;background:var(--bg);color:#1f2937;border:2px solid transparent;min-width:0;box-shadow:0 3px 8px rgba(0,0,0,.25);transition:transform .12s}
 .du-c svg{width:32px;height:36px}.du-c b{font-size:8.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .du-c span{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:800}.du-c span svg{width:11px;height:11px}
@@ -7292,49 +7299,86 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a="exit
 
 /* ---------- состояние дуэли ---------- */
 const DU={on:0,host:0,me:0,rdy:0,st:'idle',units:[],houses:[],shots:[],out:[],el:[5,5],tm:[[],[]],sel:null,t:0,cd:0,nid:1,raf:0,bot:0,sid:0,paid:0,snT:0,sa:0,res:null,bt:0,ot:0,pend:0,starting:0,uE:new Map(),hE:{},fr:0,last:0};
-const DS={},LIFE=[.22,.35,.2,.8,.4,.35];
+const DS={},LIFE=[.22,.35,.2,.8,.4,.35,.25,.45];
+const PJI={yarn:1,nip:2,snowb:3,star:4,ball:5,laser:6,fire:7,gel:8},PJC=[0,'#f472b6','#4ade80','#e0f2fe','#fde047','#1f2937','#22d3ee','#fb923c','#f9a8d4'];
+/* уникальные способности котиков в дуэли (kd — вид, atk — перезарядка, ad — урон способности) */
+const DUK={bowler:{kd:'roll',atk:6.5,rng:140,dmg:0},miner:{kd:'mine',atk:3.4,rng:85,dmg:0},boomer:{kd:'bmr',atk:2.4,rng:90,dmg:0},volt:{kd:'rail',atk:3.2,rng:115,dmg:0,ad:60},storm:{kd:'chain',atk:1.7,rng:85,dmg:0,ad:20},spark:{kd:'stun',atk:5.5,rng:46,dmg:0,ad:30},spidey:{kd:'web',atk:5,rng:85,dmg:0},drake:{kd:'fire',atk:5,rng:75,dmg:0,ad:14},baron:{kd:'air',atk:6.5,rng:115,dmg:0,ad:80},lila:{wd:.45,aoe:22},pushok:{ei:5},chef:{ei:3.6},biz:{ei:4.2}};
+const DMAPS=[{g:['#86efac','#4ade80'],mid:'#38bdf8',wv:'#e0f2fe',br:['#b45309','#78350f'],em:['🌳','🌲','🌼','🪨','🐝']},{g:['#e0f2fe','#bae6fd'],mid:'#7dd3fc',wv:'#fff',br:null,ice:1,em:['🌲','⛄','🏔️','❄️','🛖']},{g:['#fde68a','#fcd34d'],mid:'#a16207',wv:'#78350f',br:['#d6d3d1','#78716c'],em:['🌵','🏜️','🪨','🐪','🔺']},{g:['#64748b','#475569'],mid:'#1e293b',wv:'#f8fafc',br:null,road:1,em:['🏢','🏬','💡','🌆','🚏']}];
+function duMap(){const M=DMAPS[DU.map||0],ds=[[24,26],[120,30],[240,30],[336,26],[24,150],[336,150],[120,182],[240,182],[24,236],[336,236]];let d='';
+ ds.forEach((p,i)=>{d+=`<text x="${p[0]}" y="${p[1]}" font-size="22" text-anchor="middle">${M.em[i%5]}</text><text x="${p[0]}" y="${640-p[1]}" font-size="22" text-anchor="middle">${M.em[(i+2)%5]}</text>`});
+ let m=`<rect y="300" width="360" height="40" fill="${M.mid}"/>`;
+ if(M.road)m+=`<path d="M0 320H360" stroke="#f8fafc" stroke-width="3" stroke-dasharray="14 12"/>`+LX.map(x=>`<path d="M${x-22} 302v36M${x-11} 302v36M${x} 302v36M${x+11} 302v36M${x+22} 302v36" stroke="#e2e8f0" stroke-width="5" opacity=".8"/>`).join('');
+ else if(M.ice)m+=`<path d="M10 312l40 10 30-14 50 12 40-8 60 10 50-12 40 8M0 330l60-6 40 6 70-8 60 6 70-4" stroke="#fff" stroke-width="2" fill="none" opacity=".85"/>`;
+ else m+=`<path d="M0 312Q30 304 60 312T120 312 180 312 240 312 300 312 360 312M0 328Q30 320 60 328T120 328 180 328 240 328 300 328 360 328" fill="none" stroke="${M.wv}" stroke-width="2.5" opacity=".7"/>`;
+ if(M.br)m+=LX.map(x=>`<g><rect x="${x-24}" y="294" width="48" height="52" rx="6" fill="${M.br[0]}" stroke="${M.br[1]}" stroke-width="2"/><path d="M${x-24} 308H${x+24}M${x-24} 320H${x+24}M${x-24} 332H${x+24}" stroke="${M.br[1]}" stroke-width="1.5"/></g>`).join('');
+ return `<defs><linearGradient id="duG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${M.g[0]}"/><stop offset="1" stop-color="${M.g[1]}"/></linearGradient></defs><rect width="360" height="640" fill="url(#duG)"/><g opacity=".2" fill="#fff"><rect width="120" height="640"/><rect x="240" width="120" height="640"/></g><g stroke="#fff" stroke-opacity=".55" stroke-dasharray="6 8" stroke-width="2"><path d="M120 0V296M240 0V296M120 344V640M240 344V640"/></g>${d}${m}`}
 /* характеристики котика в дуэли выводятся из его обычных (без эволюции, поэтому у обоих игроков одинаково) */
 function duStat(k){if(DS[k])return DS[k];const t=TWB[k]||TW[k]||{},eco=!!(t.gain||t.inc),melee=!!t.melee,tank=melee||/Танк|Страж|Сумо/.test(t.role||''),cost=t.cost||100,dc=Math.max(2,Math.min(7,Math.round(cost/28)));
  let dps=eco?0:(dpsOf(t)||5);dps=Math.min(95,dps*6.5);const atk=t.cd>0&&t.cd<=3.5?Math.max(.3,t.cd):1,rr=t.range>0?Math.min(115,Math.max(40,t.range*.55)):40;
- return DS[k]={dc,eco,tank,hp:Math.round((50+cost*1.1)*(tank?2.3:1)),dmg:eco?0:dps*atk,atk,rng:melee?24:rr,aoe:t.aoe?t.aoe*.9:0,slow:t.slow?1:0,nova:t.kind==='nova'?1:0,sp:eco?0:(tank?24:(t.role==='Ниндзя'?38:31))}}
+ const r0={dc,eco,tank,hp:Math.round((50+cost*1.1)*(tank?2.3:1)),dmg:eco?0:dps*atk,atk,rng:melee?24:rr,aoe:t.aoe?t.aoe*.9:0,slow:t.slow?1:0,nova:t.kind==='nova'?1:0,sp:eco?0:(tank?24:(t.role==='Ниндзя'?38:31))};return DS[k]=Object.assign(r0,DUK[k]||{},{pj:PJI[t.pj]||0})}
 const duHouses=()=>{const a=[];for(let o=0;o<2;o++)for(let l=0;l<3;l++){const main=l===1,y=o===0?(main?578:538):(main?64:102),hp=main?2000:1400;a.push({id:o*3+l,o,l,main,x:LX[l],y,hp,max:hp,cd:Math.random()})}return a};
 function duShot(f){return{f,age:0,life:LIFE[f[0]]||.3}}
 function duFx(ty,x1,y1,x2,y2,o,r){const f=[ty,Math.round(x1),Math.round(y1),Math.round(x2),Math.round(y2),o,Math.round(r||0)];DU.shots.push(duShot(f));if(DU.host&&!DU.bot){DU.out.push(f);if(DU.out.length>80)DU.out.shift()}}
 function duHouseFor(u){let own=null,best=1e9;const al=[];for(const h of DU.houses){if(h.o===u.o||h.hp<=0)continue;al.push(h);if(h.l===u.lane)own=h}
  if(own)return own;for(const h of al){const d=Math.hypot(h.x-u.x,h.y-u.y);if(d<best){best=d;own=h}}return own}
-const duHit=(v,dm,u)=>{v.hp-=dm;if(u.slow)v.slow=1.6};
+const duHit=(v,dm,u)=>{v.hp-=dm;if(u.slow)v.sl=1.6};
 function duStrike(u,tg,tH){
  if(u.nova){const R=52;for(const v of DU.units)if(v.o!==u.o&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<=R)duHit(v,u.dmg,u);for(const h of DU.houses)if(h.o!==u.o&&h.hp>0&&Math.hypot(h.x-u.x,h.y-u.y)<=R+22)h.hp-=u.dmg*(u.tank?2.5:1);duFx(1,u.x,u.y,u.x,u.y,u.o,R);return}
- if(tg){duHit(tg,u.dmg,u);if(u.aoe)for(const v of DU.units)if(v!==tg&&v.o!==u.o&&v.hp>0&&Math.hypot(v.x-tg.x,v.y-tg.y)<=u.aoe)duHit(v,u.dmg*.7,u);duFx(u.rng<=26?2:(u.aoe?1:0),u.x,u.y,tg.x,tg.y,u.o,u.aoe);return}
- if(tH){tH.hp-=u.dmg*(u.tank?2.5:1);duFx(u.rng<=26?2:0,u.x,u.y,tH.x,tH.y,u.o,0)}}
-function duPlace(p,k,x,y){if(DU.st!=='play'||!DU.tm[p]||!DU.tm[p].includes(k)||!TW[k])return false;x=+x;y=+y;if(!isFinite(x)||!isFinite(y))return false;
+ if(tg){duHit(tg,u.dmg,u);if(u.aoe)for(const v of DU.units)if(v!==tg&&v.o!==u.o&&v.hp>0&&Math.hypot(v.x-tg.x,v.y-tg.y)<=u.aoe)duHit(v,u.dmg*.7,u);duFx(u.rng<=26?2:(u.aoe?1:0),u.x,u.y,tg.x,tg.y,u.o,u.aoe||u.pj);return}
+ if(tH){tH.hp-=u.dmg*(u.tank?2.5:1);duFx(u.rng<=26?2:0,u.x,u.y,tH.x,tH.y,u.o,u.pj)}}
+function duPlace(p,k,x,y){if(DU.st!=='play'||!(DU.hd&&DU.hd[p]&&DU.hd[p].includes(k))||!TW[k])return false;x=+x;y=+y;if(!isFinite(x)||!isFinite(y))return false;
  const s=duStat(k);if(DU.el[p]<s.dc){return false}
  y=p===0?Math.max(345,Math.min(610,y)):Math.max(30,Math.min(295,y));x=Math.max(14,Math.min(DW-14,x));const lane=x<120?0:x<240?1:2;
- DU.units.push({id:DU.nid++,k,o:p,lane,x:LX[lane]+(x-LX[lane])*.4+(Math.random()-.5)*8,y,hp:s.hp,max:s.hp,dmg:s.dmg,atk:s.atk,rng:s.rng,aoe:s.aoe,slow:s.slow,sl:0,nova:s.nova,sp:s.sp,tank:s.tank,eco:s.eco,cdn:.5,pt:4.5});
- DU.el[p]-=s.dc;const u=DU.units[DU.units.length-1];duFx(5,u.x,u.y,u.x,u.y,p,0);return true}
+ DU.units.push({id:DU.nid++,k,o:p,lane,x:LX[lane]+(x-LX[lane])*.4+(Math.random()-.5)*8,y,hp:s.hp,max:s.hp,dmg:s.dmg,atk:s.atk,rng:s.rng,aoe:s.aoe,slow:s.slow,sl:0,nova:s.nova,sp:s.sp,tank:s.tank,eco:s.eco,cdn:.5,pt:s.ei||4.5,ei:s.ei||4.5,kd:s.kd,ad:s.ad,wd:s.wd,pj:s.pj||0});
+ DU.el[p]-=s.dc;{const hd=DU.hd[p],ix=hd.indexOf(k);if(ix>=0&&DU.dk&&DU.dk[p]){const q=DU.dk[p].q;q.push(k);hd[ix]=q.shift();DU.nx[p]=q[0]}}const u=DU.units[DU.units.length-1];duFx(5,u.x,u.y,u.x,u.y,p,0);return true}
+function duBoom(o,x,y,R,dm,hd){for(const v of DU.units)if(v.o!==o&&v.hp>0&&Math.hypot(v.x-x,v.y-y)<=R)v.hp-=dm;for(const h of DU.houses)if(h.o!==o&&h.hp>0&&Math.hypot(h.x-x,h.y-y)<=R+22)h.hp-=(hd==null?dm:hd);duFx(1,x,y,x,y,o,R)}
+function duAb(u,tg,tH){const o=u.o,dir=o?1:-1,tx=tg?tg.x:tH.x,ty=tg?tg.y:tH.y,d=Math.hypot(tx-u.x,ty-u.y)||1,ux=(tx-u.x)/d,uy=(ty-u.y)/d,P=DU.pj;
+ switch(u.kd){
+ case'roll':for(let i=-1;i<2;i++)P.push({id:DU.pid++,c:0,o,x:u.x+i*11,y:u.y,pw:3,hit:[],dy:dir});duFx(5,u.x,u.y,u.x,u.y,o,0);break;
+ case'mine':{const m=P.filter(q=>q.c===2&&q.o===o);if(m.length>=3)P.splice(P.indexOf(m[0]),1);const L=Math.min(d,70);P.push({id:DU.pid++,c:2,o,x:u.x+ux*L,y:u.y+uy*L,arm:.7});break}
+ case'bmr':P.push({id:DU.pid++,c:1,o,x:u.x,y:u.y,sx:u.x,sy:u.y,dx:ux,dy:uy,ph:0,go:0,hit:[]});break;
+ case'rail':{const L=165;for(const v of DU.units)if(v.o!==o&&v.hp>0){const a=(v.x-u.x)*ux+(v.y-u.y)*uy,p=Math.abs((v.x-u.x)*uy-(v.y-u.y)*ux);if(a>0&&a<L&&p<11)v.hp-=u.ad}
+  for(const h of DU.houses)if(h.o!==o&&h.hp>0){const a=(h.x-u.x)*ux+(h.y-u.y)*uy,p=Math.abs((h.x-u.x)*uy-(h.y-u.y)*ux);if(a>0&&a<L+20&&p<26)h.hp-=u.ad}
+  duFx(6,u.x,u.y,u.x+ux*L,u.y+uy*L,o,0);break}
+ case'chain':{let cur=tg,px=u.x,py=u.y;const hit=[];if(!cur){tH.hp-=u.ad;duFx(6,px,py,tH.x,tH.y,o,1);break}
+  for(let j=0;j<4&&cur;j++){cur.hp-=u.ad;hit.push(cur);duFx(6,px,py,cur.x,cur.y,o,1);px=cur.x;py=cur.y;let nx=null,b=55;for(const v of DU.units)if(v.o!==o&&v.hp>0&&!hit.includes(v)){const e=Math.hypot(v.x-px,v.y-py);if(e<b){b=e;nx=v}}cur=nx}break}
+ case'stun':duBoom(o,u.x,u.y,56,u.ad);for(const v of DU.units)if(v.o!==o&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<=56)v.stn=1.2;break;
+ case'web':case'fire':{const c=u.kd==='web'?3:4,z=P.filter(q=>q.c===c&&q.o===o);if(z.length>=3)P.splice(P.indexOf(z[0]),1);P.push({id:DU.pid++,c,o,x:tx-ux*8,y:ty-uy*8,r:c===3?32:27,life:c===3?7:5,d:u.ad||0});break}
+ case'air':{let best=null,bn=-1;for(const v of DU.units)if(v.o!==o&&v.hp>0){let n=0;for(const w of DU.units)if(w.o!==o&&w.hp>0&&Math.hypot(w.x-v.x,w.y-v.y)<=46)n++;if(n>bn){bn=n;best=v}}const T=best||tH;if(T){duFx(0,u.x,u.y,T.x,T.y,o,5);duBoom(o,T.x,T.y,46,u.ad)}break}}}
+function duPj(dt){const P=DU.pj;for(let i=P.length-1;i>=0;i--){const q=P[i];let del=false;
+ if(q.c===0){q.y+=q.dy*105*dt;for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&!q.hit.includes(v.id)&&Math.abs(v.x-q.x)<14&&Math.abs(v.y-q.y)<12){v.hp-=45;q.hit.push(v.id);duFx(2,v.x,v.y,v.x,v.y,q.o,0);if(--q.pw<=0)del=true}
+  if(!del)for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&Math.abs(h.x-q.x)<28&&Math.abs(h.y-q.y)<16){h.hp-=70;duFx(4,h.x,h.y,h.x,h.y,q.o,0);del=true;break}
+  if(q.y<-10||q.y>650)del=true}
+ else if(q.c===1){const sp=210*dt;if(q.ph===0){q.x+=q.dx*sp;q.y+=q.dy*sp;q.go+=sp;if(q.go>=105){q.ph=1;q.hit=[]}}else{const dx=q.sx-q.x,dy=q.sy-q.y,d=Math.hypot(dx,dy);if(d<8)del=true;else{q.x+=dx/d*sp;q.y+=dy/d*sp}}
+  for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&!q.hit.includes(v.id)&&Math.hypot(v.x-q.x,v.y-q.y)<14){v.hp-=30;q.hit.push(v.id);duFx(2,v.x,v.y,v.x,v.y,q.o,0)}
+  for(const h of DU.houses)if(h.o!==q.o&&h.hp>0&&!q.hit.includes('h'+h.id)&&Math.hypot(h.x-q.x,h.y-q.y)<26){h.hp-=30;q.hit.push('h'+h.id)}}
+ else if(q.c===2){q.arm-=dt;if(q.arm<=0&&DU.units.some(v=>v.o!==q.o&&v.hp>0&&Math.hypot(v.x-q.x,v.y-q.y)<15)){duBoom(q.o,q.x,q.y,40,75,40);del=true}}
+ else{q.life-=dt;if(q.life<=0)del=true;else for(const v of DU.units)if(v.o!==q.o&&v.hp>0&&Math.hypot(v.x-q.x,v.y-q.y)<=q.r){if(q.c===3)v.sw=.3;else v.hp-=q.d*dt}}
+ if(del)P.splice(i,1)}}
 function duStep(dt){
  if(DU.st==='cd'){DU.cd-=dt;if(DU.cd<=0){DU.st='play';DU.t=0;DU.cd=0;duBan('В бой!',900);sfx('wave')}return}
  if(DU.st!=='play')return;
- DU.t+=dt;if(DU.t>=150&&!DU.ot){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}
- const rate=(DU.ot?2:1)/1.35;DU.el[0]=Math.min(10,DU.el[0]+rate*dt);DU.el[1]=Math.min(10,DU.el[1]+rate*dt);
- if(DU.bot){DU.bt-=dt;if(DU.bt<=0){DU.bt=2.4+Math.random()*2.4;const ks=DU.tm[1].filter(k=>duStat(k).dc<=DU.el[1]);if(ks.length)duPlace(1,ks[Math.floor(Math.random()*ks.length)],40+Math.random()*280,60+Math.random()*150)}}
+ DU.t+=dt;if(DU.t>=180&&!DU.ot){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}
+ const rate=(DU.ot?2:1)/2.3;DU.el[0]=Math.min(10,DU.el[0]+rate*dt);DU.el[1]=Math.min(10,DU.el[1]+rate*dt);
+ if(DU.bot){DU.bt-=dt;if(DU.bt<=0){DU.bt=3.6+Math.random()*3;const ks=(DU.hd[1]||[]).filter(k=>duStat(k).dc<=DU.el[1]);if(ks.length)duPlace(1,ks[Math.floor(Math.random()*ks.length)],40+Math.random()*280,60+Math.random()*150)}}
  const U=DU.units;
- for(const u of U){if(u.hp<=0)continue;u.cdn-=dt;if(u.sl>0)u.sl-=dt;
-  if(u.eco){u.pt-=dt;if(u.pt<=0){u.pt=4.5;DU.el[u.o]=Math.min(10,DU.el[u.o]+1);duFx(3,u.x,u.y,u.x,u.y,u.o,0)}continue}
+ for(const u of U){if(u.hp<=0)continue;u.cdn-=dt;if(u.sl>0)u.sl-=dt;if(u.sw>0)u.sw-=dt;if(u.stn>0){u.stn-=dt;continue}
+  if(u.eco){u.pt-=dt;if(u.pt<=0){u.pt=u.ei;DU.el[u.o]=Math.min(10,DU.el[u.o]+1);duFx(3,u.x,u.y,u.x,u.y,u.o,0)}continue}
   let tg=null,best=1e9;
   if(!u.tank){const det=u.rng+55;for(const v of U){if(v.o===u.o||v.hp<=0)continue;const d=Math.hypot(v.x-u.x,v.y-u.y);if(d<det&&d<best){best=d;tg=v}}}
   let tx,ty,inR=false,tH=null;
   if(tg){tx=tg.x;ty=tg.y;inR=best<=u.rng+6}
   else{tH=duHouseFor(u);if(!tH)continue;tx=tH.x;ty=tH.y;inR=Math.hypot(tx-u.x,ty-u.y)<=u.rng+(tH.main?28:22)}
-  if(inR){if(u.cdn<=0){u.cdn=u.atk;duStrike(u,tg,tH)}}
-  else{const d=Math.hypot(tx-u.x,ty-u.y)||1,v=u.sp*(u.sl>0?.55:1)*dt;u.x+=(tx-u.x)/d*v;u.y+=(ty-u.y)/d*v}}
+  if(u.kd==='air')inR=true;
+  if(inR){if(u.cdn<=0){if(u.kd){u.cdn=u.atk;duAb(u,tg,tH)}else if(u.wd&&!u.ww){u.ww=u.wd;duFx(7,u.x,u.y,u.x,u.y,u.o,0)}else if(u.ww>0){u.ww-=dt;if(u.ww<=0){u.ww=0;u.cdn=u.atk;duStrike(u,tg,tH)}}else{u.cdn=u.atk;duStrike(u,tg,tH)}}}
+  else{const d=Math.hypot(tx-u.x,ty-u.y)||1,v=u.sp*(u.sw>0?.4:u.sl>0?.55:1)*dt;u.x+=(tx-u.x)/d*v;u.y+=(ty-u.y)/d*v}}
  for(let i=0;i<U.length;i++){const a=U[i];if(a.hp<=0)continue;for(let j=i+1;j<U.length;j++){const b=U[j];if(b.hp<=0)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<13&&d>.01){const m=(13-d)/2/d;if(!a.eco){a.x-=dx*m;a.y-=dy*m}if(!b.eco){b.x+=dx*m;b.y+=dy*m}}}}
  for(const u of U){u.x=Math.max(10,Math.min(DW-10,u.x));u.y=Math.max(10,Math.min(DH-10,u.y))}
- for(const h of DU.houses){if(h.hp<=0)continue;h.cd-=dt;if(h.cd>0)continue;let t=null,best=h.main?120:105;for(const v of U){if(v.o===h.o||v.hp<=0)continue;const d=Math.hypot(v.x-h.x,v.y-h.y);if(d<best){best=d;t=v}}if(t){h.cd=.9;t.hp-=h.main?28:22;duFx(0,h.x,h.y-24,t.x,t.y,h.o,0)}}
+ duPj(dt);for(const h of DU.houses){if(h.hp<=0)continue;h.cd-=dt;if(h.cd>0)continue;let t=null,best=h.main?120:105;for(const v of U){if(v.o===h.o||v.hp<=0)continue;const d=Math.hypot(v.x-h.x,v.y-h.y);if(d<best){best=d;t=v}}if(t){h.cd=.9;t.hp-=h.main?28:22;duFx(0,h.x,h.y-24,t.x,t.y,h.o,0)}}
  for(let i=U.length-1;i>=0;i--)if(U[i].hp<=0){duFx(4,U[i].x,U[i].y,U[i].x,U[i].y,U[i].o,0);U.splice(i,1)}
  const m0=DU.houses[1],m1=DU.houses[4];
  if(m0.hp<=0||m1.hp<=0)return duEnd(m0.hp<=0&&m1.hp<=0?-1:m0.hp<=0?1:0,'main');
- if(DU.t>=210)duTimeEnd()}
+ if(DU.t>=240)duTimeEnd()}
 const duCrowns=()=>[DU.houses.filter(h=>h.o===1&&h.hp<=0).length,DU.houses.filter(h=>h.o===0&&h.hp<=0).length];
 function duTimeEnd(){const [a,b]=duCrowns(),hp=o=>DU.houses.filter(h=>h.o===o).reduce((s,h)=>s+Math.max(0,h.hp)/h.max,0);
  duEnd(a>b?0:b>a?1:(hp(0)>hp(1)+.01?0:hp(1)>hp(0)+.01?1:-1),'time')}
@@ -7349,55 +7393,68 @@ function duFinish(res){if(DU.res)return;DU.res=res;DU.st='over';duFix();const me
 /* ---------- экран боя ---------- */
 $('catdef').insertAdjacentHTML('beforeend',`<div class="cdv" id="cdDuel"><div class="cd-top"><button class="cd-ib" id="duQuit" aria-label="Выйти">${ic('back')}</button><h2 id="duT">Дуэль</h2><div class="du-clk" id="duClk">0:00</div></div><div class="du-wrap"><svg id="duSvg" viewBox="0 0 360 640"></svg><div class="du-ban" id="duBan"></div><div class="cd-ov" id="duOv"></div></div><div class="du-dock"><div class="du-el"><span class="du-ei">${fi()}</span><div class="du-eb"><i id="duElB"></i></div><b id="duElN">5</b></div><div class="du-cards" id="duCards"></div></div></div>`);
 function duBuild(){const s=$('duSvg');
- s.innerHTML=`<defs><linearGradient id="duG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86efac"/><stop offset="1" stop-color="#4ade80"/></linearGradient></defs><rect width="360" height="640" fill="url(#duG)"/><g opacity=".2" fill="#fff"><rect width="120" height="640"/><rect x="240" width="120" height="640"/></g><g stroke="#fff" stroke-opacity=".55" stroke-dasharray="6 8" stroke-width="2"><path d="M120 0V296M240 0V296M120 344V640M240 344V640"/></g><rect y="300" width="360" height="40" fill="#38bdf8"/><path d="M0 312Q30 304 60 312T120 312 180 312 240 312 300 312 360 312M0 328Q30 320 60 328T120 328 180 328 240 328 300 328 360 328" fill="none" stroke="#e0f2fe" stroke-width="2.5" opacity=".7"/>${LX.map(x=>`<g><rect x="${x-24}" y="294" width="48" height="52" rx="6" fill="#b45309" stroke="#78350f" stroke-width="2"/><path d="M${x-24} 308H${x+24}M${x-24} 320H${x+24}M${x-24} 332H${x+24}" stroke="#78350f" stroke-width="1.5"/></g>`).join('')}<rect id="duZone" y="344" width="360" height="296" fill="#fff" opacity="0"/><g id="duH"></g><g id="duU"></g><g id="duF"></g>`;
+ s.innerHTML=duMap()+`<rect id="duZone" y="344" width="360" height="296" fill="#fff" opacity="0"/><g id="duH"></g><g id="duJ"></g><g id="duU"></g><g id="duF"></g>`;
  DU.hE={};const gH=$('duH'),me=DU.me;
  DU.houses.forEach(h=>{const mine=h.o===me,c=mine?['#3b82f6','#1d4ed8']:['#ef4444','#b91c1c'],sc=h.main?1.25:1,g=document.createElementNS(NS2,'g'),p=me?[DW-h.x,DH-h.y]:[h.x,h.y];
   g.setAttribute('transform','translate('+p[0]+' '+p[1]+')');
-  g.innerHTML=`<g transform="scale(${sc})"><ellipse cy="20" rx="34" ry="8" fill="#0003"/><rect x="-24" y="-12" width="48" height="30" rx="4" fill="#fde68a" stroke="#92400e" stroke-width="2"/><path d="M-30-10L0-38 30-10Z" fill="${c[0]}" stroke="${c[1]}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-8 18V4a8 8 0 0116 0V18Z" fill="#78350f"/><g transform="translate(0 -17)"><path d="M-6-2l1-7 4 3M6-2l-1-7-4 3" fill="#fb923c"/><circle r="6" fill="#fb923c"/><circle cx="-2.2" cy="-.5" r="1.1" fill="#1f2937"/><circle cx="2.2" cy="-.5" r="1.1" fill="#1f2937"/></g>${h.main?'<path d="M-10-40l4 5 6-8 6 8 4-5-2 9h-16z" fill="#fbbf24" stroke="#b45309" stroke-width="1.2"/>':''}</g><rect x="-26" y="27" width="52" height="6" rx="3" fill="#0006"/><rect class="hf" x="-26" y="27" width="52" height="6" rx="3" fill="${mine?'#4ade80':'#f87171'}"/>`;
+  g.innerHTML=`<g transform="scale(${sc})"><ellipse cy="20" rx="34" ry="8" fill="#0003"/><rect x="-24" y="-12" width="48" height="30" rx="4" fill="#fde68a" stroke="#92400e" stroke-width="2"/><path d="M-30-10L0-38 30-10Z" fill="${c[0]}" stroke="${c[1]}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-8 18V4a8 8 0 0116 0V18Z" fill="#78350f"/><g transform="translate(0 -17)"><path d="M-6-2l1-7 4 3M6-2l-1-7-4 3" fill="#fb923c"/><circle r="6" fill="#fb923c"/><circle cx="-2.2" cy="-.5" r="1.1" fill="#1f2937"/><circle cx="2.2" cy="-.5" r="1.1" fill="#1f2937"/></g>${h.main?'<path d="M-10-40l4 5 6-8 6 8 4-5-2 9h-16z" fill="#fbbf24" stroke="#b45309" stroke-width="1.2"/>':''}</g><rect style="display:none" x="-26" y="27" width="52" height="6" rx="3" fill="#0006"/><rect style="display:none" class="hf" x="-26" y="27" width="52" height="6" rx="3" fill="${mine?'#4ade80':'#f87171'}"/>`;
   gH.appendChild(g);DU.hE[h.id]={g,hf:g.querySelector('.hf')}});
  DU.uE=new Map()}
-function duCardsBuild(){$('duCards').innerHTML=DU.tm[DU.me].map(k=>{const t=TW[k],s=duStat(k);return `<button class="du-c" data-k="${k}" data-dc="${s.dc}" style="--bg:${t.bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${t.n}</b><span>${fi()}${s.dc}</span></button>`}).join('')}
+const duCI=k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[k].n}</b><span>${fi()}${duStat(k).dc}</span>`;
+function duCardsBuild(){$('duCards').innerHTML=[0,1,2].map(i=>`<button class="du-c" data-i="${i}" data-k="" data-dc="99"></button>`).join('')+'<div class="du-n" id="duNx"><small>Следом</small><div class="du-m" id="duNc" data-k=""></div></div>'}
+function duSync(){const h=(DU.hd&&DU.hd[DU.me])||[];document.querySelectorAll('#duCards .du-c').forEach((c,i)=>{const k=h[i]||'';if(c.dataset.k!==k){c.dataset.k=k;if(k&&TW[k]){c.dataset.dc=duStat(k).dc;c.style.setProperty('--bg',TW[k].bg);c.innerHTML=duCI(k);c.classList.remove('deal');void c.offsetWidth;c.classList.add('deal')}else{c.innerHTML='';c.dataset.dc=99}}});
+ if(DU.sel&&!h.includes(DU.sel))DU.sel=null;const n=(DU.nx&&DU.nx[DU.me])||'',m=$('duNc');if(m&&m.dataset.k!==n){m.dataset.k=n;if(n&&TW[n]){m.style.setProperty('--bg',TW[n].bg);m.innerHTML=duCI(n);const w=$('duNx');w.classList.remove('sw');void w.offsetWidth;w.classList.add('sw')}else m.innerHTML=''}}
 function duMkU(u){const g=document.createElementNS(NS2,'g'),mine=u.o===DU.me;
- g.innerHTML=`<ellipse cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><g transform="scale(.58)"><use href="#cd-${u.k}"/></g><rect x="-13" y="-35" width="26" height="4" rx="2" fill="#0007"/><rect class="hf" x="-13" y="-35" width="26" height="4" rx="2" fill="${mine?'#4ade80':'#f87171'}"/>`;
+ g.innerHTML=`<ellipse cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><g transform="scale(.58)"><use href="#cd-${u.k}"/></g><rect style="display:none" x="-13" y="-35" width="26" height="4" rx="2" fill="#0007"/><rect style="display:none" class="hf" x="-13" y="-35" width="26" height="4" rx="2" fill="${mine?'#4ade80':'#f87171'}"/>`;
  return{g,hf:g.querySelector('.hf'),sy:0}}
+function duRPj(P){const g=$('duJ');if(!g)return;let h='';const tm=performance.now()/1000;for(const q of DU.pj||[]){const p=P(q.x,q.y),x=p[0].toFixed(1),y=p[1].toFixed(1),c=q.c;
+ if(c===0)h+=`<circle cx="${x}" cy="${y}" r="6" fill="#1e293b" stroke="#a5b4fc" stroke-width="2"/><circle cx="${x-2}" cy="${y-2}" r="1.6" fill="#fff"/>`;
+ else if(c===1)h+=`<text x="${x}" y="${y}" font-size="16" text-anchor="middle" dominant-baseline="central" transform="rotate(${(tm*720%360).toFixed(0)} ${x} ${y})">🪃</text>`;
+ else if(c===2)h+=`<circle cx="${x}" cy="${y}" r="5" fill="#f59e0b" stroke="#b91c1c" stroke-width="2" opacity="${(.6+.4*Math.sin(tm*8)).toFixed(2)}"/>`;
+ else h+=`<circle cx="${x}" cy="${y}" r="${q.r}" fill="${c===3?'#fff':'#f97316'}" fill-opacity=".3" stroke="${c===3?'#fff':'#fb923c'}" stroke-dasharray="4 3"/><text x="${x}" y="${y}" font-size="14" text-anchor="middle" dominant-baseline="central">${c===3?'🕸️':'🔥'}</text>`}g.innerHTML=h}
 function duRender(dt){const gU=$('duU'),gF=$('duF');if(!gU)return;const me=DU.me,P=(x,y)=>me?[DW-x,DH-y]:[x,y];
- DU.houses.forEach(h=>{const e=DU.hE[h.id];if(!e)return;e.hf.setAttribute('width',(52*Math.max(0,h.hp/h.max)).toFixed(1));e.g.style.opacity=h.hp>0?1:.3});
+ DU.houses.forEach(h=>{const e=DU.hE[h.id];if(!e)return;e.hf.setAttribute('width',(52*Math.max(0,h.hp/h.max)).toFixed(1));e.g.style.opacity=h.hp>0?1:.3;e.hf.style.display=e.hf.previousElementSibling.style.display=(h.hp<h.max-.5&&h.hp>0)?'':'none'});
  const seen=new Set();
  for(const u of DU.units){seen.add(u.id);let e=DU.uE.get(u.id);if(!e){e=duMkU(u);DU.uE.set(u.id,e);gU.appendChild(e.g)}
-  const p=P(u.x,u.y);e.sy=p[1];e.g.setAttribute('transform','translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')');e.hf.setAttribute('width',(26*Math.max(0,u.hp/u.max)).toFixed(1))}
+  const p=P(u.x,u.y);e.sy=p[1];e.g.setAttribute('transform','translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')');e.hf.setAttribute('width',(26*Math.max(0,u.hp/u.max)).toFixed(1));e.hf.style.display=e.hf.previousElementSibling.style.display=(u.hp<u.max-.5&&u.hp>0)?'':'none'}
  DU.uE.forEach((e,id)=>{if(!seen.has(id)){e.g.remove();DU.uE.delete(id)}});
  if(++DU.fr%6===0)[...DU.uE.values()].sort((a,b)=>a.sy-b.sy).forEach(e=>gU.appendChild(e.g));
- let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}
+ duRPj(P);let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}
   const f=s.f,k=s.age/s.life,a=P(f[1],f[2]),b=P(f[3],f[4]),col=f[5]===me?'#fde047':'#fb7185';
-  if(f[0]===0){const q=Math.min(1,k*1.5);h+=`<circle cx="${(a[0]+(b[0]-a[0])*q).toFixed(1)}" cy="${(a[1]+(b[1]-a[1])*q).toFixed(1)}" r="3.2" fill="${col}" stroke="#fff" stroke-width="1"/>`}
+   if(f[0]===0){const q=Math.min(1,k*1.5),pj=f[6]|0,x=a[0]+(b[0]-a[0])*q,y=a[1]+(b[1]-a[1])*q;if(pj===6)h+=`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;else h+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pj===5?5:pj===4?3.8:3.2}" fill="${PJC[pj]||col}" stroke="#fff" stroke-width="1"/>`}
   else if(f[0]===1)h+=`<circle cx="${b[0]}" cy="${b[1]}" r="${((f[6]||30)*(.3+.7*k)).toFixed(1)}" fill="${col}" fill-opacity="${(.25*(1-k)).toFixed(2)}" stroke="#fff" stroke-opacity="${(1-k).toFixed(2)}" stroke-width="2"/>`;
   else if(f[0]===2)h+=`<path d="M${b[0]-7} ${b[1]-7}L${b[0]+7} ${b[1]+7}M${b[0]+7} ${b[1]-7}L${b[0]-7} ${b[1]+7}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;
   else if(f[0]===3)h+=`<text x="${a[0]}" y="${(a[1]-14-14*k).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="800" fill="#fde047" stroke="#92400e" stroke-width=".6" opacity="${(1-k).toFixed(2)}">+1</text>`;
   else if(f[0]===4)h+=`<circle cx="${b[0]}" cy="${b[1]}" r="${(4+12*k).toFixed(1)}" fill="#e2e8f0" opacity="${(.7*(1-k)).toFixed(2)}"/>`;
-  else h+=`<circle cx="${a[0]}" cy="${a[1]}" r="${(8+20*k).toFixed(1)}" fill="none" stroke="#fff" stroke-width="2.5" opacity="${(1-k).toFixed(2)}"/>`}
+   else if(f[0]===6)h+=`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="${f[6]?'#fde047':'#67e8f9'}" stroke-width="${f[6]?2.5:4}" stroke-linecap="round" opacity="${(1-k).toFixed(2)}"/>`;
+   else if(f[0]===7)h+=`<text x="${a[0]}" y="${(a[1]-24).toFixed(1)}" text-anchor="middle" font-size="18" font-weight="900" fill="#ef4444" stroke="#fff" stroke-width=".8">!</text>`;
+   else h+=`<circle cx="${a[0]}" cy="${a[1]}" r="${(8+20*k).toFixed(1)}" fill="none" stroke="#fff" stroke-width="2.5" opacity="${(1-k).toFixed(2)}"/>`}
  gF.innerHTML=h}
 let banT=0;
 function duBan(t,ms){const b=$('duBan');b.textContent=t;b.classList.add('on');clearTimeout(banT);banT=setTimeout(()=>b.classList.remove('on'),ms||1200)}
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-function duHud(){const me=DU.me,el=DU.el[me],al=o=>DU.houses.filter(h=>h.o===o&&h.hp>0).length;
+function duHud(){duSync();const me=DU.me,el=DU.el[me],al=o=>DU.houses.filter(h=>h.o===o&&h.hp>0).length;
  $('duElB').style.width=(el/10*100).toFixed(1)+'%';$('duElN').textContent=Math.floor(el);
  document.querySelectorAll('#duCards .du-c').forEach(c=>{c.classList.toggle('off',el<+c.dataset.dc);c.classList.toggle('on',DU.sel===c.dataset.k)});
  $('duT').textContent='🏠 '+al(me)+' : '+al(1-me)+' 🏠';
- $('duClk').textContent=DU.st==='cd'?'…':fmt((DU.t>=150?210:150)-DU.t);
+ $('duClk').textContent=DU.st==='cd'?'…':fmt((DU.t>=180?240:180)-DU.t);
  $('duZone').setAttribute('opacity',DU.sel&&DU.st==='play'?'.22':'0');
  if(DU.st==='cd'){const b=$('duBan');b.textContent=Math.max(1,Math.ceil(DU.cd));b.classList.add('on')}}
 function duGuest(dt){if(DU.st==='cd')DU.cd=Math.max(0,DU.cd-dt);else if(DU.st==='play')DU.t+=dt;
  for(const u of DU.units)if(u.tx!=null){const k=Math.min(1,dt*10);u.x+=(u.tx-u.x)*k;u.y+=(u.ty-u.y)*k}
+ for(const q of DU.pj||[])if(q.tx!=null){const k=Math.min(1,dt*10);q.x+=(q.tx-q.x)*k;q.y+=(q.ty-q.y)*k}
  if(performance.now()-DU.snT>9000&&!DU.res)duAbort('Связь потеряна. Награды нет.')}
-function duSnap(){csend('d-s',{ds:DU.sid,t:+DU.t.toFixed(1),st:DU.st,cd:+DU.cd.toFixed(1),e:[+DU.el[0].toFixed(1),+DU.el[1].toFixed(1)],h:DU.houses.map(h=>Math.max(0,Math.round(h.hp))),u:DU.units.map(u=>[u.id,u.k,u.o,Math.round(u.x),Math.round(u.y),Math.max(0,Math.round(u.hp)),u.max]),f:DU.out.splice(0)})}
+function duSnap(){csend('d-s',{ds:DU.sid,t:+DU.t.toFixed(1),st:DU.st,cd:+DU.cd.toFixed(1),e:[+DU.el[0].toFixed(1),+DU.el[1].toFixed(1)],h:DU.houses.map(h=>Math.max(0,Math.round(h.hp))),u:DU.units.map(u=>[u.id,u.k,u.o,Math.round(u.x),Math.round(u.y),Math.max(0,Math.round(u.hp)),u.max]),f:DU.out.splice(0),hd:DU.hd,nx:DU.nx,j:DU.pj.map(q=>[q.id,q.c,q.o,Math.round(q.x),Math.round(q.y),q.r||0])})}
 function duSnapIn(p){if(DU.res)return;DU.snT=performance.now();const was=DU.st;DU.st=p.st;if(was==='cd'&&p.st==='play')duBan('В бой!',900);DU.t=p.t;DU.cd=p.cd;DU.el=p.e;
  p.h.forEach((hp,i)=>{if(DU.houses[i])DU.houses[i].hp=hp});
  const m=new Map(DU.units.map(u=>[u.id,u]));DU.units=p.u.map(a=>{let u=m.get(a[0]);if(!u)u={id:a[0],k:a[1],o:a[2],x:a[3],y:a[4]};u.tx=a[3];u.ty=a[4];u.hp=a[5];u.max=a[6];return u});
- (p.f||[]).forEach(f=>DU.shots.push(duShot(f)));if(!DU.ot&&p.t>=150){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}}
+ if(p.hd){DU.hd=p.hd;DU.nx=p.nx||[]}{const pm=new Map((DU.pj||[]).map(q=>[q.id,q]));DU.pj=(p.j||[]).map(a=>{let q=pm.get(a[0]);if(!q)q={id:a[0],x:a[3],y:a[4]};q.c=a[1];q.o=a[2];q.tx=a[3];q.ty=a[4];q.r=a[5];return q})}
+ (p.f||[]).forEach(f=>DU.shots.push(duShot(f)));if(!DU.ot&&p.t>=180){DU.ot=1;duBan('Двойные рыбки! ×2',1500)}}
 function duFrame(ts){DU.raf=0;if(!DU.on||cur!=='catdef'||VIEW!=='duel')return;const dt=Math.min(.05,(ts-DU.last)/1000||0);DU.last=ts;
  try{if(DU.host){duStep(dt);DU.sa+=dt;if(!DU.bot&&DU.sa>=.125){DU.sa=0;duSnap()}}else duGuest(dt);duRender(dt);duHud()}catch(e){console.error('duel',e)}
  DU.raf=requestAnimationFrame(duFrame)}
-function duReset(){DU.on=1;DU.starting=0;DU.st='cd';DU.cd=3.5;DU.t=0;DU.el=[5,5];DU.units=[];DU.shots=[];DU.out=[];DU.nid=1;DU.sel=null;DU.paid=0;DU.res=null;DU.houses=duHouses();DU.bt=4;DU.snT=performance.now();DU.sa=0;DU.ot=0;
+function duSetup(){DU.pj=[];DU.pid=1;DU.map=(+DU.sid||0)%4;const mk=p=>{const a=(DU.tm[p]||[]).filter(k=>TW[k]).slice(0,6);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return{h:a.slice(0,3),q:a.slice(3)}};DU.dk=[mk(0),mk(1)];DU.hd=DU.dk.map(d=>d.h);DU.nx=DU.dk.map(d=>d.q[0])}
+function duReset(){DU.on=1;DU.starting=0;DU.st='cd';DU.cd=3.5;DU.t=0;DU.el=[5,5];DU.units=[];DU.shots=[];DU.out=[];DU.nid=1;DU.sel=null;DU.paid=0;DU.res=null;DU.houses=duHouses();DU.bt=4;DU.snT=performance.now();DU.sa=0;DU.ot=0;duSetup();
  view('duel');$('cdDuel').classList.add('on');$('duOv').classList.remove('on');$('duBan').classList.remove('on');duBuild();duCardsBuild();DU.last=performance.now();cancelAnimationFrame(DU.raf);DU.raf=requestAnimationFrame(duFrame);coTrack()}
 function duStop(){cancelAnimationFrame(DU.raf);DU.raf=0;DU.on=0;DU.st='idle';DU.rdy=0;DU.starting=0;DU.pend=0;$('cdDuel').classList.remove('on');view('menu')}
 function duLeave(){duStop();MODE='duel';TAB='u';coTrack();menu()}
@@ -7440,7 +7497,7 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-md],[da
 $('cdDuel').addEventListener('click',e=>{const q=e.target.closest('#duQuit');
  if(q){if(DU.res){duLeave();return}if(!confirm('Выйти из дуэли? Награды не будет.'))return;if(!DU.bot)csend('d-bye',{ds:DU.sid});duLeave();return}
  const c=e.target.closest('.du-c');
- if(c){unlock();if(DU.st!=='play'){sfx('deny');return say('Дуэль ещё не началась')}const k=c.dataset.k;if(DU.el[DU.me]<+c.dataset.dc){sfx('deny');return say('Не хватает рыбок 🐟')}DU.sel=DU.sel===k?null:k;sfx('click');return duHud()}
+ if(c){unlock();if(DU.st!=='play'){sfx('deny');return say('Дуэль ещё не началась')}const k=c.dataset.k;if(!k)return;if(DU.el[DU.me]<+c.dataset.dc){sfx('deny');return say('Не хватает рыбок 🐟')}DU.sel=DU.sel===k?null:k;sfx('click');return duHud()}
  const du=e.target.closest('[data-du]');if(!du)return;
  if(du.dataset.du==='lobby')return duLeave();
  if(du.dataset.du==='again'){DU.on=0;duBotStart()}});
