@@ -5548,7 +5548,7 @@ function step(dt){
    if(cf.gain){t.cd=9;return}
     if(cf.kind==='roll'){if(G.state!=='wave'){t.cd=.25;return}if(KIND.roll(t)===false){t.cd=.2;return}t.cd=cf.cd;t.kick=1;return}
    if(cf.inc){if(G.state!=='wave'){t.cd=1;return}t.cd=cf.cd;const n=Math.round(cf.inc);payTo(t,n);t.dd=(t.dd||0)+n;t.kick=1;pop(t.x,t.y-24,'+'+n,1);sfx('coin');return}
-   const fnd=()=>{let tg=null;G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=cf.range+e.r*.5&&(!tg||e.d>tg.d))tg=e});return tg};
+   const fnd=()=>{let tg=null;G.en.forEach(e=>{if(!e.dead&&dist(e,t)<=cf.range+e.r*.5&&vVis(t,e)&&(!tg||vPR(t,e,tg)))tg=e});return tg};
    if(t.wd){/* Лилу: замах закончился — удар */t.wd=0;t.cd=cf.cd;const w=t.wt,R=cf.range*1.4,tg=w&&!w.dead&&dist(w,t)<=R+w.r?w:fnd();if(tg){t.kick=1;sfx('paw');vib(20);ring(tg.x,tg.y,32,'#9ca3af');puff(tg.x,tg.y,'#e5e7eb',8);dmg(tg,cf.dmg*(t.bd||1),t);G.en.slice().forEach(e=>{if(e!==tg&&!e.dead&&dist(e,tg)<=34)dmg(e,cf.dmg*(t.bd||1)*.5,t)})}return}
    const tg=fnd();if(!tg)return;t.fl=tg.x<t.x?-1:1;
    if(cf.wind){t.wd=1;t.wt=tg;t.cd=cf.wind;pop(t.x,t.y-30,'!',0,'#ef4444');ring(t.x,t.y,cf.range,'#ef4444');ring(tg.x,tg.y,22,'#ef4444');sfx('warn');return}
@@ -8075,6 +8075,132 @@ const dm2=dmg;dmg=function(e,n,src,q){dm2.apply(this,arguments);
  if(src&&src.cf&&!q&&e&&(e.ik||0)<G.tm&&G.fx.length<120){e.ik=G.tm+.08;const col=pc(src.cf),c=mk('circle',{cx:e.x,cy:e.y-4,fill:'none',stroke:col,'stroke-width':2.4},L.fx);
   addFx(c,.22,k=>{c.setAttribute('r',f(4+10*k));c.setAttribute('opacity',f(1-k))});puff(e.x,e.y-4,col,2)}};
 })();
+
+/* ===== v2: приоритет цели · ветки апгрейдов · новые зомби · Бамбуковая Деревня · карточки как в «Дуэли» ===== */
+const PRN={f:'Первый',l:'Последний',s:'Сильный'};
+const vPR=(t,e,g)=>{const m=t.pri||'f';return m==='l'?e.d<g.d:m==='s'?e.hp>g.hp:e.d>g.d};
+const vLamp=e=>G.tw.some(t=>t.cf.lamp&&dist(t,e)<=t.cf.range);
+const vVis=(t,e)=>{if(e.jt>0)return false;if(e.c.inv&&t.k!=='kosm')return false;if(e.fgd&&!t.cf.nofog&&!vLamp(e))return false;return true};
+let FOG=[];
+/* --- приоритет цели: повторный тап по выбранному котику --- */
+let preSel=null,preT=null;
+svg.addEventListener('pointerdown',e=>{preT=null;if(G&&G.tw&&!G.co){const[c,r]=cell(e);preT=G.tw.find(t=>t.c===c&&t.r===r)||null;preSel=G.sel}},true);
+svg.addEventListener('pointerdown',()=>{const t=preT;preT=null;if(t&&t===preSel&&G.sel===t&&t.cf.range>0&&!t.cf.gain&&!t.cf.inc){t.pri={f:'l',l:'s',s:'f'}[t.pri||'f'];pop(t.x,t.y-26,'Цель: '+PRN[t.pri],0,'#6366f1');sfx('click');select(t)}});
+/* --- ветки апгрейдов на 3-м уровне --- */
+const BRD=[['Мощь','+50% урона',{dmg:1.5}],['Скорость','быстрее на 30%, дальше',{cd:.7,range:1.1}]],
+ BRE=[['Щедрость','+60% дохода',{gain:1.6,inc:1.6}],['Темп','+30% дохода, чаще',{gain:1.3,inc:1.3,cd:.8}]],
+ BRA=[['Широкая аура','+35% радиус',{range:1.35}],['Резонанс','аура сильнее на 40%',{}]],
+ BRT={flame:[['Напалм','огонь по площади',{dmg:3.2,cd:3.2},{aoe:34}],['Жар','+70% урона, дальше',{dmg:1.7,range:1.12}]],
+ murzik:[['Сдвоенный бросок','быстрее в 1,7 раза',{cd:.6}],['Тяжёлый клубок','+80% урона, дальше',{dmg:1.8,range:1.12}]],
+ barsik:[['Железная лапа','+80% урона',{dmg:1.8}],['Длинная лапа','радиус +25%',{range:1.25,dmg:1.2}]],
+ murka:[['Большой взрыв','площадь +50%',{aoe:1.5,dmg:1.2}],['Скорострел','быстрее на 40%',{cd:.6}]],
+ frost:[['Вечная зима','замедление 70%',{},{slow:.3}],['Ледяной шип','+200% урона, дальше',{dmg:3,range:1.15}]],
+ tigra:[['Ярость','быстрее на 35%',{cd:.65}],['Острые когти','+80% урона',{dmg:1.8,range:1.1}]],
+ sphinx:[['Бронебой','+70% урона',{dmg:1.7}],['Дальний взор','дальше, быстрее',{range:1.35,cd:.8}]],
+ ninja:[['Сюрикены','урон x2',{dmg:2}],['Тень','быстрее на 40%',{cd:.6}]],
+ pirat:[['Картечь','площадь +60%',{aoe:1.6}],['Тяжёлое ядро','+80% урона',{dmg:1.8}]],
+ kosm:[['Мощный лазер','+70% урона',{dmg:1.7}],['Дальний лазер','дальше, быстрее',{range:1.3,cd:.75}]],
+ jelly:[['Клейкий','замедление 70%',{},{slow:.3}],['Большая лужа','площадь +50%, урон +40%',{aoe:1.5,dmg:1.4}]],
+ fairy:[['Звездопад','быстрее на 35%',{cd:.65}],['Яркая звезда','+80% урона',{dmg:1.8}]],
+ knight:[['Вихрь','радиус +30%',{range:1.3}],['Огненный меч','+80% урона',{dmg:1.8}]],
+ lila:[['Быстрый коготь','быстрее на 30%',{cd:.7,wind:.7}],['Смертельный','+80% урона',{dmg:1.8}]]};
+const brOpts=t=>BRT[t.k]||(t.cf.gain||t.cf.inc?BRE:t.cf.aura?BRA:BRD);
+function brPick(t,i){const o=brOpts(t)[i],c=t.cf,n={};for(const k in o[2])if(c[k]!=null)n[k]=c[k]*o[2][k];Object.assign(n,o[3]||{});
+ if(c.aura&&i===1)n.aura={dm:c.aura.dm*1.4,sp:c.aura.sp*1.4};
+ t.cf=Object.assign({},c,n);t.br={n:o[0]};t.kick=1;ring(t.x,t.y,44,'#c084fc');puff(t.x,t.y,'#e9d5ff',10);sfx('win');pop(t.x,t.y-28,o[0],0,'#a855f7');select(t)}
+function brUi(t){const inf=$('cdInf');let b=$('cdBr');if(!b){b=document.createElement('div');b.id='cdBr';b.className='cd-br';inf.insertBefore(b,inf.querySelector('.cdi-b'))}
+ const on=!!t&&t.lv>=3&&!t.br&&!G.co&&t.brOpen;inf.classList.toggle('brx',on);if(!on){b.style.display='none';return}
+ b.style.display='grid';b.innerHTML=`<small>Ур. 4 · ${brCost(t)} рыбок: выбери путь</small>`+brOpts(t).map((x,i)=>`<button data-bi="${i}"><b>${x[0]}</b><span>${x[1]}</span></button>`).join('')+'<button class="bk" data-bx>Назад</button>'}
+const brCost=t=>upc({k:t.k,lv:2})*2;let lastT=null;
+$('cdUp').addEventListener('click',()=>{const t=G.sel;if(!t||G.co||t.lv<3||t.br)return;t.brOpen=true;sfx('click');select(t)});
+$('cdInf').addEventListener('click',e=>{const x=e.target.closest('[data-bi]'),t=G.sel;if(!t||t.br||t.lv<3||G.co)return;if(e.target.closest('[data-bx]')){t.brOpen=false;select(t);return}if(!x)return;const c=brCost(t);if(G.fish<c){sfx('deny');return say('Не хватает рыбок')}G.fish-=c;t.inv+=c;t.brOpen=false;brPick(t,+x.dataset.bi)});
+{const s0=select;select=function(t){if(lastT&&lastT!==t)lastT.brOpen=false;lastT=t;s0(t);brUi(t);if(!t)return;if(!G.co){$('cdiL').textContent='Ур. '+(t.br?4:t.lv)+'/4';if(t.lv>=3&&!t.br){const u=$('cdUp');u.disabled=false;u.firstChild.textContent='Ур.4 · '+brCost(t)}}const a=t.cf.range>0&&!t.cf.gain&&!t.cf.inc;let P=$('cdiP');if(!P){P=document.createElement('small');P.id='cdiP';$('cdiR').after(P)}P.textContent=(a?'Цель: '+PRN[t.pri||'f']:'')+(t.br?(a?' · ':'')+t.br.n:'');P.style.display=P.textContent?'block':'none';if(t.br)t.lt.textContent+='✦'}}
+{const u9=ui;ui=function(){u9();const t=G.sel;if(t&&t.lv>=3&&!t.br&&!G.co)$('cdUp').style.opacity=G.fish>=brCost(t)?1:.55}}
+/* --- новые зомби --- */
+Object.assign(EN,{shield:{hp:70,sp:25,r:15,gold:17,dmg:2,shd:60},invis:{hp:36,sp:44,r:12,gold:15,dmg:1,inv:1},jumper:{hp:24,sp:52,r:11,gold:13,dmg:1,jmp:1},panda:{hp:420,sp:17,r:23,gold:45,dmg:3,arm:2.5},dog16:{hp:560,sp:21,r:26,gold:110,dmg:5,sum:1}});
+const ZV={shield:zom(1.08,'#94a3b8','#64748b','<path d="M-24-6h14v12q0 9-7 12-7-3-7-12z" fill="#38bdf8" stroke="#0c4a6e" stroke-width="1.8"/><path d="M-17-2v16" stroke="#e0f2fe" stroke-width="1.6"/>'),
+ invis:'<g opacity=".78">'+zom(1,'#c4b5fd','#8b5cf6','<circle cx="-4" cy="-4" r="2.4" fill="#fff"/><circle cx="6" cy="-4" r="2.4" fill="#fff"/>')+'</g>',
+ jumper:zom(.95,'#fdba74','#f97316','<path d="M-7 16l-3 4 6 2-6 3M7 16l3 4-6 2 6 3" stroke="#78350f" stroke-width="2" fill="none"/>'),
+ panda:zom(1.6,'#f8fafc','#111827','<circle cx="-8" cy="-3" r="4.5" fill="#111827"/><circle cx="8" cy="-3" r="4.5" fill="#111827"/><path d="M-4 12h8" stroke="#15803d" stroke-width="3"/>')};
+/* --- два котика Бамбуковой Деревни --- */
+TW.bamboo={n:'Бамбук',role:'Лучник',cost:115,pr:380,range:128,cd:.55,dmg:3.4,pj:'star',sp:430,bg:'#dcfce7',nofog:1,inf:'Метко стреляет дротиками и видит сквозь туман',st:'Вырос в бамбуковой роще и часами стоит неподвижно. Туман для него не помеха.'};
+TW.lantern={n:'Фонарик',role:'Маяк',cost:90,pr:330,range:105,cd:.9,dmg:2,pj:'yarn',sp:320,lamp:1,nofog:1,bg:'#fef3c7',inf:'Его свет разгоняет туман: зомби рядом видны всем котикам',st:'Хранитель деревенских огней. Ни один зомби не проскользнёт мимо его света.'};
+SYM.bamboo=cat('#86efac','#15803d','<path d="M21-10v34" stroke="#65a30d" stroke-width="4" stroke-linecap="round"/><path d="M18 2h6M18 13h6" stroke="#365314" stroke-width="2"/>');
+SYM.lantern=cat('#fde68a','#b45309','<path d="M22-12v6" stroke="#475569" stroke-width="1.6"/><rect x="17" y="-6" width="10" height="14" rx="3" fill="#ef4444"/><circle cx="22" cy="1" r="3" fill="#fde047"/>');
+['bamboo','lantern'].forEach(k=>{TWB[k]=Object.assign({},TW[k]);KEYOF.set(TWB[k],k)});
+$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+Object.keys(ZV).map(k=>`<g id="cd-${k}">${ZV[k]}</g>`).join('')+['bamboo','lantern'].map(k=>`<g id="cd-${k}">${SYM[k]}</g>`).join('')+'<g id="cd-dog16" filter="hue-rotate(90deg)"><use href="#cd-dog15"/></g></defs></svg>');
+/* --- Бамбуковая Деревня: мир, три длинных маршрута, мосты, туман --- */
+const BW=WORLDS.length,R0=ROUTES.length;
+WORLDS.push({n:'Бамбуковая Деревня',s:'Bamboo-Village',c:'#84cc16',d:'Туманные рощи, мосты через реки и зомби-панды. Карта длиннее, а в тумане зомби видно плохо.',lv:['Роща у входа','Мост над рекой','Туман в бамбуке','Деревня панд','Босс: Доктор Пёс']});
+ROUTES.push([[30,8],[30,90],[300,90],[300,210],[60,210],[60,330],[300,330],[300,450],[120,450],[120,570],[330,570]],
+ [[330,8],[330,150],[30,150],[30,270],[300,270],[300,390],[30,390],[30,510],[330,510],[330,570]],
+ [[8,30],[210,30],[210,150],[30,150],[30,270],[300,270],[300,390],[90,390],[90,510],[330,510],[330,570]]);
+MAPS.push([R0,R0+1,R0+2,R0+1,R0+2]);BS.push('bowl');DOGS.push('dog16');
+{const bm9=buildMap;buildMap=function(w){FOG=[];const o=$('cdFogL');if(o)o.remove();if(w!==BW)return bm9(w);bm9(0);
+ let s=31;const rn=()=>(s=(s*9301+49297)%233280)/233280;let m='';
+ for(let r=0;r<NR;r++)for(let c=0;c<NC;c++)if(!ROAD.has(c+','+r)&&rn()<.5){const x=c*C+10+rn()*40,y=r*C+14+rn()*30;m+=`<rect x="${x|0}" y="${y|0}" width="5" height="26" rx="2" fill="#65a30d"/><rect x="${(x+8)|0}" y="${(y+5)|0}" width="4" height="20" rx="2" fill="#84cc16"/><path d="M${x|0} ${(y+9)|0}h5M${x|0} ${(y+18)|0}h5" stroke="#365314" stroke-width="1.4"/>`}
+ const hz=y=>PATH.some((p,i)=>i&&Math.abs(p[1]-PATH[i-1][1])<2&&Math.abs(p[1]-y)<45);let cl='';
+ [150,400].forEach((y0,k)=>{let y=y0;for(const d of [0,30,-30,60,-60])if(!hz(y0+d)){y=y0+d;break}
+  m+=`<rect x="0" y="${y-17}" width="${W}" height="34" fill="#38bdf8"/><rect x="0" y="${y-6}" width="${W}" height="9" fill="#bae6fd" fill-opacity=".55"/><path d="M10 ${y+8}h28M120 ${y-9}h24M230 ${y+9}h30" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>`;
+  cl+=`<clipPath id="bamC${k}"><rect x="0" y="${y-20}" width="${W}" height="40"/></clipPath><g clip-path="url(#bamC${k})"><polyline points="${PATH.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#92400e" stroke-width="58" stroke-linejoin="round"/><polyline points="${PATH.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#fcd34d" stroke-width="50" stroke-dasharray="3 7" stroke-linejoin="round" stroke-opacity=".75"/></g>`;
+  for(let r=0;r<NR;r++)for(let c=0;c<NC;c++)if(Math.abs(r*C+30-y)<40)ROAD.add(c+','+r)});
+ $('cdMap').insertAdjacentHTML('beforeend',m+cl);
+ [.28,.5,.72,.9].forEach(k=>{const p=pos(TOT*k);FOG.push({x:p[0],y:p[1],r:58})});
+ $('cdEn').insertAdjacentHTML('afterend','<g id="cdFogL" style="pointer-events:none">'+FOG.map(f=>`<ellipse cx="${f.x}" cy="${f.y}" rx="${f.r+8}" ry="${f.r-6}" fill="#f1f5f9" fill-opacity=".5"/><ellipse cx="${f.x+14}" cy="${f.y-10}" rx="${f.r-14}" ry="${f.r-24}" fill="#fff" fill-opacity=".5"/>`).join('')+'</g>')}}
+/* --- волны: щитовики, лекари, невидимки, прыгуны, панды; карта длиннее --- */
+function vWaves(w){if(!WAVES)return;WAVES.forEach((x,i)=>{
+ if(w>=1&&i>=1)x.push(['jumper',1+Math.floor(i/3),Math.max(.9,1.8-.08*i),2]);
+ if(w>=1&&i>=2)x.push(['shield',1+Math.floor((i-1)/3),Math.max(1.1,2.4-.1*i),3]);
+ if(w>=2&&i>=3&&!x.some(a=>a[0]==='healer'))x.push(['healer',1+Math.floor(i/4),3,5]);
+ if(w>=3&&i>=3)x.push(['invis',1+Math.floor((i-2)/3),Math.max(1.2,2.2-.08*i),4]);
+ if(w===BW)x.push(['panda',1+Math.floor(i/2),Math.max(1.6,3.2-.1*i),1])})}
+{const sl9=startLevel,wp=$('cdSvg').parentNode;startLevel=function(w,l){if(!CQ.on){if(w===BW){setDim(360,600,6,10);wp.style.aspectRatio='3/5';wp.style.width='min(100%,398px,max(200px,calc((100dvh - 292px)*.6)))'}else{if(W!==360||H!==480)setDim(360,480,6,8);wp.style.aspectRatio='';wp.style.width=''}}
+ sl9.apply(this,arguments);vWaves(w)}}
+/* --- логика: щит, невидимость, туман, прыжки --- */
+const VBAN={shield:'Щитовики! Сначала сбей щит',invis:'Невидимки! Их видит только Космо',jumper:'Прыгуны перескакивают башни',panda:'Панда-танк!'};
+{const d9=dmg;dmg=function(e,n,s,q){if(e&&!e.dead&&e.c.shd){if(e.sh==null){e.sh=e.c.shd*e.max/e.c.hp;e.hf.setAttribute('fill','#38bdf8')}
+ if(e.sh>0){const a=Math.min(e.sh,n);e.sh-=a;n-=a;show(e.hb,1);if(e.sh<=0){e.hf.setAttribute('fill','#34d399');pop(e.x,e.y-16,'щит разбит',0,'#38bdf8');sfx('pop')}else{e.fl=.1}if(n<=0)return}}
+ d9.call(this,e,n,s,q)}}
+{const s9=step;step=function(dt){const ko=G.tw.some(t=>t.k==='kosm');if(!G.v2)G.v2={};
+ G.en.forEach(e=>{if(e.dead)return;const c=e.c;if(VBAN[e.type]&&!G.v2[e.type]){G.v2[e.type]=1;ban(VBAN[e.type])}
+  e.fgd=FOG.length>0&&FOG.some(f=>Math.hypot(e.x-f.x,e.y-f.y)<f.r)&&((G.tm*.7+e.id*.9)%2<1.1);
+  e.g.setAttribute('opacity',c.inv?(ko?.6:.2):(FOG.length&&e.fgd&&!vLamp(e)?.35:1))});
+ s9(dt);
+ G.en.forEach(e=>{if(e.dead||!e.c.jmp)return;if(e.jt>0){e.jt-=dt;e.d=Math.min(TOT,e.d+130*dt)}else{e.jc=(e.jc||0)-dt;if(e.jc<=0&&G.tw.some(t=>dist(t,e)<40)){e.jt=e.jT=.5;e.jc=3;sfx('whoosh')}}})}}
+{const dr9=draw;draw=function(dt){dr9(dt);G.en.forEach(e=>{if(e.c.jmp&&e.jt>0){const k=Math.sin((1-e.jt/e.jT)*Math.PI);e.b.setAttribute('transform',`translate(0 ${(-k*26).toFixed(1)}) scale(${(1+.12*k).toFixed(2)})`)}});
+ const f=$('cdFogL');if(f)f.setAttribute('opacity',(.8+.2*Math.sin(G.tm*.8)).toFixed(2))}}
+/* --- карточки котиков в стиле «Дуэли» + ветки --- */
+{const st=document.createElement('style');st.textContent=`.cd-t,.tm-s{background:linear-gradient(165deg,rgba(255,255,255,.55),rgba(255,255,255,0) 45%),var(--bg);border:2px solid rgba(255,255,255,.75);border-radius:14px;box-shadow:0 3px 8px rgba(0,0,0,.28),inset 0 -12px 16px rgba(0,0,0,.06);transition:transform .12s,box-shadow .12s}
+.cd-t{position:relative;animation:duDeal .55s cubic-bezier(.2,1.5,.4,1) backwards}.cd-t b{font:800 9.5px Comfortaa,sans-serif;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd-t>span{position:absolute;top:3px;left:3px;gap:1px;background:#1e1b4b;color:#fde68a;border-radius:9px;padding:1px 5px 1px 3px;font-size:10.5px;font-weight:800;box-shadow:0 2px 5px rgba(0,0,0,.35)}.cd-t>span svg{width:11px;height:11px}
+.cd-t.sel{border-color:#f43f5e;transform:translateY(-6px);box-shadow:0 0 0 2px rgba(244,63,94,.35),0 8px 16px rgba(244,63,94,.35)}
+.cd-inf{grid-template-columns:minmax(0,1fr)}.cd-inf.brx .cdi-g,.cd-inf.brx .cdi-b{display:none}#cdiP{font-size:10px!important;color:#fde68a!important}.cd-br{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin:0}.cd-br small{grid-column:1/3;font-weight:800;font-size:11px;color:#fde68a}
+.cd-br button{display:grid;gap:2px;text-align:left;padding:7px 8px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:2px solid rgba(255,255,255,.3)}.cd-br button.bk{grid-column:1/3;padding:5px;text-align:center;background:rgba(255,255,255,.14)}.cd-br b{font:800 12px Comfortaa,sans-serif}.cd-br span{font-size:10px;opacity:.9;line-height:1.2}`;document.head.appendChild(st)}
+
+/* ===== v3: карта в стиле «Дуэли» (рамка тропы, тени, декор по миру) + иконка счётчика зомби ===== */
+{const zc=$('cdZC');if(zc&&zc.firstElementChild)zc.firstElementChild.outerHTML='<svg viewBox="-18 -22 36 40" width="20" height="22" style="flex:none"><use href="#cd-zcat"/></svg>'}
+const MTH=w=>w===3?{k:'snow',b:['#ffffff','#9fbfd6'],a:['pine','drift','rock']}:w===4||w===9?{k:'lava',b:['#4a3a3a','#150f12'],a:['lrock','ember','lrock']}:w===2?{k:'neon',b:['#8b5cf6','#2e1065'],a:['crystal','crate','crystal']}:w>=10&&w<15?{k:'sand',b:['#fde68a','#b45309'],a:['cactus','dune','rock']}:w===8?{k:'rock',b:['#d6d3d1','#78716c'],a:['rock','pine','bush']}:{k:'grass',b:['#d9c58b','#8a6d3b'],a:['tree','bush','flower','rock']};
+const MDC={tree:()=>'<ellipse cy="10" rx="13" ry="4.5" fill="#0003"/><rect x="-2.5" y="-2" width="5" height="12" rx="2" fill="#7a4a1a"/><circle cy="-9" r="12" fill="#2f9e44"/><circle cx="-6" cy="-4" r="8" fill="#43b85a"/><circle cx="6" cy="-12" r="7" fill="#63d471"/><circle cx="-3" cy="-15" r="3" fill="#fff" opacity=".35"/>',
+ bush:()=>'<ellipse cy="6" rx="13" ry="4" fill="#0003"/><circle cx="-6" r="7" fill="#2f9e44"/><circle cx="5" cy="-1" r="8" fill="#43b85a"/><circle cy="-5" r="6" fill="#5fd06f"/><circle cx="3" cy="-7" r="1.8" fill="#fff" opacity=".4"/>',
+ flower:q=>{const c=['#f472b6','#fde047','#fff','#c084fc'][q%4];return `<ellipse cy="5" rx="8" ry="2.5" fill="#0002"/><path d="M0 5V-2" stroke="#2f9e44" stroke-width="2"/><circle cx="-4" cy="-3" r="3.2" fill="${c}"/><circle cx="4" cy="-3" r="3.2" fill="${c}"/><circle cy="-6" r="3.2" fill="${c}"/><circle cy="-2" r="2.4" fill="#f59e0b"/>`},
+ rock:()=>'<ellipse cy="7" rx="13" ry="4" fill="#0003"/><path d="M-12 7L-8-5 0-9 9-4 12 7Z" fill="#a8a29e"/><path d="M-8-5L0-9 9-4 3 0Z" fill="#d6d3d1"/><path d="M-12 7L-8-5 3 0 0 7Z" fill="#78716c" opacity=".55"/>',
+ pine:()=>'<ellipse cy="10" rx="11" ry="4" fill="#0003"/><rect x="-2" y="2" width="4" height="9" fill="#6b4423"/><path d="M0-20L-11-2H11Z" fill="#1f7a4d"/><path d="M0-12L-13 6H13Z" fill="#2f9e6a"/><path d="M0-20L-5-12H5Z M0-12L-6-5H6Z" fill="#fff"/>',
+ drift:()=>'<ellipse cy="5" rx="14" ry="5" fill="#9fbfd6" opacity=".6"/><ellipse cx="-2" cy="3" rx="12" ry="5" fill="#fff"/>',
+ lrock:()=>'<ellipse cy="7" rx="13" ry="4" fill="#0006"/><path d="M-12 7L-7-8 2-12 11-3 12 7Z" fill="#4b4452"/><path d="M-7-8L2-12 4-3Z" fill="#6b6475"/><path d="M-3 7L0-2 4 7" stroke="#fb923c" stroke-width="2" fill="none"/>',
+ ember:()=>'<circle r="9" fill="#fb923c" opacity=".25"/><circle r="4" fill="#f97316"/><circle r="2" fill="#fde047"/>',
+ crystal:()=>'<ellipse cy="8" rx="11" ry="3.5" fill="#0006"/><path d="M-6 8L-9-4-3-14 0-2Z" fill="#22d3ee"/><path d="M0 8L-2-8 5-18 10-2 8 8Z" fill="#a78bfa"/><path d="M5-18L10-2" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/>',
+ crate:()=>'<ellipse cy="9" rx="12" ry="3.5" fill="#0006"/><rect x="-10" y="-8" width="20" height="17" rx="3" fill="#1e293b" stroke="#22d3ee" stroke-width="2"/><path d="M-10 0h20M0-8V9" stroke="#22d3ee" stroke-opacity=".5"/>',
+ cactus:()=>'<ellipse cy="10" rx="11" ry="3.5" fill="#0003"/><rect x="-4" y="-14" width="8" height="25" rx="4" fill="#3f9b4a"/><path d="M-4-2h-5v-8M4 2h5v-8" stroke="#3f9b4a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M0-12v20" stroke="#6fd37a" stroke-width="1.4"/>',
+ dune:()=>'<ellipse cy="5" rx="15" ry="5" fill="#c9902e" opacity=".5"/><ellipse cx="-2" cy="3" rx="13" ry="5" fill="#fbe7a1"/>'};
+const dSeg=(x,y)=>{let m=1e9;for(let i=1;i<PATH.length;i++){const a=PATH[i-1],b=PATH[i],dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(l||1))),q=Math.hypot(x-a[0]-dx*t,y-a[1]-dy*t);if(q<m)m=q}return m};
+{const bm2=buildMap;buildMap=function(w){bm2(w);const mp=$('cdMap'),th=MTH(w),pl=PATH.map(p=>p.join(',')).join(' '),ln=(wd,c,ex)=>`<polyline points="${pl}" fill="none" stroke="${c}" stroke-width="${wd}" stroke-linejoin="round" stroke-linecap="round" ${ex||''}/>`;
+ let h=mp.innerHTML;const i=h.indexOf('<polyline'),rim=ln(80,'rgba(0,0,0,.2)','transform="translate(0 4)"')+ln(78,th.b[1])+ln(72,th.b[0]);
+ h=i<0?h+rim:h.slice(0,i)+rim+h.slice(i);
+ let s=w*7+13;const rn=()=>(s=(s*16807)%2147483647)/2147483647;let d='';
+ for(let r=0;r<NR;r++)for(let c=0;c<NC;c++){if(ROAD.has(c+','+r)||rn()>.75)continue;const x=c*C+(rn()<.5?13:47)+rn()*4,y=r*C+(rn()<.5?16:46)+rn()*4;if(dSeg(x,y)<44)continue;
+  const k=th.a[(rn()*th.a.length)|0],sc=.62+rn()*.2;d+=`<g transform="translate(${x|0} ${y|0}) scale(${sc.toFixed(2)})">${MDC[k]((rn()*4)|0)}</g>`}
+ h+=`<defs><radialGradient id="cdVg" cx="50%" cy="50%" r="75%"><stop offset="60%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".22"/></radialGradient></defs>`+ln(3,'rgba(255,255,255,.55)','stroke-dasharray="1 15"')+d+`<rect width="${W}" height="${H}" fill="url(#cdVg)"/>`;
+ mp.innerHTML=h}}
 
 }catch(e){console.error('catdef',e)}})();
 </script>
