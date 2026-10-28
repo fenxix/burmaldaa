@@ -5325,7 +5325,7 @@ const st=document.createElement('style');st.textContent=`
 .cd-conf i{position:absolute;top:-14px;width:8px;height:12px;border-radius:2px;animation:cdconf 2.6s linear infinite}
 @keyframes cdconf{to{transform:translateY(560px) rotate(540deg)}}
 .cd-ban{position:absolute;left:0;right:0;top:34%;z-index:4;text-align:center;pointer-events:none;font:800 26px Comfortaa,sans-serif;color:#fff;text-shadow:0 3px 0 #7c3aed,0 0 18px rgba(124,58,237,.7);opacity:0}
-.cd-ban.on{animation:cdban 1.8s ease-out}
+.cd-ban.on{animation:cdban 1.8s ease-out}.cd-zc{position:absolute;right:8px;top:8px;z-index:9;display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;background:rgba(15,10,35,.72);border:1px solid rgba(255,255,255,.2);color:#fff;font:800 14px Montserrat,sans-serif;pointer-events:none}.cd-zc.on{display:flex}.cd-ov.on~.cd-zc{display:none}
 @keyframes cdban{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.1)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 .cd-sell{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;display:none;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:14px;font:800 13px Montserrat,sans-serif;color:#fff;background:linear-gradient(135deg,#f43f5e,#fb923c);box-shadow:0 6px 16px rgba(0,0,0,.35)}
 .cd-sell svg{width:20px;height:13px}
@@ -5403,7 +5403,7 @@ $('app').insertAdjacentHTML('beforeend',`<svg width="0" height="0" style="positi
 <div class="cd-tabs" id="cdTabs"><button data-t="w">${ic('map')}Миры</button><button data-t="k">${ic('team')}Котики</button><button data-t="m">${ic('gear')}Ещё</button></div><div class="cd-sub" id="cdSub"></div><div class="cd-body" id="cdBody"></div></div>
 <div class="cdv" id="cdPlay"><div class="cd-top"><button class="cd-ib" id="cdQuit" aria-label="Выйти">${ic('back')}</button><h2 id="cdLT"></h2><button class="cd-ib cd-snd" aria-label="Звук"></button></div>
 <div class="cd-hud"><div class="cd-chip" id="cdHpC"><svg viewBox="-24 -16 48 36"><use href="#cd-bowl"/></svg><b id="cdHp">10</b></div><div class="cd-chip">${fi()}<b id="cdFish">0</b></div><button class="cd-chip" id="cdWave">${ic('wave')}<span id="cdWT">Волна 0/5</span></button><button class="cd-chip cd-x2" id="cdX2" aria-label="Ускорение">${ic('ff')}<b>x1</b></button></div>
-<div class="cd-wrap"><svg id="cdSvg" viewBox="0 0 ${W} ${H}"></svg><div class="cd-ban" id="cdBan"></div><div class="cd-ov" id="cdOv"></div></div>
+<div class="cd-wrap"><svg id="cdSvg" viewBox="0 0 ${W} ${H}"></svg><div class="cd-ban" id="cdBan"></div><div class="cd-ov" id="cdOv"></div><div class="cd-zc" id="cdZC"><span>🧟</span><b>0</b></div></div>
 <div class="cd-dock" id="cdDock"><div class="cd-bar" id="cdBar"></div><div class="cd-inf" id="cdInf"><div class="cdi-h"><svg id="cdiI" viewBox="-28 -46 56 66"></svg><div class="cdi-n"><b id="cdiN"></b><small id="cdiR"></small></div><div class="cdi-l" id="cdiL"></div><button class="cdi-x" id="cdiX" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.600" stroke-linecap="round"/></svg></button></div><div class="cdi-g" id="cdiG"></div><div class="cdi-b"><button id="cdSell"><span></span>${fi()}</button><button id="cdUp"><span></span>${fi()}</button></div></div></div></div>
 <div class="cdv" id="cdFilm"><div class="cd-top"><button class="cd-ib" data-a="skip" aria-label="Выйти">${ic('back')}</button><h2 id="cdFT"></h2><button class="cd-ib t" data-a="skip">${ic('skip')}Пропустить</button></div>
 <div class="cd-fw"><div class="cd-film" id="cdFA" data-a="tap"></div><div class="cd-cap" id="cdFC" data-a="tap"></div></div><div class="cd-dots" id="cdFD"></div><div class="cd-pbar"><i id="cdFP"></i></div><button class="cd-btn" id="cdFN" data-a="tap">Далее</button></div>
@@ -5563,7 +5563,7 @@ function step(dt){
  G.pr=G.pr.filter(p=>!p.done);G.en=G.en.filter(e=>!e.dead);
  /* волна отбита */
  if(G.state==='wave'&&!(G.co&&!CQ.host)&&!G.q.length&&!G.en.length){const b=(20+10*G.wave)*(G.co?1.2:1)|0;G.fish+=b;if(G.co)G.pf+=b;pop(W/2+10,40,'+'+b,1);sfx('coin');
-  if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=G.co?14:SKIP?.8:9;ban('Волна отбита! ✨');if(G.co)coWc(b)}}}
+  if(G.wave>=MAXW)finish(true);else{G.state='break';G.cd=SKIP?.8:G.co?14:9;ban('Волна отбита! ✨');if(G.co)coWc(b)}}}
 function finish(win){G.state='over';SV.kills=(SV.kills||0)+(G.kills||0);if(win&&G.hp>=10)SV.pf=(SV.pf||0)+1;let n=0,gold=0;if(win){n=G.hp>=8?3:G.hp>=5?2:1;const k=LV.w+'-'+LV.l,o=SV.lv[k]||0;gold=o?(n>o?10*(n-o)+8+4*LV.w:8+4*LV.w):14+8*n+5*LV.w;SV.lv[k]=Math.max(o,n);SV.g+=gold;svs()}G.gold=gold;svs();achCheck();badge();
  sfx(win?'win':'lose');vib(win?[40,40,80]:[120,60,120]);const g=G;setTimeout(()=>{if(G===g&&G.state==='over')showOv(win?'win':'lose',n)},700)}
 
@@ -5576,9 +5576,9 @@ function draw(dt){
  G.shake=Math.max(0,G.shake-dt);$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}
 const N={hp:$('cdHp'),fish:$('cdFish'),wave:$('cdWave'),wt:$('cdWT')};
 function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel){$('cdUp').style.opacity=G.sel.lv>=3||G.fish>=upc(G.sel)?1:.55;const dd=$('cdiDD');if(dd)sT(dd,n1(G.sel.dd||0))}
- if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW} · ${(AUTO||G.co)?Math.ceil(G.cd):'▶'}`;go=1}
- else if(G.state==='wave')t=`Волна ${G.wave}/${MAXW} · ${G.co&&!CQ.host?G.rem:G.q.length+G.en.length}`;else t=`Волна ${G.wave}/${MAXW}`;
- sT(N.wt,t);N.wave.classList.toggle('go',!!go);
+ if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW>999?'∞':MAXW} · ${(AUTO||G.co)?Math.ceil(G.cd):'▶'}`;go=1}
+ else t=`Волна ${G.wave}/${MAXW>999?'∞':MAXW}`;
+ sT(N.wt,t);N.wave.classList.toggle('go',!!go);{const z=$('cdZC');if(z){const n=G.state==='wave'?(G.co&&!CQ.host?G.rem:G.q.length+G.en.filter(e=>!e.dead).length):0;sT(z.lastElementChild,n);z.classList.toggle('on',n>0)}}
  document.querySelectorAll('#cdBar .cd-t').forEach(b=>{const k=b.dataset.k;const n=G.tw.filter(t=>t.k===k&&(!G.co||t.o===CQ.me)).length;b.classList.toggle('no',G.fish<TW[k].cost||n>=MAXT);b.classList.toggle('sel',G.pick===k);sT(b.lastChild,n+'/'+MAXT)})}
 let raf=0,last=0;
 function frame(ts){raf=0;if(cur!=='catdef'||VIEW!=='play')return;const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
@@ -5676,7 +5676,7 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a],[dat
   if(d.a==='cf'){sfx('click');return cfilm(d.k)}
   if(d.a==='tm'){const i=SV.team.indexOf(d.k);if(i>=0){if(SV.team.length<2){sfx('deny');return say('В отряде нужен хотя бы один котик')}SV.team.splice(i,1)}else{if(SV.team.length>=TMAX){sfx('deny');return say('Отряд полон — сначала убери кого-нибудь')}SV.team.push(d.k)}svs();sfx('click');return menu()}
   if(d.a==='sset'){if(mute&&window.BSFX&&!window.BSFX.on)return say('Звук выключен в настройках приложения');mute=!mute;ls('cd_mute',mute?'1':'0');sndIcon();sfx('click');return menu()}
-  if(d.a==='sauto'){SKIP=!SKIP;ls('cd_skip',SKIP?'1':'0');if(SKIP&&G&&G.state==='break'&&!G.co)G.cd=Math.min(G.cd,.8);sfx('click');return menu()}
+  if(d.a==='sauto'){SKIP=!SKIP;ls('cd_skip',SKIP?'1':'0');if(SKIP&&G&&G.state==='break'&&(!G.co||CQ.host))G.cd=Math.min(G.cd,.8);sfx('click');return menu()}
   if(d.a==='sx2'){SPD=SPD===1?2:1;ls('cd_spd',SPD);spdUi();sfx('click');return menu()}
   if(d.a==='reset'){if(confirm('Сбросить весь прогресс Cat Defense: уровни, котиков и золото?')){SV=defSV();svs();badge();sfx('lose');menu()}return}
  if(d.a==='buy'){const t=TW[d.k];if(t.ep&&!SV.ep.includes(t.ep)){sfx('deny');return say('Сначала открой эпоху этого котика')}if(SV.g<t.pr){sfx('deny');return say('Не хватает золотых рыбок')}SV.g-=t.pr;SV.own.push(d.k);if(SV.team.length<TMAX)SV.team.push(d.k);svs();sfx('win');say(t.n+' теперь в твоей команде!');if(CF[d.k])return cfilm(d.k);menu()}});
@@ -6261,7 +6261,7 @@ const SKS=[];Object.keys(THEMES).forEach(t=>{const cs=THEMES[t].cats.filter(k=>S
 const LKP=60,pk=a=>a[Math.floor(Math.random()*a.length)];
 const skinG=(k,t)=>{if(!t)return SYM[k];const rb=t.slice(-1)==='!',h=rb?t.slice(0,-1):t;if(!THEMES[h])return SYM[k];return `<g filter="url(#cdf-${rb?'rb':h})">${SYM[k]}</g>${THEMES[h].acc}`};
 const star=(x,y)=>`<path d="M${x} ${y}l2 4 4 1-4 2-1 4-2-4-4-1 4-2z" fill="#fde047"/>`;
-const compose=k=>{const e=SV.evo[k]||0;return (e>=3?'<circle cy="2" r="27" fill="url(#cdEg)"/>':'')+skinG(k,SV.sk[k])+(e>=1?star(-24,-30):'')+(e>=2?star(22,-30):'')+(e>=4?'<circle cy="-4" r="22" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 4"/>':'')+(e>=5?'<path d="M-10-26L-7-38 0-30 7-38 10-26Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.2"/>':'')};
+const compose=(k,sk0,e0)=>{const e=e0!=null?e0:(SV.evo[k]||0);return (e>=3?'<circle cy="2" r="27" fill="url(#cdEg)"/>':'')+skinG(k,sk0!==undefined?sk0:SV.sk[k])+(e>=1?star(-24,-30):'')+(e>=2?star(22,-30):'')+(e>=4?'<circle cy="-4" r="22" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 4"/>':'')+(e>=5?'<path d="M-10-26L-7-38 0-30 7-38 10-26Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.2"/>':'')};
 function paint(k){const g=document.getElementById('cd-'+k);if(g)g.innerHTML=compose(k)}
 const paintAll=()=>Object.keys(TW).forEach(paint);
 $('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="cdEg"><stop offset="0" stop-color="#fde047" stop-opacity=".55"/><stop offset="1" stop-color="#fde047" stop-opacity="0"/></radialGradient>'+Object.keys(THEMES).map(t=>{const T=THEMES[t];return `<filter id="cdf-${t}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${T.hue}"/><feColorMatrix type="saturate" values="${T.sat}"/><feComponentTransfer><feFuncR type="linear" slope="${T.br}"/><feFuncG type="linear" slope="${T.br}"/><feFuncB type="linear" slope="${T.br}"/></feComponentTransfer></filter>`}).join('')+'<filter id="cdf-rb" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="0"><animate attributeName="values" from="0" to="360" dur="3.2s" repeatCount="indefinite"/></feColorMatrix><feColorMatrix type="saturate" values="1.7"/></filter><g id="cd-evo">'+SYM.evo+'</g>'+NEWK.map(k=>`<g id="cd-${k}"></g>`).join('')+SKS.map(s=>`<g id="${pvId(s)}">${skinG(s.k,skVal(s))}</g>`).join('')+'</defs></svg>');
@@ -6297,7 +6297,7 @@ SUBS.k.push(['e','Эволюция','team'],['x','Скины','star']);TG.e='k';
  if(c.evo)for(const k in c.evo)SV.evo[k]=Math.max(SV.evo[k]||0,c.evo[k]||0);if(Array.isArray(c.skins))SV.skins=[...new Set([...SV.skins,...c.skins])];SV.sk=Object.assign({},c.sk,SV.sk);if(c.dl&&!SV.dl)SV.dl=c.dl;evoApply();paintAll()}catch(e){console.warn('catdef merge',e)}}}
 $('cdX2').insertAdjacentHTML('afterend','<button class="cd-chip cd-x2" id="cdAuto" aria-label="Авто-пропуск волн"><b>Скип</b></button>');
 function autoUi(){const b=$('cdAuto');if(b){b.classList.toggle('on',SKIP);b.firstChild.textContent=SKIP?'Скип ✓':'Скип'}}
-$('cdAuto').addEventListener('click',()=>{unlock();SKIP=!SKIP;ls('cd_skip',SKIP?'1':'0');if(SKIP&&G&&G.state==='break'&&!G.co)G.cd=Math.min(G.cd,.8);sfx('click');autoUi();say(SKIP?'Авто-пропуск: волны идут одна за другой':'Новая волна через 9 секунд')});autoUi();
+$('cdAuto').addEventListener('click',()=>{unlock();SKIP=!SKIP;ls('cd_skip',SKIP?'1':'0');if(SKIP&&G&&G.state==='break'&&(!G.co||CQ.host))G.cd=Math.min(G.cd,.8);sfx('click');autoUi();say(G&&G.co&&!CQ.host?'Скип в коопе решает хост':SKIP?'Авто-пропуск: волны идут одна за другой':'Новая волна через 9 секунд')});autoUi();
 autoUi();
 
 /* ===== Часть 3: марафоны, новые зомби, задания дня, альбом + лукошки с падением с космоса ===== */
@@ -6536,9 +6536,9 @@ function coJoin(){if(CQ.ch||!GS().room||!GS().uid)return;
   ch.on('presence',{event:'sync'},coPres).on('broadcast',{event:'m'},({payload})=>{try{coMsg(payload)}catch(e){console.error('coMsg',e)}});
   ch.subscribe(st=>{if(CQ.ch!==ch)return;if(st==='SUBSCRIBED'){CQ.sub=1;coTrack();coPres()}else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT'){CQ.sub=0}})}catch(e){console.warn('coJoin',e)}}
 function coLeave(bye){if(!CQ.ch)return;if(bye&&CQ.on)csend('bye');const ch=CQ.ch;CQ.ch=null;CQ.sub=0;CQ.pt=null;CQ.rdy=0;try{sb.removeChannel(ch)}catch{}if(CQ.on)coReset()}
-function coTrack(){if(!CQ.ch||!CQ.sub)return;try{CQ.ch.track({u:GS().uid,n:myName(),rd:CQ.rdy,mis:CQ.mis,cp:coClr(),ing:CQ.on?1:0,tm:SV.team.slice(0,6)})}catch{}}
+function coTrack(){if(!CQ.ch||!CQ.sub)return;try{CQ.ch.track({u:GS().uid,n:myName(),rd:CQ.rdy,mis:CQ.mis,cp:coClr(),ing:CQ.on?1:0,tm:SV.team.slice(0,6),sk:SV.sk,ev:SV.evo})}catch{}}
 function coPres(){if(!CQ.ch)return;let pt=null;try{const st=CQ.ch.presenceState();for(const k in st){const m=(st[k]||[])[0];if(m&&m.u&&m.u!==GS().uid){pt=m;break}}}catch{}
- const was=!!CQ.pt;CQ.pt=pt;if(pt&&pt.n)CQ.pn=pt.n;
+ const was=!!CQ.pt;CQ.pt=pt;if(pt&&pt.n)CQ.pn=pt.n;if(pt){CQ.psk=pt.sk||{};ppRepaint()}
  if(CQ.on){coAway(!pt);return}
  if(pt&&!was)coSys(ptName()+' в лобби 💗');
  if(VIEW==='menu'&&TAB==='v')lobbyUi();coCheckStart()}
@@ -6603,17 +6603,19 @@ function startCo(m,host){fixSV();fixCo();evoApply();
  WAVES=mkCo(m);MAXW=WAVES.length;setPath(KR[m.map]);buildMap(m.th);
  {const lk=$('cdLk');if(lk)lk.innerHTML=''}
  buildBar();spdUi();reset();
- $('cdLT').textContent='Вдвоём · '+m.n;$('cdPlay').classList.add('co');coHud();$('cdOv').classList.remove('on');
+ $('cdLT').textContent='Вдвоём · '+m.n;$('cdPlay').classList.add('co');$('cdPlay').classList.toggle('cqc',!host);try{coTrack()}catch{}coHud();$('cdOv').classList.remove('on');
  view('play');ui();ban(host?'Ждём партнёра…':m.n);coTrack()}
 function coReset(){if(!CQ.on&&W===360)return;CQ.on=0;CQ.starting=0;clearTimeout(CQ.awayT);CQ.awayT=0;CQ.away=0;setDim(360,480,6,8);SPD=SPD0||SPD;spdUi();
- $('cdPlay').classList.remove('co');const lk=$('cdLk');if(lk)lk.innerHTML='';coChatToggle(0);coLag(0);if(G){G.co=0;G.paused=false}}
+ $('cdPlay').classList.remove('co','cqc');const lk=$('cdLk');if(lk)lk.innerHTML='';coChatToggle(0);coLag(0);if(G){G.co=0;G.paused=false}}
 function coToLobby(){CQ.rdy=0;$('cdOv').classList.remove('on');if(G)G.state='idle';view('menu');TAB='v';coReset();coTrack();menu()}
 function coBye(){if(CQ.ended)return;CQ.ended=1;G.state='over';const o=$('cdOv');o.innerHTML=`<div class="cd-card"><h3>Партнёр вышел</h3><p>${esc(ptName())} вернулся(лась) в лобби. Бой завершён без наград.</p><button class="cd-btn" data-q="lobby">В лобби</button></div>`;o.classList.add('on')}
 function coLag(on,t){const l=$('cqLag');if(!l)return;if(on){l.textContent=t||'';l.classList.add('on')}else l.classList.remove('on')}
 
 /* ---------- ведущий: действия игроков ---------- */
 function coNo(o,why){if(o===0){sfx('deny');say(why)}else csend('no',{why});return null}
-function coMake(id,k,c,r,o,ev,lv,quiet){const t=mkTw(k,c,r);t.id=id;t.o=o;t.ev=ev||0;t.lv=lv||1;t.cf=upg(k,t.lv,t.ev);t.lt.textContent='★'.repeat(t.lv-1);
+function ppSet(k,ev){let g=document.getElementById('cd-pp-'+k);if(!g){let d=document.getElementById('cdPPd');if(!d){$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="cdPPd"></defs></svg>');d=document.getElementById('cdPPd')}g=document.createElementNS('http://www.w3.org/2000/svg','g');g.id='cd-pp-'+k;d.appendChild(g)}g.innerHTML=compose(k,(CQ.psk||{})[k]||'',ev||0)}
+function ppRepaint(){if(!G||!G.tw)return;G.tw.forEach(t=>{if(t.o!==CQ.me)ppSet(t.k,t.ev)})}
+function coMake(id,k,c,r,o,ev,lv,quiet){const t=mkTw(k,c,r);if(o!==CQ.me){ppSet(k,ev);const u=t.b.querySelector('use');if(u)u.setAttribute('href','#cd-pp-'+k)}t.id=id;t.o=o;t.ev=ev||0;t.lv=lv||1;t.cf=upg(k,t.lv,t.ev);t.lt.textContent='★'.repeat(t.lv-1);
  const ring=mk('ellipse',{cy:18,rx:23,ry:9,fill:'none',stroke:o===0?'#fb923c':'#38bdf8','stroke-width':2.8,'stroke-opacity':.95},null);t.g.insertBefore(ring,t.b);
  G.tw.push(t);if(!quiet){puff(t.x,t.y+10,'#fff',5);sfx('place');vib(10)}return t}
 function coSetLv(t,lv){t.lv=lv;t.cf=upg(t.k,lv,t.ev);t.lt.textContent='★'.repeat(lv-1);t.kick=1;ring(t.x,t.y,38,'#fde047');puff(t.x,t.y,'#fde047',8);sfx('win')}
@@ -6705,7 +6707,7 @@ function coEnd(res){if(CQ.ended||!res)return;CQ.ended=1;G.state='over';const pay
 .cq-b i.on{display:block}
 .cq-h{display:none}
 #cdPlay.co .cq-h{display:flex}
-#cdPlay.co #cdX2,#cdPlay.co #cdAuto{display:none}
+#cdPlay.co.cqc #cdX2,#cdPlay.co.cqc #cdAuto{display:none}#cdPlay.co #cdX2,#cdPlay.co #cdAuto{flex:none;min-width:38px;padding:0 6px}#cdPlay.co #cdX2 svg{display:none}
 #cdPlay.co .cd-hud{gap:5px}
 #cdPlay.co .cd-chip{font-size:13px;padding-left:4px;padding-right:4px;gap:3px;min-width:0}
 #cdPlay.co #cdWave{flex:1.35}
