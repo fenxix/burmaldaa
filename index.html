@@ -6325,7 +6325,7 @@ const ZN={mouse:['Мышь-зомби','Самая обычная. Ходит т
 {const d0=dmg;dmg=function(e,n,s,q){if(!e||e.dead)return;const c=e.c,k=s&&s.cf&&s.cf.kind;
  if(c.arm&&n<c.arm)n*=.3;
  if(e.gh&&!(s&&s.cf&&(s.cf.aoe||s.cf.psn||s.cf.zdps||['mine','zone','air','nova','stun'].includes(k))))return;
- if(c.fly&&s&&s.cf&&(s.cf.melee||['mine','zone','roll','nova'].includes(k))){if(!e.mt||G.tm-e.mt>1){e.mt=G.tm;pop(e.x,e.y-14,'мимо',0,'#94a3b8')}return}
+ if(c.fly&&s&&s.cf&&!(typeof CHA6!=='undefined'&&CHA6&&CHA6.r&&CHA6.r.melee)&&(s.cf.melee||['mine','zone','roll','nova'].includes(k))){if(!e.mt||G.tm-e.mt>1){e.mt=G.tm;pop(e.x,e.y-14,'мимо',0,'#94a3b8')}return}
  d0(e,n,s,q);if(e.dead&&!e.cn){e.cn=1;fixSV();SV.zk[e.type]=(SV.zk[e.type]||0)+1;dqAdd('kill',1);if(NEWZ.includes(e.type))dqAdd('new',1);dirty=1}}}
 {const sl0=slowE;slowE=function(e,t,f){if(e.c.nosl)return;sl0(e,t,f)}}
 {const st0=step;step=function(dt){G.en.forEach(e=>{if(e.c.nosl)e.slow=0});st0(dt);
