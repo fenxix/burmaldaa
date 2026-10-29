@@ -9293,4 +9293,40 @@ html body #app #home .hzr-b{flex-direction:row;justify-content:flex-start;gap:12
  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);font:700 14px Manrope,sans-serif}
 html body #app #home .hzr-i{width:40px;height:40px;border-radius:14px;flex:none}
 </style>
+<style id="cdFitCss">
+/* iPhone: нижняя панель прокачки котика не должна обрезаться */
+#cdPlay .cd-dock{flex:none;margin-bottom:0}
+#cdPlay .cd-inf{max-height:none}
+</style>
+<script id="cdFitJs">
+/* Подгоняет размер поля под реальную высоту экрана и нижней панели (прокачка, выбор пути, коп-режим) */
+(function(){try{
+ var play=document.getElementById('cdPlay'),dock=document.getElementById('cdDock');
+ if(!play||!dock)return;
+ var wr=play.querySelector('.cd-wrap');if(!wr)return;
+ var busy=false;
+ function fit(){
+  if(busy||!play.classList.contains('on'))return;busy=true;
+  try{
+   var used=0,kids=play.children;
+   for(var i=0;i<kids.length;i++){var el=kids[i];if(el===wr)continue;
+    var cs=getComputedStyle(el);if(cs.display==='none'||cs.position==='absolute'||cs.position==='fixed')continue;
+    used+=el.getBoundingClientRect().height+(parseFloat(cs.marginTop)||0)+(parseFloat(cs.marginBottom)||0);}
+   var wcs=getComputedStyle(wr);used+=(parseFloat(wcs.marginTop)||0)+(parseFloat(wcs.marginBottom)||0);
+   var availH=play.clientHeight-used-2;
+   var w=Math.floor(Math.min(play.clientWidth,398,availH*0.75));
+   w=Math.max(150,w);
+   wr.style.width=w+'px';
+  }catch(e){}
+  busy=false;
+ }
+ var raf=0;function sched(){cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)}
+ if(window.ResizeObserver){var ro=new ResizeObserver(sched);ro.observe(play);ro.observe(dock);var inf=document.getElementById('cdInf');if(inf)ro.observe(inf);}
+ new MutationObserver(sched).observe(dock,{attributes:true,childList:true,subtree:true});
+ new MutationObserver(sched).observe(play,{attributes:true,attributeFilter:['class']});
+ addEventListener('resize',sched);addEventListener('orientationchange',function(){setTimeout(sched,250)});
+ if(window.visualViewport)visualViewport.addEventListener('resize',sched);
+ sched();
+}catch(e){console.error('cdFit',e)}})();
+</script>
 </body></html>
