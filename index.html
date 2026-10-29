@@ -5496,10 +5496,10 @@ const KIND={
   /* шары идут ИЗ МИСКИ (конец дороги) навстречу зомби; радиус не нужен — только таймер */
   if(!G.q.length&&!G.en.some(e=>!e.dead))return false;
   const bw=L2?[[L2.a,0],[TOT,L2.b]]:[[TOT,0]];
-  bw.forEach(([hi,lo],j)=>{for(let i=0;i<n;i++)G.rl.push({d:Math.max(1,hi-2),dr:-1,sp:150,pool,max:pool,src:t,hit:new Set(),g:null,rot:0,w:i*.45+.05+j*.12,x:0,y:0,lo,hi,bn:0})});
+  bw.forEach(([hi,lo],j)=>{for(let i=0;i<n;i++)G.rl.push({d:Math.max(1,hi-2),dr:-1,sp:cf.rsp||150,spr:cf.rb||'bball',sl:cf.rsl||0,pool,max:pool,src:t,hit:new Set(),g:null,rot:0,w:i*.45+.05+j*.12,x:0,y:0,lo,hi,bn:0})});
   bw.forEach(([hi])=>{const p0=pos(Math.max(1,hi-2));ring(p0[0],p0[1],26,'#a5b4fc')});sfx('whoosh')},
  mine(t,tg){const cf=t.cf;if(G.mn.filter(m=>m.t===t).length>=(cf.zmax||3))return false;const d=Math.min(TOT-6,tg.d+22),p=pos(d),g=mk('g',{transform:`translate(${p[0]} ${p[1]})`},L.zn);use('mine',g);G.mn.push({t,x:p[0],y:p[1],dmg:cf.dmg*(t.bd||1),aoe:cf.aoe,src:t,g});sfx('mine');puff(p[0],p[1],'#9ca3af',3)},
- bmr(t,tg){const cf=t.cf,dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,R=cf.range*1.25,g=mk('g',{},L.pr);use('boomr',g);G.bm.push({t,x:t.x,y:t.y-6,tx:t.x+dx/l*R,ty:t.y+dy/l*R,ph:0,sp:cf.sp||340,dmg:cf.dmg*(t.bd||1),hit:new Set(),g,rot:0,src:t});sfx('whoosh')},
+ bmr(t,tg){const cf=t.cf,dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,R=cf.range*1.25,g=mk('g',{},L.pr);use(cf.bs||'boomr',g);G.bm.push({t,x:t.x,y:t.y-6,tx:t.x+dx/l*R,ty:t.y+dy/l*R,ph:0,sp:cf.sp||340,dmg:cf.dmg*(t.bd||1),hit:new Set(),g,rot:0,src:t});sfx('whoosh')},
  rail(t,tg){const cf=t.cf,dx=tg.x-t.x,dy=tg.y-t.y,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,R=cf.range*1.4,x2=t.x+ux*R,y2=t.y-6+uy*R,m=cf.dmg*(t.bd||1);
   G.en.forEach(e=>{if(e.dead)return;const px=e.x-t.x,py=e.y-t.y,k=Math.max(0,Math.min(R,px*ux+py*uy));if(Math.hypot(px-ux*k,py-uy*k)<=e.r+5)dmg(e,m,t)});
   const a=mk('line',{x1:t.x,y1:t.y-6,x2,y2,stroke:'#22d3ee','stroke-width':7,'stroke-linecap':'round'},L.fx),b=mk('line',{x1:t.x,y1:t.y-6,x2,y2,stroke:'#fff','stroke-width':3,'stroke-linecap':'round'},L.fx);
@@ -5520,8 +5520,8 @@ const KIND={
 function stepX(dt){
  G.tw.forEach(t=>{t.bd=1+.12*(t.ln||0);t.bs=1+.04*(t.ln||0)});
  G.tw.forEach(b=>{const a=b.cf.aura;if(!a)return;G.tw.forEach(t=>{if(t!==b&&!t.cf.aura&&dist(t,b)<=b.cf.range){t.bd+=a.dm;t.bs+=a.sp}});b.ap=(b.ap||0)-dt;if(b.ap<=0&&G.state==='wave'){b.ap=3;ring(b.x,b.y,b.cf.range*.9,'#f0abfc')}});
-  G.rl.forEach(r=>{if(r.w>0){r.w-=dt;if(r.w>0)return}if(!r.g){r.g=mk('g',{},L.pr);use('bball',r.g)}r.d+=(r.dr||-1)*r.sp*dt;const p=pos(Math.max(0,r.d));r.x=p[0];r.y=p[1];r.rot-=dt*420;const sc=.8+.8*Math.max(0,r.pool)/r.max;r.g.setAttribute('transform',`translate(${r.x.toFixed(1)} ${r.y.toFixed(1)}) scale(${sc.toFixed(2)}) rotate(${r.rot.toFixed(0)})`);
-  G.en.forEach(e=>{if(r.done||e.dead||r.hit.has(e)||dist(e,r)>=e.r+13)return;r.hit.add(e);const h0=e.hp;dmg(e,Math.min(r.pool,Math.max(0,e.hp)),r.src);const used=Math.max(0,h0-e.hp);if(used>0){r.pool-=used;puff(e.x,e.y,'#c7d2fe',4);sfx('pop')}if(r.pool<=.01){r.done=1;puff(r.x,r.y,'#a5b4fc',8);r.g.remove()}});
+  G.rl.forEach(r=>{if(r.w>0){r.w-=dt;if(r.w>0)return}if(!r.g){r.g=mk('g',{},L.pr);use(r.spr||'bball',r.g)}r.d+=(r.dr||-1)*r.sp*dt;const p=pos(Math.max(0,r.d));r.x=p[0];r.y=p[1];r.rot-=dt*420;const sc=.8+.8*Math.max(0,r.pool)/r.max;r.g.setAttribute('transform',`translate(${r.x.toFixed(1)} ${r.y.toFixed(1)}) scale(${sc.toFixed(2)}) rotate(${r.rot.toFixed(0)})`);
+  G.en.forEach(e=>{if(r.done||e.dead||r.hit.has(e)||dist(e,r)>=e.r+13)return;r.hit.add(e);const h0=e.hp;dmg(e,Math.min(r.pool,Math.max(0,e.hp)),r.src);const used=Math.max(0,h0-e.hp);if(used>0){r.pool-=used;puff(e.x,e.y,'#c7d2fe',4);sfx('pop');if(r.sl&&!e.dead)slowE(e,r.sl,.35)}if(r.pool<=.01){r.done=1;puff(r.x,r.y,'#a5b4fc',8);r.g.remove()}});
   if(!r.done){const lo=r.lo||0,hi=r.hi||TOT;if(r.d<=lo){if(!r.bn&&G.state==='wave'&&(G.q.length||G.en.some(e=>!e.dead))){r.bn=1;r.dr=1;r.d=lo+1;r.hit.clear()}else{r.done=1;r.g&&r.g.remove()}}else if(r.d>=hi){r.done=1;r.g&&r.g.remove()}}});G.rl=G.rl.filter(r=>!r.done);
  G.bm.forEach(b=>{const tx=b.ph?b.t.x:b.tx,ty=b.ph?b.t.y-6:b.ty,dx=tx-b.x,dy=ty-b.y,d=Math.hypot(dx,dy),sp=b.sp*dt;
   if(d<=sp){b.x=tx;b.y=ty;if(b.ph||!G.tw.includes(b.t)){b.done=1;b.g.remove();return}b.ph=1;b.hit.clear()}else{b.x+=dx/d*sp;b.y+=dy/d*sp}
@@ -6332,7 +6332,7 @@ const ZN={mouse:['Мышь-зомби','Самая обычная. Ходит т
 {const d0=dmg;dmg=function(e,n,s,q){if(!e||e.dead)return;const c=e.c,k=s&&s.cf&&s.cf.kind;
  if(c.arm&&n<c.arm)n*=.3;
  if(e.gh&&!(s&&s.cf&&(s.cf.aoe||s.cf.psn||s.cf.zdps||['mine','zone','air','nova','stun'].includes(k))))return;
- if(c.fly&&s&&s.cf&&!(typeof CHA6!=='undefined'&&CHA6&&CHA6.r&&CHA6.r.melee)&&(s.cf.melee||['mine','zone','roll','nova'].includes(k))){if(!e.mt||G.tm-e.mt>1){e.mt=G.tm;pop(e.x,e.y-14,'мимо',0,'#94a3b8')}return}
+ if(c.fly&&s&&s.cf&&!(typeof CHA6!=='undefined'&&CHA6&&CHA6.r&&CHA6.r.melee)&&(s.cf.melee||['mine','zone','roll','nova','leap'].includes(k))){if(!e.mt||G.tm-e.mt>1){e.mt=G.tm;pop(e.x,e.y-14,'мимо',0,'#94a3b8')}return}
  d0(e,n,s,q);if(e.dead&&!e.cn){e.cn=1;fixSV();SV.zk[e.type]=(SV.zk[e.type]||0)+1;dqAdd('kill',1);if(NEWZ.includes(e.type))dqAdd('new',1);dirty=1}}}
 {const sl0=slowE;slowE=function(e,t,f){if(e.c.nosl)return;sl0(e,t,f)}}
 {const st0=step;step=function(dt){G.en.forEach(e=>{if(e.c.nosl)e.slow=0});st0(dt);
@@ -8449,6 +8449,109 @@ const o_mkEn=mkEn;mkEn=function(type,hm){const e=o_mkEn.apply(this,arguments);if
 const o_coReset=coReset;coReset=function(){L2=null;return o_coReset.apply(this,arguments)};
 /* --- фон каждого мира --- */
 const o_bm=buildMap;buildMap=function(w){if(w>BW2){o_bm(0);const a=AM[w];$('cdMap').insertAdjacentHTML('beforeend',ambHTML(w));return}o_bm(w);const mp=$('cdMap');if(mp)mp.insertAdjacentHTML('beforeend',ambHTML(w))};
+}
+
+/* ===== Часть 9: 17 новых котиков (прыгуны, катящиеся шары, экономика) и категории в магазине ===== */
+{
+const NEWC=[
+ /* id, имя, роль, цвет, тёмный, аксессуар, параметры */
+ ['jumpy','Прыгун','Прыгун','#bef264','#4d7c0f','<path d="M-15-11Q0-4 15-11" stroke="#ef4444" stroke-width="3.4" fill="none"/><ellipse cx="-9" cy="24" rx="6.500" ry="3" fill="#ef4444"/><ellipse cx="9" cy="24" rx="6.500" ry="3" fill="#ef4444"/><path d="M-9 21q-3-2 0-4M9 21q3-2 0-4" stroke="#475569" stroke-width="1.600" fill="none"/>',
+  {kind:'leap',cost:110,pr:290,range:88,cd:2.2,dmg:10,stun:.8,bg:'#ecfccb',inf:'Прыгает на самого дальнего зомби: тяжёлый удар сверху и оглушение',st:'Тренировался на батуте во дворе. Теперь все зомби для него просто большие батуты.'}],
+ ['froggy','Квак','Лягушатник','#86efac','#15803d','<circle cx="-9" cy="-20" r="6" fill="#86efac" stroke="#15803d" stroke-width="1.200"/><circle cx="9" cy="-20" r="6" fill="#86efac" stroke="#15803d" stroke-width="1.200"/><circle cx="-9" cy="-20" r="2.600" fill="#1f2937"/><circle cx="9" cy="-20" r="2.600" fill="#1f2937"/><path d="M-10 6Q0 12 10 6" stroke="#15803d" stroke-width="1.800" fill="none" stroke-linecap="round"/>',
+  {kind:'leap',cost:125,pr:340,range:82,cd:3,dmg:6,aoe:44,slow:.5,bg:'#dcfce7',inf:'Прыжок на толпу: урон по площади, зомби вокруг приземления замедляются',st:'Надел лягушачий костюм ради шутки. Прыгает теперь выше всех во дворе и страшно этим гордится.'}],
+ ['acro','Сальто','Акробат','#f9a8d4','#be185d','<path d="M-10-17L0-34 10-17Z" fill="#6366f1"/><circle cy="-35" r="3" fill="#fde047"/><path d="M-14 8Q0 14 14 8" stroke="#fde047" stroke-width="3" fill="none"/><path d="M-6-17h12" stroke="#fde047" stroke-width="2"/>',
+  {kind:'leap',cost:95,pr:260,range:72,cd:1,dmg:3.6,stun:.25,bg:'#fce7f3',inf:'Частые короткие прыжки: быстро бьёт сверху и на миг сбивает зомби с шага',st:'Цирковой кот. Каждый прыжок с переворотом, и зомби каждый раз удивляются, как в первый.'}],
+ ['hamster','Хомка','Хомячий шар','#fcd34d','#b45309','<circle cx="19" cy="15" r="9.500" fill="#bae6fd" fill-opacity=".5" stroke="#38bdf8" stroke-width="1.600"/><circle cx="19" cy="17" r="4.600" fill="#fdba74"/><circle cx="14.800" cy="12.600" r="2" fill="#fdba74"/><circle cx="23.200" cy="12.600" r="2" fill="#fdba74"/><circle cx="17.600" cy="16" r="1" fill="#1f2937"/><circle cx="20.600" cy="16" r="1" fill="#1f2937"/>',
+  {kind:'roll',rb:'hamball',rsp:205,cost:120,pr:310,range:80,cd:8,dmg:34,balls:2,bg:'#fef3c7',inf:'Выкатывает два прозрачных шара с хомяком внутри: очень быстрые, сбивают зомби и катятся дальше',st:'Хомяк сбежал из клетки внутри шара и совсем не умеет тормозить. Хомка просто вовремя открывает дверь.'}],
+ ['melon','Арбузик','Арбузомёт','#86efac','#166534','<path d="M-4-18Q-2-27 7-26Q4-19-4-18Z" fill="#16a34a"/><circle cx="20" cy="15" r="9.500" fill="#16a34a"/><path d="M20 5.500v19M13.500 8.500Q11 15 13.500 21.500M26.500 8.500Q29 15 26.500 21.500" stroke="#bbf7d0" stroke-width="1.500" fill="none"/>',
+  {kind:'roll',rb:'melon',rsp:105,cost:150,pr:380,range:80,cd:12,dmg:120,balls:1,bg:'#dcfce7',inf:'Выкатывает огромный арбуз: катится медленно, зато сносит целые толпы',st:'Вырастил арбуз размером с себя и не придумал ничего лучше, чем покатить его на зомби.'}],
+ ['barrel','Бочонок','Бочкокат','#d6a77a','#78350f','<path d="M-16-9Q0-20 16-9L16-12Q0-24-16-12Z" fill="#dc2626"/><rect x="12" y="8" width="15" height="17" rx="4" fill="#92400e" stroke="#451a03" stroke-width="1.200"/><path d="M12 13.500h15M12 19.500h15" stroke="#fbbf24" stroke-width="1.700"/>',
+  {kind:'roll',rb:'barrel',rsp:140,cost:135,pr:360,range:80,cd:9,dmg:18,balls:4,bg:'#ffedd5',inf:'Скатывает четыре бочки подряд: каждая сбивает зомби на пути',st:'Бывший помощник пирата. Рома не нашёл, зато бочек в порту хватило на целую армию.'}],
+ ['snowroll','Комок','Снежный ком','#f1f5f9','#94a3b8','<path d="M-14-12Q0-30 14-12Z" fill="#38bdf8"/><circle cy="-28" r="3" fill="#fff"/><rect x="-15" y="-14" width="30" height="4" rx="2" fill="#7dd3fc"/><circle cx="19" cy="16" r="8.500" fill="#fff" stroke="#bae6fd" stroke-width="1.400"/><circle cx="16.500" cy="14" r="1" fill="#94a3b8"/><circle cx="21" cy="18" r="1.200" fill="#94a3b8"/>',
+  {kind:'roll',rb:'snowroll',rsp:130,rsl:1.4,cost:125,pr:340,range:80,cd:9,dmg:26,balls:2,bg:'#e0f2fe',inf:'Катит два снежных кома: сбивают зомби и замораживают тех, кого задели',st:'Лепил снеговика, а голова всё время укатывалась. Решил, что это не баг, а оружие.'}],
+ ['yoyo','Йо','Йо-йо','#fca5a5','#b91c1c','<path d="M-14-11Q0-3 14-11" stroke="#1d4ed8" stroke-width="3.400" fill="none"/><circle cx="21" cy="12" r="6" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.300"/><circle cx="21" cy="12" r="2.400" fill="#fecaca"/><path d="M16 4Q10-2 5-4" stroke="#e2e8f0" stroke-width="1" fill="none"/>',
+  {kind:'bmr',bs:'yoyo',cost:100,pr:280,range:85,cd:1.1,dmg:2.2,sp:380,bg:'#fee2e2',inf:'Бросает йо-йо вперёд и тут же возвращает: бьёт всех зомби на пути туда и обратно',st:'Освоил один трюк, но зато отлично. «Гулять собаку» он, правда, тоже умеет, только зомби не знают.'}],
+ ['fisher','Рыбак','Рыбак','#7dd3fc','#0369a1','<path d="M-15-11Q0-3 15-11L11-22Q0-27-11-22Z" fill="#fbbf24"/><path d="M17 20L31-12" stroke="#92400e" stroke-width="2"/><path d="M31-12Q35-2 32 6" stroke="#cbd5e1" stroke-width="1" fill="none"/><path d="M29 6h6l-3 5Z" fill="#38bdf8"/>',
+  {range:0,cd:9,gain:50,cost:90,pr:160,bg:'#e0f2fe',inf:'Не стреляет: каждую волну приносит +50 рыбных консервов',st:'Сидит у миски с удочкой. Рыба не ловится, зато консервы приходят исправно.'}],
+ ['piggy','Копилка','Копилка','#fbcfe8','#be185d','<circle cx="0" cy="-26" r="6" fill="#fde047" stroke="#f59e0b" stroke-width="1.500"/><path d="M0-29v6M-2-26h4" stroke="#b45309" stroke-width="1.300" stroke-linecap="round"/><ellipse cy="3" rx="5" ry="3.200" fill="#f472b6"/><circle cx="-1.800" cy="3" r=".8" fill="#9d174d"/><circle cx="1.800" cy="3" r=".8" fill="#9d174d"/>',
+  {range:0,cd:4,inc:5,cost:100,pr:230,bg:'#fce7f3',inf:'Не стреляет: во время волны каждые 4 секунды приносит +5 рыбок',st:'Собирает монетки в себя, тихо звенит и никому не признаётся, сколько уже накопила.'}],
+ /* --- Эпоха II --- */
+ ['rex','Тарзи','Лианщик','#d6a77a','#78350f','<path d="M-13 12Q0 22 13 12L11 20Q0 26-11 20Z" fill="#16a34a"/><path d="M-22-30Q-16-20-20-8" stroke="#16a34a" stroke-width="2.600" fill="none"/><path d="M-8-19l3-5 3 5M2-19l3-6 3 6" stroke="#a16207" stroke-width="2" fill="none"/>',
+  {kind:'leap',ep:2,cost:140,pr:480,range:95,cd:2.8,dmg:16,aoe:40,stun:1,bg:'#fef3c7',inf:'Прыгает с лианы: огромный урон по площади и долгое оглушение главной цели',st:'Вырос в джунглях и считает, что динозавры просто плохо разбегаются перед прыжком.'}],
+ ['boulder','Булыжник','Камнекат','#a8a29e','#57534e','<rect x="-12" y="-21" width="24" height="4" rx="2" fill="#fff7ed"/><circle cx="-12" cy="-21" r="3" fill="#fff7ed"/><circle cx="12" cy="-21" r="3" fill="#fff7ed"/><circle cx="20" cy="15" r="9.500" fill="#78716c" stroke="#44403c" stroke-width="1.400"/><path d="M15 11l4 2-1 5M24 17l-4 1" stroke="#44403c" stroke-width="1.200" fill="none"/>',
+  {kind:'roll',rb:'boulder',rsp:120,ep:2,cost:160,pr:520,range:80,cd:11,dmg:160,balls:1,bg:'#f5f5f4',inf:'Скатывает каменный шар: проламывает почти всё, что стоит на дороге',st:'Нашёл круглый камень на склоне вулкана. Теперь у динозавров один совет: не стоять на дороге.'}],
+ ['gatherer','Собиратель','Собиратель','#a7f3d0','#047857','<path d="M-4-18Q-2-28 8-26Q5-19-4-18Z" fill="#16a34a"/><path d="M12 12h17l-2 13H14Z" fill="#a16207" stroke="#78350f" stroke-width="1.200"/><circle cx="17" cy="10" r="3.600" fill="#ef4444"/><circle cx="24" cy="9" r="3.600" fill="#f59e0b"/><circle cx="20.500" cy="5.500" r="3.200" fill="#84cc16"/>',
+  {range:0,cd:9,gain:95,ep:2,cost:125,pr:470,bg:'#d1fae5',inf:'Не стреляет: каждую волну приносит +95 рыбных консервов',st:'Шарит по папоротникам с корзиной. Что нашёл, то и в миску.'}],
+ /* --- Эпоха III --- */
+ ['sunball','Скара','Диск солнца','#fbbf24','#92400e','<path d="M-15-8L-19 14M15-8L19 14" stroke="#2563eb" stroke-width="4.500"/><path d="M-15-12Q0-27 15-12Z" fill="#fbbf24" stroke="#2563eb" stroke-width="1.400"/><circle cx="21" cy="14" r="9" fill="#fde047" stroke="#f59e0b" stroke-width="1.600"/><circle cx="21" cy="14" r="4.200" fill="#f59e0b"/>',
+  {kind:'roll',rb:'sundisk',rsp:160,ep:3,cost:150,pr:540,range:80,cd:9,dmg:42,balls:3,bg:'#fef9c3',inf:'Катит три золотых солнечных диска: быстрые, тяжёлые, пробивают толпу',st:'Верит, что каждое утро кто-то должен катить солнце. Сегодня очередь Скары.'}],
+ ['trader','Торговец','Торговец','#fde68a','#92400e','<path d="M-15-11Q-17-27 0-27T15-11Z" fill="#7c3aed"/><path d="M-14-14Q0-8 14-14" stroke="#c4b5fd" stroke-width="2" fill="none"/><circle cy="-24" r="2.600" fill="#fde047"/><circle cx="20" cy="17" r="7" fill="#a16207"/><path d="M17 10h6" stroke="#78350f" stroke-width="2"/><circle cx="20" cy="17" r="2.600" fill="#fde047"/>',
+  {range:0,cd:9,gain:115,ep:3,cost:135,pr:560,bg:'#fef3c7',inf:'Не стреляет: каждую волну приносит +115 рыбных консервов',st:'Продаёт на базаре всё подряд, особенно песок. Покупатели почему-то довольны.'}],
+ /* --- Эпоха IV --- */
+ ['moon','Луна','Лунный прыгун','#e0e7ff','#6366f1','<path d="M-21-11L0-33 21-11Z" fill="#fde68a" stroke="#b45309" stroke-width="1.300"/><path d="M-12-16h24" stroke="#b45309" stroke-width="1"/><path d="M0-30a4 4 0 110 8 3 3 0 010-8Z" fill="#6366f1"/>',
+  {kind:'leap',ep:4,cost:130,pr:500,range:100,cd:1.2,dmg:7,stun:.4,bg:'#e0e7ff',inf:'Быстрые высокие прыжки на большой дальности: бьёт сверху и притормаживает цель',st:'Тренируется на крышах ночного города. В полнолуние прыгает так высоко, что не видно.'}],
+ ['bao','Бао','Пельмень','#fecaca','#b91c1c','<path d="M-14-12Q0-27 14-12Z" fill="#dc2626"/><circle cy="-27" r="2.400" fill="#fbbf24"/><path d="M11 22Q11 6 20 6T29 22Z" fill="#fff7ed" stroke="#fdba74" stroke-width="1.300"/><path d="M20 6v5M16 8l2 4M24 8l-2 4" stroke="#fdba74" stroke-width="1.200"/>',
+  {kind:'roll',rb:'dumpling',rsp:170,rsl:.8,ep:4,cost:145,pr:500,range:80,cd:8,dmg:38,balls:3,bg:'#fee2e2',inf:'Выкатывает три горячих пельменя: сбивают зомби и ненадолго притормаживают',st:'Повар из переулка с фонарями. Говорит, что пельмени должны быть круглыми, чтобы катиться на врагов.'}]
+];
+const NEWS={
+ hamball:'<circle r="10" fill="#bae6fd" fill-opacity=".5" stroke="#38bdf8" stroke-width="1.600"/><circle cy="2" r="5" fill="#fdba74"/><circle cx="-4" cy="-2.500" r="2" fill="#fdba74"/><circle cx="4" cy="-2.500" r="2" fill="#fdba74"/><circle cx="-1.800" cy="1" r="1" fill="#1f2937"/><circle cx="1.800" cy="1" r="1" fill="#1f2937"/><path d="M-7-6Q-3-9 1-8" stroke="#fff" stroke-width="1.400" fill="none" stroke-linecap="round"/>',
+ melon:'<circle r="10" fill="#16a34a"/><path d="M0-10V10M-6.500-7.500Q-9 0-6.500 7.500M6.500-7.500Q9 0 6.500 7.500" stroke="#bbf7d0" stroke-width="1.800" fill="none"/>',
+ barrel:'<circle r="10" fill="#a16207" stroke="#451a03" stroke-width="1.400"/><circle r="6.500" fill="none" stroke="#fbbf24" stroke-width="1.500"/><path d="M-10 0H10M0-10V10" stroke="#78350f" stroke-width="1.400"/><circle r="2" fill="#451a03"/>',
+ snowroll:'<circle r="10" fill="#f8fafc" stroke="#bae6fd" stroke-width="1.500"/><circle cx="-3" cy="-3" r="2.200" fill="#e0f2fe"/><circle cx="4" cy="3" r="2.600" fill="#e0f2fe"/><circle cx="-4" cy="5" r="1.400" fill="#bae6fd"/>',
+ boulder:'<path d="M-9-4L-4-10 5-9 10-2 8 7 0 10-8 7Z" fill="#78716c" stroke="#44403c" stroke-width="1.400" stroke-linejoin="round"/><path d="M-3-3l4 2-1 5M4 3l3-1" stroke="#57534e" stroke-width="1.200" fill="none"/>',
+ sundisk:'<circle r="10" fill="#fde047" stroke="#f59e0b" stroke-width="1.600"/><circle r="5" fill="#f59e0b"/><path d="M0-12V-15M0 12V15M-12 0H-15M12 0H15" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>',
+ dumpling:'<circle r="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.500"/><path d="M-6-4Q0-9 6-4M-7 1Q0-4 7 1" stroke="#fdba74" stroke-width="1.300" fill="none"/><circle cy="4" r="2" fill="#fb7185"/>',
+ yoyo:'<circle r="6.500" fill="#ef4444" stroke="#7f1d1d" stroke-width="1.300"/><circle r="2.600" fill="#fecaca"/><path d="M-6.500 0H6.500" stroke="#7f1d1d" stroke-width="1"/>'
+};
+const NEWID=[];
+NEWC.forEach(([id,n,role,c,d,acc,o])=>{if(TW[id]||SYM[id])return;SYM[id]=cat(c,d,acc);TW[id]=Object.assign({n,role},o);TWB[id]=Object.assign({},TW[id]);KEYOF.set(TWB[id],id);NEWID.push(id)});
+Object.keys(NEWS).forEach(k=>{if(!SYM[k])SYM[k]=NEWS[k]});
+$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+NEWID.concat(Object.keys(NEWS)).map(k=>`<g id="cd-${k}">${SYM[k]}</g>`).join('')+'</defs></svg>');
+NEWID.forEach(k=>paint(k));
+
+/* прыжок: котик перелетает на зомби, бьёт сверху, оглушает и задевает соседей */
+KIND.leap=(t,tg)=>{const cf=t.cf,m=cf.dmg*(t.bd||1),x0=t.x,y0=t.y;let lx=tg.x,ly=tg.y,done=false;
+ const g=mk('g',{},L.fx),sh=mk('ellipse',{rx:11,ry:4,fill:'#000','fill-opacity':.22},L.fx),H=34+Math.min(46,Math.hypot(lx-x0,ly-y0)*.3),dir=lx<x0?-1:1;
+ use(t.k,g);t.b.setAttribute('opacity','.2');sfx('whoosh');
+ const land=()=>{t.b.setAttribute('opacity','1');if(G.tw.indexOf(t)<0)return;
+  let e0=tg&&!tg.dead?tg:null;if(!e0){let bd=1e9;G.en.forEach(e=>{if(e.dead)return;const q=Math.hypot(e.x-lx,e.y-ly);if(q<bd){bd=q;e0=e}});if(e0&&bd>50)e0=null}
+  const px=e0?e0.x:lx,py=e0?e0.y:ly,R=cf.aoe||24;ring(px,py,R,'#fde68a');puff(px,py,'#fef3c7',8);sfx('paw');vib(18);
+  if(e0){dmg(e0,m,t);if(cf.stun&&!e0.dead)slowE(e0,cf.stun,0)}
+  if(cf.aoe)G.en.slice().forEach(e=>{if(e===e0||e.dead||Math.hypot(e.x-px,e.y-py)>cf.aoe+e.r*.5)return;dmg(e,m*.6,t);if(!e.dead&&cf.slow)slowE(e,1.6,cf.slow)})};
+ addFx(g,.42,k=>{if(tg&&!tg.dead){lx=tg.x;ly=tg.y}const x=x0+(lx-x0)*k,y=y0+(ly-4-y0)*k-Math.sin(k*Math.PI)*H,s=.95+.3*Math.sin(k*Math.PI);
+  g.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(dir*k*360*(cf.cd<1.5?1:0)).toFixed(0)}) scale(${s.toFixed(2)})`);
+  sh.setAttribute('cx',x.toFixed(1));sh.setAttribute('cy',(y0+(ly-y0)*k+16).toFixed(1));sh.setAttribute('rx',(11-6*Math.sin(k*Math.PI)).toFixed(1));
+  if(k>=1&&!done){done=true;land()}});
+ addFx(sh,.42,()=>{})};
+
+/* ---------- категории в магазине ---------- */
+const NEWSET=new Set(NEWID);
+const CATS=[
+ ['all','Все',()=>true],
+ ['new','Новые',(c,k)=>NEWSET.has(k)],
+ ['e1','Эпоха I',c=>!c.ep||c.ep===1],
+ ['e2','Эпоха II',c=>c.ep===2],
+ ['e3','Эпоха III',c=>c.ep===3],
+ ['e4','Эпоха IV',c=>c.ep===4],
+ ['eco','Экономика',c=>!!(c.gain||c.inc)],
+ ['melee','Ближний бой',c=>!!(c.melee||c.wind||c.kind==='nova'||c.kind==='stun'||c.kind==='leap')],
+ ['far','Дальний бой',c=>!(c.gain||c.inc||c.melee||c.wind||c.aura)&&!['nova','stun','leap','roll','mine','zone','aura'].includes(c.kind)&&(c.range>=100||['air','rail','bmr'].includes(c.kind))],
+ ['aoe','По площади',c=>!!(c.aoe||['nova','stun','chain','air','mine','roll'].includes(c.kind)||(c.kind==='zone'&&c.zt==='fire'))],
+ ['ctrl','Замедление и контроль',c=>!!(c.slow||c.stun||c.kb||c.rsl||c.kind==='warp'||c.kind==='stun'||(c.kind==='zone'&&c.zt==='web'))],
+ ['dot','Яд и огонь',c=>!!(c.psn||c.zdps||c.pj==='fire')],
+ ['spec','Особые атаки',c=>!!(c.kind&&c.kind!=='aura'||c.wind)],
+ ['roll','Катящиеся шары',c=>c.kind==='roll'],
+ ['jump','Прыгуны',c=>c.kind==='leap'],
+ ['sup','Поддержка',c=>!!(c.aura||c.lamp)]
+];
+let SHC=lg('cd_shc')||'all';if(!CATS.some(c=>c[0]===SHC))SHC='all';
+const inCat=(k,id)=>{const c=CATS.find(x=>x[0]===id);return !!(c&&TW[k]&&c[2](TW[k],k))};
+const sk1=shopKeys;shopKeys=function(){const r=sk1.apply(this,arguments);return SHC==='all'?r:r.filter(k=>inCat(k,SHC))};
+const catBar=()=>{const ks=Object.keys(TW);return `<div class="cd-sort cd-cat">${CATS.map(c=>{const n=c[0]==='all'?ks.length:ks.filter(k=>inCat(k,c[0])).length;return n?`<button class="${SHC===c[0]?'on':''}" data-a="shc" data-c="${c[0]}">${c[1]}<span>${n}</span></button>`:''}).join('')}</div>`};
+{const sh2=shopH;shopH=function(){if(!CATS.some(c=>c[0]===SHC&&Object.keys(TW).some(k=>inCat(k,SHC))))SHC='all';return catBar()+sh2.apply(this,arguments)}}
+$('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a="shc"]');if(!b)return;SHC=b.dataset.c;ls('cd_shc',SHC);sfx('click');menu();
+ requestAnimationFrame(()=>{const bar=document.querySelector('#cdMenu .cd-cat'),on=bar&&bar.querySelector('button.on');if(on)bar.scrollLeft=on.offsetLeft-bar.clientWidth/2+on.offsetWidth/2})});
+document.head.insertAdjacentHTML('beforeend','<style>.cd-cat button span{margin-left:6px;opacity:.6;font-weight:600}.cd-cat button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899)!important;border-color:transparent!important;color:#fff}</style>');
 }
 }catch(e){console.error('catdef',e)}})();
 </script>
