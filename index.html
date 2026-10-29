@@ -5466,7 +5466,7 @@ function reset(){G={paused:false,hp:10,fish:LV.fish,wave:0,state:'idle',cd:0,wt:
 const queue=i=>{const q=[];WAVES[i].forEach(([k,n,gap,off])=>{for(let j=0;j<n;j++)q.push({t:(off||0)+j*gap,k})});return q.sort((a,b)=>a.t-b.t)};
 
 /* ---------- эффекты ---------- */
-function addFx(e,life,u){G.fx.push({e,t:0,life,u});u(0)}
+function addFx(e,life,u){if(G.fx.length>=70&&e.tagName!=='g'&&e.tagName!=='text'){e.remove();return}G.fx.push({e,t:0,life,u});u(0)}
 function ring(x,y,r,col){const c=mk('circle',{cx:x,cy:y,fill:col,'fill-opacity':.25,stroke:col,'stroke-width':3},L.fx);addFx(c,.35,k=>{c.setAttribute('r',(r*(.3+.7*k)).toFixed(1));c.setAttribute('opacity',1-k)})}
 function puff(x,y,col,n){for(let i=0;i<n;i++){const c=mk('circle',{r:rnd(2,4),fill:col},L.fx),a=rnd(0,6.28),v=rnd(25,60);addFx(c,.4,k=>{c.setAttribute('cx',(x+Math.cos(a)*v*k*.4).toFixed(1));c.setAttribute('cy',(y+Math.sin(a)*v*k*.4-k*8).toFixed(1));c.setAttribute('opacity',1-k)})}}
 function pop(x,y,txt,fish,col){const g=mk('g',{},L.fx),t=mk('text',{'text-anchor':'end','font-size':14,'font-weight':800,fill:col||'#f97316',stroke:'#fff','stroke-width':3,'paint-order':'stroke'},g);t.textContent=txt;if(fish)use('fish',g,{transform:'translate(9 -5) scale(.6)'});addFx(g,.9,k=>{g.setAttribute('transform',`translate(${Math.min(W-14,Math.max(24,x))} ${y-k*26})`);g.setAttribute('opacity',k<.7?1:(1-k)/.3)})}
@@ -5569,11 +5569,14 @@ function finish(win){G.state='over';SV.kills=(SV.kills||0)+(G.kills||0);if(win&&
 
 /* ---------- отрисовка кадра: анимация ходьбы, дыхания, отдачи ---------- */
 function draw(dt){
- G.tw.forEach(t=>{t.kick=Math.max(0,t.kick-dt*5);const s=Math.sin(G.tm*3+t.ph);t.b.setAttribute('transform',`translate(0 20) scale(${(t.fl*.95*(1+.025*s+.14*t.kick)).toFixed(3)} ${(.95*(1-.025*s-.12*t.kick)).toFixed(3)}) translate(0 -20)`)});
+ const fr=G.fr2=(G.fr2||0)+1,tk=fr%3===0,tk2=fr%2===0;
+ G.tw.forEach(t=>{const k0=t.kick;t.kick=Math.max(0,k0-dt*5);if(!k0&&!tk)return;const s=Math.sin(G.tm*3+t.ph);t.b.setAttribute('transform',`translate(0 20) scale(${(t.fl*.95*(1+.025*s+.14*t.kick)).toFixed(3)} ${(.95*(1-.025*s-.12*t.kick)).toFixed(3)}) translate(0 -20)`)});
  G.en.forEach(e=>{const s=Math.sin(e.ph+G.tm*(e.c.sp/54)*(e.slow>0?5:9));e.g.setAttribute('transform',`translate(${e.x.toFixed(1)} ${e.y.toFixed(1)})`);
-  e.b.setAttribute('transform',`translate(0 ${(-Math.abs(s)*3).toFixed(1)}) rotate(${(s*9).toFixed(1)})`);e.b.setAttribute('opacity',e.fl>0?.5:1);show(e.sl,e.slow>0)});
+  if(tk2||e.fl>0)e.b.setAttribute('transform',`translate(0 ${(-Math.abs(s)*3).toFixed(1)}) rotate(${(s*9).toFixed(1)})`);
+  const o=e.fl>0?.5:1;if(e.__bo!==o){e.__bo=o;e.b.setAttribute('opacity',o)}
+  const sl=e.slow>0;if(e.__sl!==sl){e.__sl=sl;show(e.sl,sl)}});
  {const fa=G.fx;G.fx=[];fa.forEach(f=>{f.t+=dt;const k=Math.min(1,f.t/f.life);f.u(k);if(k>=1)f.e.remove();else G.fx.push(f)})}
- G.shake=Math.max(0,G.shake-dt);$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}
+ G.shake=Math.max(0,G.shake-dt);if(G.shake>0||G.__bs){G.__bs=G.shake>0;$('cdBase').setAttribute('transform',`translate(${BASE[0]+Math.sin(G.tm*60)*G.shake*14} ${BASE[1]}) scale(1.5)`)}}
 const N={hp:$('cdHp'),fish:$('cdFish'),wave:$('cdWave'),wt:$('cdWT')};
 function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel){$('cdUp').style.opacity=G.sel.lv>=CMAXL-1||G.fish>=upc(G.sel)?1:.55;const dd=$('cdiDD');if(dd)sT(dd,n1(G.sel.dd||0))}
  if(G.state==='break'){t=`Волна ${G.wave+1}/${MAXW>999?'∞':MAXW} · ${(AUTO||G.co)?Math.ceil(G.cd):'▶'}`;go=1}
@@ -5582,7 +5585,7 @@ function ui(){sT(N.hp,G.hp);sT(N.fish,G.fish);let t,go=0;if(G.sel){$('cdUp').sty
  document.querySelectorAll('#cdBar .cd-t').forEach(b=>{const k=b.dataset.k;const n=G.tw.filter(t=>t.k===k&&(!G.co||t.o===CQ.me)).length;b.classList.toggle('no',G.fish<TW[k].cost||n>=MAXT);b.classList.toggle('sel',G.pick===k);sT(b.lastChild,n+'/'+MAXT)})}
 let raf=0,last=0;
 function frame(ts){raf=0;if(cur!=='catdef'||VIEW!=='play')return;const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
- try{if(!G.paused){for(let i=0;i<SPD;i++)step(dt);G.tm+=dt*SPD}draw(G.paused?0:dt*SPD);ui()}catch(e){console.error('catdef',e)}raf=requestAnimationFrame(frame)}
+ try{if(!G.paused){for(let i=0;i<SPD;i++)step(dt);G.tm+=dt*SPD}draw(G.paused?0:dt*SPD);if((G.uf=(G.uf||0)+1)%4===1)ui()}catch(e){console.error('catdef',e)}raf=requestAnimationFrame(frame)}
 
 /* ---------- ввод: выбор котика, постановка, продажа ---------- */
 const cell=e=>{const r=svg.getBoundingClientRect();return[Math.floor((e.clientX-r.left)/r.width*W/C),Math.floor((e.clientY-r.top)/r.height*H/C)]};
@@ -8106,7 +8109,7 @@ const dm2=dmg;dmg=function(e,n,src,q){dm2.apply(this,arguments);
 const PRN={f:'Первый',l:'Последний',s:'Сильный'};
 const vPR=(t,e,g)=>{const m=t.pri||'f';return m==='l'?e.d<g.d:m==='s'?e.hp>g.hp:e.d>g.d};
 const vLamp=e=>G.tw.some(t=>t.cf.lamp&&dist(t,e)<=t.cf.range);
-const vVis=(t,e)=>{if(e.jt>0)return false;if(e.c.inv&&t.k!=='kosm')return false;if(e.fgd&&!t.cf.nofog&&!vLamp(e))return false;return true};
+const vVis=(t,e)=>{if(e.jt>0)return false;if(e.c.inv&&t.k!=='kosm')return false;if(e.fgd&&!t.cf.nofog&&!(e.lp==null?vLamp(e):e.lp))return false;return true};
 let FOG=[];
 const fogK=()=>{if(typeof G==='undefined'||!G||LV.w!==BW)return 0;const P=[0,44,32,26,24][LV.l]||0;if(!P)return 0;const t=(G.tm%P)/P;return t<.55?0:Math.sin((t-.55)/.45*Math.PI)};
 /* --- приоритет цели: повторный тап по выбранному котику --- */
@@ -8205,11 +8208,11 @@ const VBAN={shield:'Щитовики! Сначала сбей щит',invis:'Н�
 {const s9=step;step=function(dt){const ko=G.tw.some(t=>t.k==='kosm');if(!G.v2)G.v2={};const fk=fogK();if(LV.w===BW){const on=fk>.3;if(on&&!G.fgW){G.fgW=1;ban('Туман сгущается! Зомби в дымке не видно')}else if(!on)G.fgW=0}
  G.en.forEach(e=>{if(e.dead)return;const c=e.c;if(VBAN[e.type]&&!G.v2[e.type]){G.v2[e.type]=1;ban(VBAN[e.type])}
   e.fgd=fk>.3&&FOG.some(f=>Math.hypot(e.x-f.x,e.y-f.y)<f.r)&&(fk>.85||(G.tm*.7+e.id*.9)%2<1.1);
-  e.g.setAttribute('opacity',c.inv?(ko?.6:.2):(FOG.length&&e.fgd&&!vLamp(e)?.35:1))});
+  e.lp=e.fgd?vLamp(e):null;{const o=c.inv?(ko?.6:.2):(FOG.length&&e.fgd&&!e.lp?.35:1);if(e.__o!==o){e.__o=o;e.g.setAttribute('opacity',o)}}});
  s9(dt);
  G.en.forEach(e=>{if(e.dead||!e.c.jmp)return;if(e.jt>0){e.jt-=dt;e.d=Math.min(TOT,e.d+130*dt)}else{e.jc=(e.jc||0)-dt;if(e.jc<=0&&G.tw.some(t=>dist(t,e)<40)){e.jt=e.jT=.5;e.jc=3;sfx('whoosh')}}})}}
 {const dr9=draw;draw=function(dt){dr9(dt);G.en.forEach(e=>{if(e.c.jmp&&e.jt>0){const k=Math.sin((1-e.jt/e.jT)*Math.PI);e.b.setAttribute('transform',`translate(0 ${(-k*26).toFixed(1)}) scale(${(1+.12*k).toFixed(2)})`)}});
- const f=$('cdFogL');if(f)f.setAttribute('opacity',(.06+.94*fogK()*(.88+.12*Math.sin(G.tm*.8))).toFixed(2))}}
+ const f=$('cdFogL');if(f){const v=(Math.round((.06+.94*fogK()*(.88+.12*Math.sin(G.tm*.8)))*25)/25).toFixed(2);if(f.__v!==v){f.__v=v;f.setAttribute('opacity',v)}}}}
 /* --- карточки котиков в стиле «Дуэли» + ветки --- */
 {const st=document.createElement('style');st.textContent=`.cd-t,.tm-s{background:linear-gradient(165deg,rgba(255,255,255,.55),rgba(255,255,255,0) 45%),var(--bg);border:2px solid rgba(255,255,255,.75);border-radius:14px;box-shadow:0 3px 8px rgba(0,0,0,.28),inset 0 -12px 16px rgba(0,0,0,.06);transition:transform .12s,box-shadow .12s}
 .cd-t{position:relative;animation:duDeal .55s cubic-bezier(.2,1.5,.4,1) backwards}.cd-t b{font:800 9.5px Comfortaa,sans-serif;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -8322,7 +8325,8 @@ var L2=null;
 const SV_NS='http://www.w3.org/2000/svg',hs=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h};
 document.body.insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="cdOutC" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.2" result="d"/><feFlood flood-color="#3b1d3a"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="cdOutZ" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.2" result="d"/><feFlood flood-color="#0b2a1c"/><feComposite in2="d" operator="in" result="o"/><feColorMatrix in="SourceGraphic" type="matrix" values=".82 .12 0 0 0  .04 1 .05 0 .03  0 .08 .78 0 0  0 0 0 1 0" result="g"/><feMerge><feMergeNode in="o"/><feMergeNode in="g"/></feMerge></filter></defs></svg>');
 document.head.insertAdjacentHTML('beforeend','<style>@keyframes ambF{0%{transform:translate(0,-30px)}50%{transform:translate(var(--sx),calc(var(--h)/2))}100%{transform:translate(0,var(--h))}}@keyframes ambR{0%{transform:translate(0,30px)}50%{transform:translate(var(--sx),calc(var(--h)/-2))}100%{transform:translate(0,calc(var(--h)*-1))}}@keyframes ambD{0%{transform:translate(-40px,0)}50%{transform:translate(calc(var(--h)/2),var(--sx))}100%{transform:translate(var(--h),0)}}@keyframes ambB{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:1;transform:scale(1.4)}}.amb *{transform-box:fill-box;transform-origin:center}</style>');
-if(localStorage.getItem('cd_v2fx')!=='0'){L.tw.setAttribute('filter','url(#cdOutC)');L.en.setAttribute('filter','url(#cdOutZ)')}
+/* perf: feMorphology-фильтры на целых слоях пересчитывались каждый кадр (главная причина лагов на iPhone). Включаются только вручную: localStorage.cd_hq='1' */
+if(localStorage.getItem('cd_hq')==='1'){L.tw.setAttribute('filter','url(#cdOutC)');L.en.setAttribute('filter','url(#cdOutZ)')}
 /* --- оружие: у каждого котика своё --- */
 const RC=['#f87171','#60a5fa','#4ade80','#fbbf24','#c084fc','#f472b6'];
 const WS={
@@ -8418,7 +8422,7 @@ const PR={0:(W,H)=>`<g fill="#f472b6">${[[40,H-24],[W-50,40],[W-30,H-90]].map(p=
  palace:(W,H)=>`<path d="M${W-100} 40h80M${W-96} 40q16-24 36-24t36 24" fill="none" stroke="#b45309" stroke-width="4"/><rect x="${W-90}" y="40" width="60" height="10" fill="#dc2626"/>`};
 function ambHTML(w){const a=AM[w];if(!a)return'';let s=w*131+7;const rn=()=>(s=s*16807%2147483647)/2147483647;let h=a[0]?`<rect width="${W}" height="${H}" fill="${a[0]}" opacity="${a[1]}" style="mix-blend-mode:multiply"/>`:'';
  const p=w===9||w===4&&0?PR.volc:w>=5&&w<=9?PR.fern:w>=10&&w<=14?PR.egypt:PR[w===15?'fern':w===16?'rice':w===17?'lan':w===18?'mount':w===19?'palace':w];if(p)h+=`<g opacity=".5">${p(W,H)}</g>`;if(w===9)h+=`<g opacity=".55">${PR.volc(W,H)}</g>`;
- const n=a[2]==='lantern'?9:22;h+='<g class="amb" pointer-events="none">';for(let i=0;i<n;i++){const x=rn()*W,y=rn()*H,c=a[3][i%a[3].length],r=a[4]*(.6+rn()*.8),d=6+rn()*9,de=-rn()*d,sx=(rn()*30-15)|0,an=a[2]==='fall'?'ambF':a[2]==='rise'?'ambR':a[2]==='drift'?'ambD':'ambB',hh=a[2]==='drift'?W+80:H+60;
+ const n=a[2]==='lantern'?5:8;h+='<g class="amb" pointer-events="none">';for(let i=0;i<n;i++){const x=rn()*W,y=rn()*H,c=a[3][i%a[3].length],r=a[4]*(.6+rn()*.8),d=6+rn()*9,de=-rn()*d,sx=(rn()*30-15)|0,an=a[2]==='fall'?'ambF':a[2]==='rise'?'ambR':a[2]==='drift'?'ambD':'ambB',hh=a[2]==='drift'?W+80:H+60;
   const st=`style="--sx:${sx}px;--h:${hh}px;animation:${an} ${d.toFixed(1)}s ${a[2]==='blink'?'ease-in-out':'linear'} ${de.toFixed(1)}s infinite;opacity:${a[2]==='blink'?.2:.75}"`;
   h+=a[5]==='leaf'?`<ellipse cx="${x|0}" cy="${y|0}" rx="${r*1.4}" ry="${r*.6}" fill="${c}" ${st}/>`:a[5]==='line'?`<rect x="${x|0}" y="${y|0}" width="1.6" height="${r*6}" fill="${c}" ${st}/>`:a[5]==='lantern'?`<g ${st}><rect x="${x|0}" y="${y|0}" width="${r*1.4}" height="${r*1.8}" rx="${r*.5}" fill="${c}" stroke="#fde68a" stroke-width="1"/></g>`:`<circle cx="${x|0}" cy="${y|0}" r="${r.toFixed(1)}" fill="${c}" ${st}/>`}
  return h+'</g>'}
@@ -8618,6 +8622,13 @@ const catBar=()=>{const ks=Object.keys(TW);return `<div class="cd-sort cd-cat">$
 $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a="shc"]');if(!b)return;SHC=b.dataset.c;ls('cd_shc',SHC);sfx('click');menu();
  requestAnimationFrame(()=>{const bar=document.querySelector('#cdMenu .cd-cat'),on=bar&&bar.querySelector('button.on');if(on)bar.scrollLeft=on.offsetLeft-bar.clientWidth/2+on.offsetWidth/2})});
 document.head.insertAdjacentHTML('beforeend','<style>.cd-cat button span{margin-left:6px;opacity:.6;font-weight:600}.cd-cat button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899)!important;border-color:transparent!important;color:#fff}</style>');
+/* ===== perf: статичная карта и декор-частицы вынесены в отдельные слои, чтобы не перерисовываться каждый кадр вместе с котиками и зомби ===== */
+{const wrap=svg.parentNode,NS2='http://www.w3.org/2000/svg',mkS=id=>{const e=document.createElementNS(NS2,'svg');e.id=id;e.setAttribute('viewBox',svg.getAttribute('viewBox'));e.setAttribute('aria-hidden','true');return e};
+const bg=mkS('cdBgSvg'),am=mkS('cdAmbSvg'),sync=()=>{const vb=svg.getAttribute('viewBox');bg.setAttribute('viewBox',vb);am.setAttribute('viewBox',vb)};
+wrap.insertBefore(bg,svg);wrap.insertBefore(am,svg);bg.appendChild($('cdMap'));
+document.head.insertAdjacentHTML('beforeend','<style>#cdBgSvg,#cdAmbSvg{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none}#cdSvg{position:relative}#cdBgSvg,#cdAmbSvg,#cdSvg{will-change:transform;transform:translateZ(0)}</style>');
+const sd0=setDim;setDim=function(){const r=sd0.apply(this,arguments);sync();return r};
+const bm0=buildMap;buildMap=function(){bm0.apply(this,arguments);sync();am.textContent='';$('cdMap').querySelectorAll('.amb').forEach(a=>{a.remove();[...a.children].slice(8).forEach(n=>n.remove());am.appendChild(a)})}}
 }
 }catch(e){console.error('catdef',e)}})();
 </script>
