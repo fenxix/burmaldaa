@@ -7404,7 +7404,7 @@ $('cdMenu').addEventListener('click',e=>{const b=e.target.closest('[data-a="exit
 
 /* ---------- состояние дуэли ---------- */
 const DU={on:0,host:0,me:0,rdy:0,st:'idle',units:[],houses:[],shots:[],out:[],el:[5,5],tm:[[],[]],sel:null,t:0,cd:0,nid:1,raf:0,bot:0,sid:0,paid:0,snT:0,sa:0,res:null,bt:0,ot:0,pend:0,starting:0,uE:new Map(),hE:{},fr:0,last:0};
-const DS={},LIFE=[.22,.35,.3,.8,.5,.5,.25,.45,.8,1];
+const DS={},LIFE=[.22,.35,.3,.8,.5,.5,.25,.45,.8,1,.3];
 const PJI={yarn:1,nip:2,snowb:3,star:4,ball:5,laser:6,fire:7,gel:8},PJC=[0,'#f472b6','#4ade80','#e0f2fe','#fde047','#1f2937','#22d3ee','#fb923c','#f9a8d4'];
 /* уникальные способности котиков в дуэли (kd — вид, atk — перезарядка, ad — урон способности) */
 const DUK={bowler:{kd:'roll',atk:7,rng:92,dmg:0},miner:{kd:'mine',atk:3.4,rng:85,dmg:0},boomer:{kd:'bmr',atk:2.4,rng:90,dmg:0},volt:{kd:'rail',atk:3.2,rng:115,dmg:0,ad:60},storm:{kd:'chain',atk:1.7,rng:85,dmg:0,ad:20},spark:{kd:'stun',atk:5.5,rng:46,dmg:0,ad:30},spidey:{kd:'web',atk:5,rng:85,dmg:0},drake:{kd:'fire',atk:5,rng:75,dmg:0,ad:14},baron:{kd:'air',atk:6.5,rng:115,dmg:0,ad:80},lila:{wd:.45,aoe:22},portik:{dmg:30,atk:1.2},chasik:{kd:'web',atk:5.5,rng:85,dmg:0},raduzhka:{kd:'chain',atk:1.4,rng:85,dmg:0,ad:18},dinn:{kd:'stun',atk:5,rng:52,dmg:0,ad:26},fokus:{kd:'air',atk:5.5,rng:115,dmg:0,ad:55},pushok:{ei:7},chef:{ei:5.5},biz:{ei:6.5}};
@@ -7505,7 +7505,7 @@ const duLk=h=>h.main&&DU.houses.some(x=>x.o===h.o&&!x.main&&x.hp>0);
 function duHouseFor(u){let own=null,best=1e9;const al=[];for(const h of DU.houses){if(h.o===u.o||h.hp<=0||duLk(h))continue;al.push(h);if(h.l===u.lane)own=h}
  if(own)return own;for(const h of al){const d=Math.hypot(h.x-u.x,h.y-u.y);if(d<best){best=d;own=h}}return own}
 const duHit=(v,dm,u)=>{v.hp-=dm;if(u.slow)v.sl=1.6};
-function duStrike(u,tg,tH){
+function duStrike(u,tg,tH){duAtkE(u,tg,tH);
  if(u.nova){const R=52;for(const v of DU.units)if(v.o!==u.o&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<=R)duHit(v,u.dmg,u);for(const h of DU.houses)if(h.o!==u.o&&h.hp>0&&!duLk(h)&&Math.hypot(h.x-u.x,h.y-u.y)<=R+22)h.hp-=u.dmg*(u.tank?2.5:1);duFx(1,u.x,u.y,u.x,u.y,u.o,R);return}
  if(tg){duHit(tg,u.dmg,u);if(u.aoe)for(const v of DU.units)if(v!==tg&&v.o!==u.o&&v.hp>0&&Math.hypot(v.x-tg.x,v.y-tg.y)<=u.aoe)duHit(v,u.dmg*.7,u);duFx(u.rng<=26?2:(u.aoe?1:0),u.x,u.y,tg.x,tg.y,u.o,u.aoe||u.pj);return}
  if(tH){tH.hp-=u.dmg*(u.tank?2.5:1);duFx(u.rng<=26?2:0,u.x,u.y,tH.x,tH.y,u.o,u.pj)}}
@@ -7518,7 +7518,7 @@ const duNL=x=>x<DW/3?0:x<DW*2/3?1:2;
 function duMove(u,tx,ty,dt){let wx=tx,wy=ty;const sd=y=>y>MID?1:0;if(sd(u.y)!==sd(ty)){wx=LX[duNL(u.x)];wy=u.y>MID?MID-14:MID+14}
  const d=Math.hypot(wx-u.x,wy-u.y)||1,v=u.sp*1.12*(u.sw>0?.4:u.sl>0?.55:1)*dt;u.x+=(wx-u.x)/d*v;u.y+=(wy-u.y)/d*v}
 function duBoom(o,x,y,R,dm,hd){for(const v of DU.units)if(v.o!==o&&v.hp>0&&Math.hypot(v.x-x,v.y-y)<=R)v.hp-=dm;for(const h of DU.houses)if(h.o!==o&&h.hp>0&&!duLk(h)&&Math.hypot(h.x-x,h.y-y)<=R+22)h.hp-=(hd==null?dm:hd);duFx(1,x,y,x,y,o,R)}
-function duAb(u,tg,tH){const o=u.o,dir=o?1:-1,tx=tg?tg.x:tH.x,ty=tg?tg.y:tH.y,d=Math.hypot(tx-u.x,ty-u.y)||1,ux=(tx-u.x)/d,uy=(ty-u.y)/d,P=DU.pj;
+function duAb(u,tg,tH){duAtkE(u,tg,tH);const o=u.o,dir=o?1:-1,tx=tg?tg.x:tH.x,ty=tg?tg.y:tH.y,d=Math.hypot(tx-u.x,ty-u.y)||1,ux=(tx-u.x)/d,uy=(ty-u.y)/d,P=DU.pj;
  switch(u.kd){
  case'roll':for(let i=-1;i<2;i++)P.push({id:DU.pid++,c:0,o,x:u.x-uy*i*11,y:u.y+ux*i*11,pw:3,hit:[],dx:ux,dy:uy});duFx(5,u.x,u.y,u.x,u.y,o,0);break;
  case'mine':{const m=P.filter(q=>q.c===2&&q.o===o);if(m.length>=3)P.splice(P.indexOf(m[0]),1);const L=Math.min(d,70);P.push({id:DU.pid++,c:2,o,x:u.x+ux*L,y:u.y+uy*L,arm:.7});break}
@@ -7588,7 +7588,7 @@ function duTw(main,c,mine){const L=main?1.3:1.05,yb=main?44:33,sx=main?1:0;
  `<rect x="-25" y="-15" width="50" height="6" rx="1.5" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.8"/>`+[-22.5,-10.5,1.5,13.5].map(x=>`<rect x="${x}" y="-23" width="9" height="9" rx="1.5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.6"/>`).join('')+
  `</g><g class="dru" style="display:none"><ellipse cy="16" rx="31" ry="8" fill="#0004"/><path d="M-27 19l6-14 10 6 8-11 10 8 8-6 6 17z" fill="#94a3b8" stroke="#475569" stroke-width="2" stroke-linejoin="round"/><path d="M-14 17l4-6 6 4M10 17l4-8 6 6" stroke="#475569" fill="none" stroke-width="1.6"/><circle cx="-6" cy="-4" r="6" fill="#64748b" opacity=".5"/><circle cx="6" cy="-12" r="8" fill="#64748b" opacity=".35"/></g></g></g>`+
  `<g class="dhb" transform="translate(0 ${yb})"><rect x="-28" y="0" width="56" height="8" rx="4" fill="#0b1224" stroke="#fff" stroke-opacity=".6" stroke-width="1.2"/><rect class="dhf" x="-26.5" y="1.5" width="53" height="5" rx="2.5" fill="${mine?'#4ade80':'#f87171'}"/><text class="dht" y="19" text-anchor="middle" font-size="10" font-weight="800" fill="#fff" stroke="#0f172a" stroke-width="2.6" paint-order="stroke" font-family="Montserrat,sans-serif">0</text></g>`}
-function duBuild(){const s=$('duSvg');s.setAttribute('viewBox',`0 0 ${DW} ${DH}`);
+function duBuild(){DU.pkv={sk:Object.assign({},(CQ.pt&&CQ.pt.sk)||CQ.psk||{}),ev:Object.assign({},(CQ.pt&&CQ.pt.ev)||{})};const s=$('duSvg');s.setAttribute('viewBox',`0 0 ${DW} ${DH}`);
  s.innerHTML=duMap()+`<rect id="duZone" y="${MID+26}" width="${DW}" height="${DH-MID-26}" fill="#60a5fa" opacity="0"/><g id="duH"></g><g id="duJ"></g><g id="duU"></g><g id="duF"></g>`;
  DU.hE={};const gH=$('duH'),me=DU.me;
  DU.houses.forEach(h=>{const mine=h.o===me,c=mine?['#3b82f6','#1d4ed8']:['#ef4444','#b91c1c'],g=document.createElementNS(NS2,'g'),p=me?[DW-h.x,DH-h.y]:[h.x,h.y];
@@ -7599,9 +7599,97 @@ const duCI=k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg><b>${TW[
 function duCardsBuild(){$('duCards').innerHTML=[0,1,2].map(i=>`<button class="du-c" data-i="${i}" data-k="" data-dc="99"></button>`).join('')+'<div class="du-n" id="duNx"><small>Следом</small><div class="du-m" id="duNc" data-k=""></div></div>'}
 function duSync(){const h=(DU.hd&&DU.hd[DU.me])||[];document.querySelectorAll('#duCards .du-c').forEach((c,i)=>{const k=h[i]||'';if(c.dataset.k!==k){c.dataset.k=k;if(k&&TW[k]){c.dataset.dc=duStat(k).dc;c.style.setProperty('--bg',TW[k].bg);c.innerHTML=duCI(k);c.classList.remove('deal');void c.offsetWidth;c.classList.add('deal')}else{c.innerHTML='';c.dataset.dc=99}}});
  if(DU.sel&&!h.includes(DU.sel))DU.sel=null;const n=(DU.nx&&DU.nx[DU.me])||'',m=$('duNc');if(m&&m.dataset.k!==n){m.dataset.k=n;if(n&&TW[n]){m.style.setProperty('--bg',TW[n].bg);m.innerHTML=duCI(n);const w=$('duNx');w.classList.remove('sw');void w.offsetWidth;w.classList.add('sw')}else m.innerHTML=''}}
-function duMkU(u){const g=document.createElementNS(NS2,'g'),mine=u.o===DU.me;
- g.innerHTML=`<ellipse class="dsh" cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><ellipse cy="12" rx="13" ry="5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><g class="db"><g transform="scale(.58)"><use href="#cd-${u.k}"/></g></g><g class="dhb2" style="display:none"><rect x="-13" y="-37" width="26" height="4.6" rx="2.3" fill="#0009"/><rect class="dhf" x="-12.4" y="-36.4" width="25.2" height="3.4" rx="1.7" fill="${mine?'#4ade80':'#f87171'}"/></g>`;
- return{g,db:g.querySelector('.db'),sh:g.querySelector('.dsh'),hb:g.querySelector('.dhb2'),hf:g.querySelector('.dhf'),sy:0,px:0,py:0,ph:0,fl:0,php:u.hp,acc:0,tc:0}}
+/* ===== КУКЛА КОТИКА В ДУЭЛИ: хвост, моргание, лапки, оружие, скин и эволюция — как в основной игре ===== */
+const DUNOEYE=['ninja','kosm','pirat','sphinx'],duSyms=new Set(),duF1=n=>(+n).toFixed(1),duF2=n=>(+n).toFixed(2);
+/* скин и эволюция берутся у владельца котика: у себя из SV, у партнёра из его данных в комнате (снимок на старте матча) */
+function duSkEv(own,k){let sk='',ev=0;
+ if(own){sk=(SV.sk&&SV.sk[k])||'';ev=(SV.evo&&SV.evo[k])||0}
+ else if(!(DU.on&&DU.bot)){const p=(DU.on&&DU.pkv)||CQ.pt||{},q=CQ.psk||{};sk=(p.sk&&p.sk[k])||q[k]||'';ev=(p.ev&&p.ev[k])||0}
+ sk=typeof sk==='string'&&THEMES[sk.slice(-1)==='!'?sk.slice(0,-1):sk]?sk:'';
+ return[sk,Math.max(0,Math.min(5,Math.floor(+ev||0)))]}
+/* отдельный символ на сочетание «котик + скин + эволюция», чтобы чужие котики не получали твой скин */
+function duSym(k,sk,ev){const id='cd-du-'+k+'-'+(sk?sk.replace('!','R'):'0')+'-'+ev;
+ if(!duSyms.has(id)){duSyms.add(id);let d=document.getElementById('duDefs');
+  if(!d){$('app').insertAdjacentHTML('beforeend','<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="duDefs"></defs></svg>');d=document.getElementById('duDefs')}
+  const g=document.createElementNS(NS2,'g');g.id=id;g.innerHTML=SYM[k]?compose(k,sk,ev):'<use href="#cd-'+k+'"/>';d.appendChild(g)}
+ return id}
+const duUseL=(own,k)=>{const q=duSkEv(own,k);return duSym(k,q[0],q[1])};
+/* цвет хвоста и лапок под скин: то же, что делает фильтр скина (поворот оттенка, насыщенность, яркость), но без тяжёлых фильтров на каждом котике */
+function duTint(col,sk){if(!sk||sk.slice(-1)==='!')return col;const T=THEMES[sk];if(!T)return col;
+ const c=[1,3,5].map(i=>parseInt(col.slice(i,i+2),16)),a=(T.hue||0)*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),sa=T.sat==null?1:T.sat,br=T.br==null?1:T.br,
+ H=[[.213+cs*.787-sn*.213,.715-cs*.715-sn*.715,.072-cs*.072+sn*.928],[.213-cs*.213+sn*.143,.715+cs*.285+sn*.14,.072-cs*.072-sn*.283],[.213-cs*.213-sn*.787,.715-cs*.715+sn*.715,.072+cs*.928+sn*.072]],
+ S=[[.213+.787*sa,.715-.715*sa,.072-.072*sa],[.213-.213*sa,.715+.285*sa,.072-.072*sa],[.213-.213*sa,.715-.715*sa,.072+.928*sa]],
+ mv=(M,v)=>M.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]);
+ return'#'+mv(S,mv(H,c)).map(v=>Math.max(0,Math.min(255,Math.round(v*br))).toString(16).padStart(2,'0')).join('')}
+const duMx=c=>'#'+[1,3,5].map(i=>Math.round(parseInt(c.slice(i,i+2),16)*.78).toString(16).padStart(2,'0')).join('');
+function duDoll(u){
+ const k=u.k,sv=duSkEv(u.o===DU.me,k),sk=sv[0],ev=sv[1],id=duSym(k,sk,ev),s=SYM[k]||'',
+  c0=(s.match(/fill="(#[0-9a-fA-F]{6})"/)||[])[1]||'#fb923c',col=duTint(c0,sk),
+  cat=s.includes('rx="2.6" ry="3.4"')&&!DUNOEYE.includes(k),dk='#0f172a',F=sk&&sk.slice(-1)==='!'?' filter="url(#cdf-rb)"':'',
+  tail=`<g data-p="tl" transform="translate(10 18)"><g${F}><path d="M0 0Q15 3 16-12Q16-19 11-20" stroke="${col}" stroke-width="5.5" fill="none" stroke-linecap="round"/><circle cx="11" cy="-20" r="3" fill="${duMx(col)}"/></g></g>`,
+  au=ev>=3?`<circle data-p="au" cy="6" r="27" fill="#fde047" opacity="0"/><g data-p="sp" opacity="0"><path d="M-23-12l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="#fde047"/><path d="M22 2l1.2 3.2 3.2 1.2-3.2 1.2-1.2 3.2-1.2-3.2-3.2-1.2 3.2-1.2z" fill="#fff7ae"/></g>`:'',
+  paw=x=>`<g data-p="${x<0?'pl':'pr'}"><g${F}><ellipse cx="${x}" cy="22" rx="4.6" ry="3.2" fill="${col}" stroke="#0000001f"/><path d="M${x-2} 22v1.6M${x} 22v1.8M${x+2} 22v1.6" stroke="#0000002e" stroke-width=".8"/></g></g>`,
+  ov=cat?`<ellipse cx="-11" cy="1" rx="3.2" ry="1.9" fill="#fb7185" opacity=".35"/><ellipse cx="11" cy="1" rx="3.2" ry="1.9" fill="#fb7185" opacity=".35"/><g data-p="ld" opacity="0"><g${F}><ellipse cx="-6" cy="-5" rx="3.1" ry="4" fill="${col}"/><ellipse cx="6" cy="-5" rx="3.1" ry="4" fill="${col}"/></g><path d="M-9-4q3 2 6 0M3-4q3 2 6 0" stroke="${dk}" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>${paw(-7)}${paw(7)}`:'';
+ let w=null,hands='';
+ try{const W=window.CDW;if(W&&W.wClass){w=W.wClass(k,TWB[k]||TW[k]||{});if(w)hands=(w[0]==='gun'?[12,-12]:[12]).map((x,i)=>`<g data-w="${i}" transform="translate(${x} 5) rotate(${w[3]})">${W.WS[w[0]](w[1])}</g>`).join('')}}catch(e){w=null;hands=''}
+ return{body:`${au}${tail}<use href="#${id}"/>${ov}`,hands,w}}
+function duMkU(u){const g=document.createElementNS(NS2,'g'),mine=u.o===DU.me,D=duDoll(u),st=duStat(u.k),tb=TWB[u.k]||{};
+ g.innerHTML=`<ellipse class="dsh" cy="12" rx="13" ry="5" fill="${mine?'#3b82f6':'#ef4444'}" opacity=".6"/><ellipse cy="12" rx="13" ry="5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><g class="db"><g transform="scale(.58)"><g class="dbd">${D.body}</g>${D.hands}</g></g><g class="dhb2" style="display:none"><rect x="-13" y="-37" width="26" height="4.6" rx="2.3" fill="#0009"/><rect class="dhf" x="-12.4" y="-36.4" width="25.2" height="3.4" rx="1.7" fill="${mine?'#4ade80':'#f87171'}"/></g>`;
+ const q=x=>g.querySelector(x),ra=D.w?D.w[3]:0;
+ return{g,db:q('.db'),sh:q('.dsh'),hb:q('.dhb2'),hf:q('.dhf'),bd:q('.dbd'),tl:q('[data-p=tl]'),ld:q('[data-p=ld]'),pl:q('[data-p=pl]'),pr:q('[data-p=pr]'),au:q('[data-p=au]'),sp:q('[data-p=sp]'),wh:[...g.querySelectorAll('[data-w]')],
+  w:D.w,ml:!!(tb.wind||st.rng<=26),pj:st.pj||0,dp:(u.id*2.399)%6.28,tp:0,kk:0,rc:0,ah:0,wa:ra,wt:ra,bl:0,pa:0,tx:null,ty:0,mx:0,my:mine?-1:1,ax:0,ay:mine?-1:1,face:1,
+  sy:0,px:0,py:0,ph:0,fl:0,php:u.hp,acc:0,tc:0}}
+/* анимация куклы: дыхание, хвост, моргание, лапки, поза и прицел оружия */
+function duAnim(e,u,p,mv,mdx,mdy,dt,tm,P){
+ if((e.pa-=dt)<=0){e.pa=.12+Math.random()*.08;let b=1e9,bx=0,by=0;for(const v of DU.units){if(v.o===u.o||v.hp<=0)continue;const d=Math.hypot(v.x-u.x,v.y-u.y);if(d<b){b=d;bx=v.x;by=v.y}}
+  if(b<150){const q=P(bx,by);e.tx=q[0];e.ty=q[1]}else e.tx=null}
+ if(mv){const l=Math.hypot(mdx,mdy)||1,r=Math.min(1,dt*8);e.mx+=(mdx/l-e.mx)*r;e.my+=(mdy/l-e.my)*r}
+ let wt;
+ if(e.ah>0){e.ah-=dt;wt=e.wt}
+ else if(e.tx!=null){const dx=e.tx-p[0];wt=Math.atan2(e.ty-p[1],dx)*57.3;if(Math.abs(dx)>5)e.face=dx<0?-1:1}
+ else if(mv){wt=Math.atan2(e.my,e.mx)*57.3;if(Math.abs(e.mx)>.45)e.face=e.mx<0?-1:1}
+ else wt=e.w?e.w[3]:0;
+ const k=e.kk=Math.max(0,e.kk-dt*4.5),s=Math.sin(tm*3+e.dp);
+ e.bd.setAttribute('transform',`translate(${duF2(e.ax*3*k)} ${duF2(e.ay*2*k)}) translate(0 20) rotate(${duF2(e.ax*7*k)}) scale(${duF2(e.face*.95*(1+.04*s+.18*k))} ${duF2(.95*(1-.04*s-.15*k))}) translate(0 -20)`);
+ e.tp+=dt*(mv?5:2.4);e.tl.setAttribute('transform',`translate(10 18) rotate(${duF1(Math.sin(e.tp+e.dp)*14+k*22)})`);
+ if(e.ld){const b=((tm+e.dp*1.7)%3.6)<.14?1:0;if(b!==e.bl){e.bl=b;e.ld.setAttribute('opacity',b)}}
+ if(e.pl){const wk=mv?Math.sin(e.ph):0;e.pl.setAttribute('transform',`translate(0 ${duF1(-k*5-Math.max(0,wk)*2.2)})`);e.pr.setAttribute('transform',`translate(0 ${duF1(-k*5-Math.max(0,-wk)*2.2)})`)}
+ if(e.au){e.au.setAttribute('opacity',duF2(.18+.1*Math.sin(tm*3+e.dp)));e.sp.setAttribute('opacity',duF2(.5+.5*Math.sin(tm*4+e.dp)))}
+ if(e.w){const d=((wt-e.wa+540)%360)-180;e.wa+=d*Math.min(1,dt*14);const a=e.wa/57.3,cx=Math.cos(a),sy=Math.sin(a),fy=cx<0?-1:1;e.rc=Math.max(0,e.rc-dt*6);
+  for(let i=0;i<e.wh.length;i++)e.wh[i].setAttribute('transform',`translate(${duF1((i?-12:12)-cx*3*e.rc)} ${duF1(5-sy*3*e.rc)}) rotate(${duF1(e.wa)}) scale(1 ${fy})`)}}
+/* событие атаки: host кладёт его в общий поток вспышек (f), guest получает вместе со снимком — у обоих игроков атаки выглядят одинаково */
+function duAtkE(u,tg,tH){const t=tg||tH;if(t)duFx(10,u.x,u.y,t.x,t.y,u.o,u.id)}
+function duAtkEv(f,P){const e=DU.uE.get(f[6]);if(!e)return;const a=P(f[1],f[2]),b=P(f[3],f[4]);let dx=b[0]-a[0],dy=b[1]-a[1];const l=Math.hypot(dx,dy);
+ if(l<3){dx=e.face;dy=0}else{dx/=l;dy/=l}
+ e.ax=dx;e.ay=dy;e.kk=1;if(Math.abs(dx)>.2)e.face=dx<0?-1:1;
+ if(e.w){e.wt=Math.atan2(dy,dx)*57.3;e.wa=e.wt;e.ah=1.1;e.rc=1}}
+function duAtkSvg(s,me,P){
+ const f=s.f,k=s.age/s.life,e=DU.uE.get(f[6]),a=P(f[1],f[2]),b=P(f[3],f[4]);let dx=b[0]-a[0],dy=b[1]-a[1];const l=Math.hypot(dx,dy);
+ if(l<3){dx=e?e.face:1;dy=0}else{dx/=l;dy/=l}
+ const d=Math.atan2(dy,dx)*57.3,own=f[5]===me,o=(1-k).toFixed(2),n1=duF1,sd=f[1]*3.1+f[2]*7.7,rn=n=>Math.sin(sd+n*12.9898)*.5+.5;
+ if(e&&e.ml){const c=own?'#f9a8d4':'#fda4af',arcs='<path d="M10-14Q30-8 28 2"/><path d="M8-3Q34 2 32 10"/><path d="M10 8Q28 12 24 20"/>';
+  return `<g transform="translate(${n1(a[0]+dx*3)} ${n1(a[1]-2+dy*3)}) rotate(${n1(d)}) scale(${duF2((.55+.5*k)*.62)})" opacity="${o}" fill="none" stroke-linecap="round"><g stroke="#fff" stroke-width="3.4">${arcs}</g><g stroke="${c}" stroke-width="1.4">${arcs}</g></g>`}
+ const W=window.CDW,w=e&&e.w,M=w&&W&&W.MZ?(W.MZ[w[0]]||[16,0]):null,fy=dx<0?-1:1;let mx,my;
+ if(M){const m1=M[1]*fy;mx=a[0]+(12+dx*M[0]-dy*m1)*.58;my=a[1]+(5+dy*M[0]+dx*m1)*.58}else{mx=a[0]+dx*9;my=a[1]-5+dy*9}
+ const pc=PJC[e?e.pj:0]||(own?'#fde047':'#fb923c');
+ let h=`<g transform="translate(${n1(mx)} ${n1(my)}) rotate(${n1(d)}) scale(${duF2((1+.7*k)*.75)})" opacity="${o}"><path d="M-3-6L13 0-3 6Z" fill="${pc}"/><circle r="5" fill="#fff" opacity=".9"/><path d="M-6-9l5 4M-6 9l5-4" stroke="${pc}" stroke-width="1.6" stroke-linecap="round"/></g>`;
+ if(!w)return h;
+ const wc=w[1],S=(c,n,v)=>{let q='';for(let i=0;i<n;i++){const an=rn(i)*6.28,vv=10+rn(i+7)*((v||40)*.6-10);q+=`<circle cx="${n1(mx+Math.cos(an)*vv*k)}" cy="${n1(my+Math.sin(an)*vv*k)}" r="${n1(.8+rn(i+3))}" fill="${c}" opacity="${o}"/>`}return q},
+  R=(r,c)=>`<circle cx="${n1(mx)}" cy="${n1(my)}" r="${n1(r*.6*(.3+.7*k))}" fill="${c}" fill-opacity=".25" stroke="${c}" stroke-width="1.6" opacity="${o}"/>`,
+  Q=(c,n)=>{let q='';for(let i=0;i<n;i++){const an=rn(i+20)*6.28,vv=15+rn(i+30)*25;q+=`<circle cx="${n1(mx+Math.cos(an)*vv*k*.24)}" cy="${n1(my+Math.sin(an)*vv*k*.24-k*5)}" r="${n1((1.2+rn(i+40)*1.4)*(1-k*.5))}" fill="${c}" opacity="${o}"/>`}return q};
+ switch(w[2]){
+  case'muz':h+=`<polygon points="0,-9 3,-3 9,0 3,3 0,9 -3,3 -9,0 -3,-3" fill="#fde047" stroke="#fff" stroke-width="1" transform="translate(${n1(mx)} ${n1(my)}) rotate(${n1(d)}) scale(${duF2((.7+k)*.6)})" opacity="${o}"/>`+S('#fef08a',3,26);break;
+  case'zap':case'glow':h+=R(14,wc)+S(wc,5,40);break;
+  case'mag':h+=R(16,wc)+S(wc,7,38)+Q('#fff',3);break;
+  case'fire':h+=Q('#fb923c',4)+Q('#fde047',3)+S('#ef4444',3,30);break;
+  case'gas':h+=Q('#a3e635',4)+Q('#65a30d',3);break;
+  case'splash':h+=Q(wc,6)+S('#fff',3,30);break;
+  case'note':h+=`<text x="${n1(mx+k*8)}" y="${n1(my-20*k)}" font-size="11" font-weight="800" fill="#f472b6" stroke="#fff" stroke-width=".6" opacity="${o}">${['♪','♫','♬'][Math.floor(rn(1)*3)]}</text>`;break;
+  case'claw':for(let i=-1;i<=1;i++)h+=`<path d="M${n1(mx-5.4+i*3)} ${n1(my-6)}l8 11" stroke="${wc}" stroke-width="1.6" stroke-linecap="round" opacity="${o}"/>`;break;
+  case'web':h+=R(12,'#e2e8f0')+S('#fff',4,34);break;
+  case'boom':h+=Q('#94a3b8',5)+S('#fbbf24',3,30);break;
+  case'toss':h+=S(wc,4,30)+Q('#fff',2);break}
+ return h}
 function duRPj(P){const g=$('duJ');if(!g)return;let h='';const tm=performance.now()/1000,me=DU.me;for(const q of DU.pj||[]){const p=P(q.x,q.y),x=+p[0].toFixed(1),y=+p[1].toFixed(1),c=q.c;
  if(c===0)h+=`<circle cx="${x}" cy="${y}" r="9" fill="#a5b4fc" opacity=".22"/><g transform="translate(${x} ${y})"><circle r="6.8" fill="#1e293b" stroke="#818cf8" stroke-width="2"/><g transform="rotate(${(tm*260%360).toFixed(0)})"><circle cx="-1.8" cy="-2.6" r="1" fill="#64748b"/><circle cx="1.6" cy="-2.8" r="1" fill="#64748b"/><circle cy="-.4" r="1" fill="#64748b"/></g><circle cx="-2.4" cy="-3" r="1.6" fill="#fff" opacity=".55"/></g>`;
  else if(c===1)h+=`<circle cx="${x}" cy="${y}" r="9" fill="#fbbf24" opacity=".16"/><g transform="translate(${x} ${y}) rotate(${(tm*720%360).toFixed(0)})"><path d="M-9 2Q0-11 9 2L5.5 4Q0-4-5.5 4Z" fill="#fbbf24" stroke="#b45309" stroke-width="1.6" stroke-linejoin="round"/></g>`;
@@ -7610,7 +7698,7 @@ function duRPj(P){const g=$('duJ');if(!g)return;let h='';const tm=performance.no
  else h+=`<g transform="translate(${x} ${y})"><circle r="${q.r}" fill="#f97316" fill-opacity="${(.2+.06*Math.sin(tm*8)).toFixed(2)}" stroke="#fb923c" stroke-opacity=".7" stroke-dasharray="4 3"/>${[[-9,4],[8,5],[0,-6],[-5,-10],[10,-5]].map(([a,b],i)=>`<g transform="translate(${a} ${b}) scale(${(.85+.3*Math.sin(tm*9+i*1.7)).toFixed(2)})"><path d="M0 5Q-6 1-3.5-6Q-1-2 1-10Q8-2 5.5 2Q4 5 0 5Z" fill="#fb923c" stroke="#c2410c" stroke-width="1"/><path d="M0 3Q-2 0 0-4Q2 0 0 3Z" fill="#fde047"/></g>`).join('')}</g>`}
  g.innerHTML=h}
 function duShotSvg(s,me,P){const f=s.f,k=s.age/s.life,ty=f[0],a=P(f[1],f[2]),b=P(f[3],f[4]),own=f[5]===me,col=own?'#fde047':'#fb7185',o=(1-k).toFixed(2),sd=f[1]*3.1+f[2]*7.7,rn=n=>Math.sin(sd+n*12.9898)*.5+.5,n1=v=>(+v).toFixed(1);
- if(ty===0){const q=Math.min(1,k*1.5),pj=f[6]|0,x=a[0]+(b[0]-a[0])*q,y=a[1]+(b[1]-a[1])*q,ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI,r=k*720;
+ if(ty===10)return duAtkSvg(s,me,P);if(ty===0){const q=Math.min(1,k*1.5),pj=f[6]|0,x=a[0]+(b[0]-a[0])*q,y=a[1]+(b[1]-a[1])*q,ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI,r=k*720;
   if(pj===6)return `<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" opacity="${(.35*(1-k)).toFixed(2)}"/><path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" stroke="#ecfeff" stroke-width="2.4" stroke-linecap="round" opacity="${o}"/>`;
   const t0=Math.max(0,q-.35),tx=a[0]+(b[0]-a[0])*t0,ty2=a[1]+(b[1]-a[1])*t0,tc=PJC[pj]||col;
   const H=[`<circle r="3.4" fill="${col}" stroke="#fff" stroke-width="1"/>`,
@@ -7639,7 +7727,7 @@ function duShotSvg(s,me,P){const f=s.f,k=s.age/s.life,ty=f[0],a=P(f[1],f[2]),b=P
   for(let i=0;i<12;i++){const an=(i*30+rn(i)*25)*Math.PI/180,dd=(8+50*k*(.5+rn(i+4)))*bg,xx=c+Math.cos(an)*dd,yy=d+Math.sin(an)*dd+34*k*k*bg;h+=`<rect x="${n1(xx-3)}" y="${n1(yy-3)}" width="${n1(6*(1-k*.5))}" height="${n1(5*(1-k*.5))}" fill="${i%3?'#94a3b8':'#475569'}" transform="rotate(${(k*300+i*40).toFixed(0)} ${n1(xx)} ${n1(yy)})" opacity="${o}"/>`}
   for(let i=0;i<4;i++)h+=`<circle cx="${n1(c+(i-1.5)*12*bg)}" cy="${n1(d-10-30*k*(.6+rn(i)*.6)*bg)}" r="${n1((7+14*k)*bg)}" fill="#64748b" opacity="${(.5*(1-k)).toFixed(2)}"/>`;return h}
  return `<circle cx="${a[0]}" cy="${a[1]}" r="${n1(8+20*k)}" fill="none" stroke="#fff" stroke-width="2.5" opacity="${o}"/>`}
-function duRender(dt){const gU=$('duU'),gF=$('duF');if(!gU)return;const me=DU.me,P=(x,y)=>me?[DW-x,DH-y]:[x,y];
+function duRender(dt){const gU=$('duU'),gF=$('duF');if(!gU)return;const me=DU.me,P=(x,y)=>me?[DW-x,DH-y]:[x,y],tm=performance.now()/1000;
  DU.houses.forEach(h=>{const e=DU.hE[h.id];if(!e)return;const a=h.hp>0,pc=Math.max(0,h.hp/h.max),dr=e.php-h.hp;
   if(dr>0){e.acc+=dr;if(dr>=2)e.fl=.12}
   if(e.php>0&&!a)DU.shots.push(duShot([9,h.x,h.y,0,0,h.o,h.main?1:0]));
@@ -7655,15 +7743,15 @@ function duRender(dt){const gU=$('duU'),gF=$('duF');if(!gU)return;const me=DU.me
   const p=P(u.x,u.y),pc=Math.max(0,u.hp/u.max),dr=e.php-u.hp;
   if(dr>0){e.acc+=dr;if(dr>=1.5)e.fl=.13}e.php=u.hp;e.tc-=dt;
   if(e.acc>=3&&e.tc<=0){DU.shots.push(duShot([8,u.x+(Math.random()-.5)*8,u.y-22,Math.round(e.acc),u.o,0,0]));e.acc=0;e.tc=.25}
-  const mv=Math.hypot(p[0]-e.px,p[1]-e.py)>.12;e.px=p[0];e.py=p[1];if(mv)e.ph+=dt*13;if(e.fl>0)e.fl-=dt;
+  const mdx=p[0]-e.px,mdy=p[1]-e.py,mv=Math.hypot(mdx,mdy)>.12;e.px=p[0];e.py=p[1];if(mv)e.ph+=dt*13;if(e.fl>0)e.fl-=dt;
   e.sy=p[1];e.g.setAttribute('transform','translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+')');
-  e.db.setAttribute('transform','translate(0 '+(mv?(-Math.abs(Math.sin(e.ph))*2.4).toFixed(1):0)+')'+(e.fl>0?' scale(1.1)':''));
+  e.db.setAttribute('transform','translate(0 '+(mv?(-Math.abs(Math.sin(e.ph))*2.4).toFixed(1):0)+')'+(e.fl>0?' scale(1.1)':''));duAnim(e,u,p,mv,mdx,mdy,dt,tm,P);
   e.sh.setAttribute('fill',e.fl>0?'#fff':(u.o===me?'#3b82f6':'#ef4444'));
   e.hf.setAttribute('width',(25.2*pc).toFixed(1));e.hb.style.display=(pc<.995&&u.hp>0)?'':'none'}
  DU.uE.forEach((e,id)=>{if(!seen.has(id)){e.g.remove();DU.uE.delete(id)}});
  if(++DU.fr%6===0)[...DU.uE.values()].sort((a,b)=>a.sy-b.sy).forEach(e=>gU.appendChild(e.g));
  duRPj(P);if(DU.shots.length>150)DU.shots.splice(0,DU.shots.length-150);
- let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}h+=duShotSvg(s,me,P)}gF.innerHTML=h}
+ let h='';for(let i=DU.shots.length-1;i>=0;i--){const s=DU.shots[i];if(s.f[0]===10&&!s.ev){s.ev=1;duAtkEv(s.f,P)}s.age+=dt;if(s.age>=s.life){DU.shots.splice(i,1);continue}h+=duShotSvg(s,me,P)}gF.innerHTML=h}
 let banT=0;
 function duBan(t,ms){const b=$('duBan');b.textContent=t;b.classList.add('on');clearTimeout(banT);banT=setTimeout(()=>b.classList.remove('on'),ms||1200)}
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -7704,9 +7792,9 @@ const DMN=DMAPS;
 const DTIP=['Котики идут к ближайшей боковой башне — ставь их ближе к нужной линии','Сначала ломай боковые башни: главная под защитой, пока они стоят','Поставил котика — тут же приходит следующая карта','Инженеры дают рыбки, но сами не дерутся'];
 function duIntro(){const el=$('duIntro');if(!el)return;const me=DU.me,bot=DU.bot,pt=CQ.pt||{},nm=[myName(),bot?'Бот':ptName()],mine=DU.tm[me]&&DU.tm[me].length?DU.tm[me]:SV.team.slice(0,6),opp=bot?DU.tm[1]:((pt.tm&&pt.tm.length?pt.tm:DU.tm[1-me])||[]),
  st=[SV.du.w+' поб. · '+SV.du.l+' пор.',bot?'тренировка':(pt.dw==null?'новичок?':pt.dw+' поб. · '+(pt.dl||0)+' пор.')];
- const sq=a=>{a=a.filter(k=>TW[k]).slice(0,6);const c=a.length?Math.round(a.reduce((x,k)=>x+duStat(k).dc,0)/a.length*10)/10:0;return `<div class="di-sq">${a.map(k=>`<div style="--b:${TW[k].bg}"><svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg></div>`).join('')}</div><small>средняя цена ${fi()} ${c}</small>`};
+ const sq=(a,own)=>{a=a.filter(k=>TW[k]).slice(0,6);const c=a.length?Math.round(a.reduce((x,k)=>x+duStat(k).dc,0)/a.length*10)/10:0;return `<div class="di-sq">${a.map(k=>`<div style="--b:${TW[k].bg}"><svg viewBox="-28 -46 56 66"><use href="#${duUseL(own,k)}"/></svg></div>`).join('')}</div><small>средняя цена ${fi()} ${c}</small>`};
  const cards=[];for(let r=0;r<5;r++)DMAPS.forEach(m=>cards.push(`<div class="di-c" style="--b:#f1f5f9"><i class="di-sw" style="--s:${m.g[0]};--t:${m.g[1]};--m:${m.mid[1]}"></i>${m.n}</div>`));
- el.classList.remove('off');el.innerHTML=`<div class="di-h"><small>ДУЭЛЬ</small><b>Выбираем арену…</b></div><div class="di-vp" id="diVp"><div class="di-st" id="diSt">${cards.join('')}</div><u class="di-pin"></u></div><div class="di-nm" id="diNm">&nbsp;</div><div class="di-vs"><div class="di-p b"><b>${esc(nm[0])}</b><em>${st[0]}</em>${sq(mine)}</div><span>VS</span><div class="di-p r"><b>${esc(nm[1])}</b><em>${st[1]}</em>${sq(opp)}</div></div><small class="di-tip">${DTIP[Math.floor(Math.random()*DTIP.length)]}</small>`;
+ el.classList.remove('off');el.innerHTML=`<div class="di-h"><small>ДУЭЛЬ</small><b>Выбираем арену…</b></div><div class="di-vp" id="diVp"><div class="di-st" id="diSt">${cards.join('')}</div><u class="di-pin"></u></div><div class="di-nm" id="diNm">&nbsp;</div><div class="di-vs"><div class="di-p b"><b>${esc(nm[0])}</b><em>${st[0]}</em>${sq(mine,1)}</div><span>VS</span><div class="di-p r"><b>${esc(nm[1])}</b><em>${st[1]}</em>${sq(opp,0)}</div></div><small class="di-tip">${DTIP[Math.floor(Math.random()*DTIP.length)]}</small>`;
  const stp=$('diSt'),vp=$('diVp');setTimeout(()=>{const t=stp.children[DMAPS.length*2+DU.map];if(!t)return;stp.style.transform='translateX('+(-(t.offsetLeft+t.offsetWidth/2)+vp.clientWidth/2)+'px)';setTimeout(()=>{t.classList.add('win');$('diNm').textContent=DMAPS[DU.map].n+' · '+DMAPS[DU.map].d;const h=el.querySelector('.di-h b');if(h)h.textContent='Арена выбрана!'},3400)},80)}
 function duSetup(){DU.pj=[];DU.pid=1;DU.map=(+DU.sid||0)%DMAPS.length;const mk=p=>{const a=(DU.tm[p]||[]).filter(k=>TW[k]).slice(0,6);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return{h:a.slice(0,3),q:a.slice(3)}};DU.dk=[mk(0),mk(1)];DU.hd=DU.dk.map(d=>d.h);DU.nx=DU.dk.map(d=>d.q[0])}
 function duReset(){DU.on=1;DU.starting=0;DU.st='cd';DU.cd=8.2;DU.t=0;DU.el=[5,5];DU.units=[];DU.shots=[];DU.out=[];DU.nid=1;DU.sel=null;DU.paid=0;DU.res=null;DU.houses=duHouses();DU.bt=4;DU.snT=performance.now();DU.sa=0;DU.ot=0;duSetup();
@@ -7733,11 +7821,11 @@ coTrack=function(){if(!CQ.ch||!CQ.sub)return;try{CQ.ch.track({u:GS().uid,n:myNam
 {const g0=window.go;window.go=function(s){if(cur==='catdef'&&s!=='catdef'&&DU.on){try{if(!DU.res&&!DU.bot)csend('d-bye',{ds:DU.sid})}catch{}duStop()}return g0.apply(this,arguments)}}
 
 /* ---------- лобби дуэли ---------- */
-function duelH(){duFix();const ok=GS().room&&GS().uid,pt=CQ.pt,on=!!pt,sq=a=>`<div class="cq-sq">${a.filter(k=>TW[k]).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#cd-${k}"/></svg>`).join('')}</div>`,ri=(n,t)=>`<span class="du-rl"><span class="du-ic">${DUI[n]}</span><span>${t}</span></span>`;let h='';
+function duelH(){duFix();const ok=GS().room&&GS().uid,pt=CQ.pt,on=!!pt,sq=(a,own)=>`<div class="cq-sq">${a.filter(k=>TW[k]).map(k=>`<svg viewBox="-28 -46 56 66"><use href="#${duUseL(own,k)}"/></svg>`).join('')}</div>`,ri=(n,t)=>`<span class="du-rl"><span class="du-ic">${DUI[n]}</span><span>${t}</span></span>`;let h='';
  if(ok){h+=`<div class="cq-pt"><span class="cq-av">${esc((ptName()[0]||'?').toUpperCase())}</span><div><b>${esc(ptName())}</b><small>${!CQ.sub?'подключаемся…':!on?'пока не в игре':pt.ing?'сейчас в бою':pt.dr?'готов(а) к дуэли':'в лобби'}</small></div><span class="cq-dot${on?' on':''}"></span></div>`;if(!on)h+='<button class="cd-btn g cq-go" data-du="inv">Позвать в чате</button>'}
  else h+='<p class="cq-rl">Дуэль с партнёром работает в паре: сначала создайте комнату в приложении. А пока можно потренироваться с ботом.</p>';
- h+=`<p class="tm-h">Твой отряд · победы ${SV.du.w} · поражения ${SV.du.l}</p>${sq(SV.team.slice(0,6))}`;
- if(pt&&pt.tm&&pt.tm.length)h+=`<p class="tm-h">Отряд ${esc(ptName())}</p>${sq(pt.tm)}`;
+ h+=`<p class="tm-h">Твой отряд · победы ${SV.du.w} · поражения ${SV.du.l}</p>${sq(SV.team.slice(0,6),1)}`;
+ if(pt&&pt.tm&&pt.tm.length)h+=`<p class="tm-h">Отряд ${esc(ptName())}</p>${sq(pt.tm,0)}`;
  h+='<button class="cd-btn g cq-go" data-t="t">Изменить отряд</button>';
  if(ok)h+=`<button class="cd-btn cq-go" data-du="rdy">${DU.rdy?'Отменить готовность':'Готов к дуэли!'}</button>`;
  h+='<button class="cd-btn g cq-go" data-du="bot">Тренировка с ботом</button>';
@@ -8385,7 +8473,7 @@ function wClass(k,cf){if(NOW.has(k))return null;let r=WK[k];if(r)return r;if(cf.
 const orig_mkTw=mkTw;
 mkTw=function(k,c,r){const t=orig_mkTw(k,c,r),w=wClass(k,t.cf);if(!w)return t;const dual=w[0]==='gun',g=mk('g',{},t.g);const hand=(x,s)=>{const e=mk('g',{transform:`translate(${x} 5) rotate(${w[3]})`},g);e.innerHTML=WS[w[0]](w[1]);if(s)e.setAttribute('data-l',1);return e};
  t.w={t:w,a:[hand(12),...(dual?[hand(-12,1)]:[])],c:w[1],fx:w[2],ra:w[3]};return t};
-const MZ={sling:[10,0],fist:[20,0],mitt:[19,0],club:[30,0],crossbow:[22,0],blowpipe:[31,0],lantern:[24,0],shuriken:[12,0],pan:[26,0],pcannon:[22,0],wcan:[22,-9],dagger:[27,0],bone:[24,0],pin:[26,0],bubble:[24,0],snowball:[18,0],magnet:[23,0],hoop:[20,0],hourglass:[16,0],rainbow:[20,0],bo:[30,0],crook:[30,0],moonstaff:[26,-4],boomerang:[24,0],yarnball:[18,0],baseball:[18,0],gun:[17,0],rifle:[26,0],bow:[20,0],blast:[18,0],staff:[24,0],flask:[24,0],lute:[26,0],claw:[18,0],pick:[22,0],rail:[24,0],glove:[18,0],cannon:[22,0],web:[18,0],mace:[22,0],torch:[24,-6],thrower:[24,0],gelgun:[19,0],bomb:[8,-8],ball:[10,0]};
+const MZ={sling:[10,0],fist:[20,0],mitt:[19,0],club:[30,0],crossbow:[22,0],blowpipe:[31,0],lantern:[24,0],shuriken:[12,0],pan:[26,0],pcannon:[22,0],wcan:[22,-9],dagger:[27,0],bone:[24,0],pin:[26,0],bubble:[24,0],snowball:[18,0],magnet:[23,0],hoop:[20,0],hourglass:[16,0],rainbow:[20,0],bo:[30,0],crook:[30,0],moonstaff:[26,-4],boomerang:[24,0],yarnball:[18,0],baseball:[18,0],gun:[17,0],rifle:[26,0],bow:[20,0],blast:[18,0],staff:[24,0],flask:[24,0],lute:[26,0],claw:[18,0],pick:[22,0],rail:[24,0],glove:[18,0],cannon:[22,0],web:[18,0],mace:[22,0],torch:[24,-6],thrower:[24,0],gelgun:[19,0],bomb:[8,-8],ball:[10,0]}; window.CDW={WS,wClass,MZ};
 function aimW(t,tg){if(!t.w)return null;const a=Math.atan2(tg.y-(t.y+5),tg.x-t.x),d=a*57.3,m=MZ[t.w.t[0]]||[16,0],lf=Math.cos(a)<0;
  t.w.a.forEach((e,i)=>{const sx=e.getAttribute('data-l')?-12:12;e.setAttribute('transform',`translate(${sx} 5) rotate(${d})`);e.__k=0;addFx(e,.16,k=>{e.setAttribute('transform',`translate(${sx-Math.cos(a)*3*(1-k)} ${5-Math.sin(a)*3*(1-k)}) rotate(${d})`)})});
  return{x:t.x+12+Math.cos(a)*m[0]-Math.sin(a)*m[1],y:t.y+5+Math.sin(a)*m[0]+Math.cos(a)*m[1],a,d}}
